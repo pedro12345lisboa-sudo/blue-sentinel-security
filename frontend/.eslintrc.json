@@ -1,0 +1,25 @@
+{
+  "extends": [
+    "next/core-web-vitals",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:jsx-a11y/recommended",
+    "plugin:tailwindcss/recommended",
+    "prettier"
+  ],
+  "plugins": ["@typescript-eslint", "jsx-a11y", "tailwindcss"],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "@typescript-eslint/no-explicit-any": "warn",
+    "jsx-a11y/anchor-is-valid": "off",
+    "jsx-a11y/click-events-have-key-events": "warn",
+    "jsx-a11y/no-noninteractive-element-interactions": "warn",
+    "react/no-unescaped-entities": "off",
+    "tailwindcss/no-custom-classname": "off",
+    "tailwindcss/enforce-consistent-line-clamp": "warn"
+  },
+  "settings": {
+    "tailwindcss": {
+      "config": "tailwind.config.js"
+    }
+  }
+}

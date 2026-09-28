@@ -1,0 +1,157 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: blue-sentinel-postgres
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=blue_sentinel
+      - POSTGRES_USER=${POSTGRES_USER:-sentinel}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sentinel -d blue_sentinel"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend-net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: "512M"
+        reservation:
+          cpus: "0.5"
+          memory: "256M"
+
+  redis:
+    image: redis:7-alpine
+    container_name: blue-sentinel-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend-net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: "512M"
+        reservation:
+          cpus: "0.5"
+          memory: "256M"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: blue-sentinel-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-sentinel}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/blue_sentinel
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - AGENT_API_KEY=${AGENT_API_KEY:-dev-agent-key}
+      - AGENT_HMAC_SECRET=${AGENT_HMAC_SECRET:-dev-hmac-secret}
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health/ready"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    networks:
+      - backend-net
+      - frontend-net
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: "1G"
+        reservation:
+          cpus: "1.0"
+          memory: "512M"
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: blue-sentinel-worker
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-sentinel}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/blue_sentinel
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - AGENT_API_KEY=${AGENT_API_KEY:-dev-agent-key}
+      - AGENT_HMAC_SECRET=${AGENT_HMAC_SECRET:-dev-hmac-secret}
+    command: >
+      sh -c "while true; do
+        python -m backend.app.workers.event_worker;
+        sleep 5;
+      done"
+    networks:
+      - backend-net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: "800M"
+        reservation:
+          cpus: "0.8"
+          memory: "400M"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: blue-sentinel-frontend
+    restart: unless-stopped
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+    ports:
+      - "3000:3000"
+    networks:
+      - frontend-net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: "1G"
+        reservation:
+          cpus: "0.5"
+          memory: "512M"
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  backend-net:
+    driver: bridge
+    internal: true
+  frontend-net:
+    driver: bridge
+    internal: false

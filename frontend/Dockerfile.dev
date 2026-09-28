@@ -1,0 +1,12 @@
+FROM node:20-alpine
+
+ENV PNPM_HOME="/pnpm" \
+    PATH="/pnpm:${PATH}"
+
+WORKDIR /app
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+EXPOSE 3000
+
+CMD ["sh", "-c", "pnpm install && pnpm dev"]

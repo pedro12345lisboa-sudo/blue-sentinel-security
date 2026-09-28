@@ -1,0 +1,47 @@
+# Development overrides for docker-compose
+# Copy to docker-compose.override.yml and modify as needed
+#
+# This file is gitignored and loaded automatically by docker compose
+
+version: "3.9"
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - NEXT_TELEMETRY_DISABLED=1
+    command: pnpm dev
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./backend:/app
+    environment:
+      - DEBUG=True
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    volumes:
+      - ./backend:/app
+    command: >
+      sh -c "while true; do
+        python -m backend.app.workers.event_worker;
+        sleep 5;
+      done"
+
+  postgres:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
