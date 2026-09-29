@@ -130,8 +130,8 @@ export function Hero() {
               </div>
             </div>
 
-            <div className="absolute -bottom-6 -right-6 w-72 h-72 bg-primary/5 rounded-full blur-3xl" aria-hidden="true />
-            <div className="absolute -top-6 -left-6 w-72 h-72 bg-success/5 rounded-full blur-3xl" aria-hidden="true />
+            <div className="absolute -bottom-6 -right-6 w-72 h-72 bg-primary/5 rounded-full blur-3xl" aria-hidden="true" />
+            <div className="absolute -top-6 -left-6 w-72 h-72 bg-success/5 rounded-full blur-3xl" aria-hidden="true" />
           </div>
         </div>
       </div>

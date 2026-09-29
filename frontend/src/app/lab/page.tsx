@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import { Terminal, Play, Pause, RotateCcw, Zap, Shield, Activity, AlertTriangle, CheckCircle, XCircle, Search, Filter, Download, Settings } from 'lucide-react';
@@ -33,7 +33,7 @@ const mockRules = [
   { id: 6, name: 'DNS Exfiltration Attempt', mitre: 'T1071.004', status: 'inactive', matches: 0 },
 ];
 
-export function LabPage() {
+function LabPage() {
   const reducedMotion = useReducedMotion();
   const { gsap } = useGSAP();
   const sectionRef = useRef<HTMLSectionElement>(null);
@@ -147,7 +147,7 @@ export function LabPage() {
                 <span className="font-mono text-primary">blue-sentinel</span> Lab
               </h1>
               <p className="mt-1 text-muted-foreground">
-                Interactive detection laboratory — Real-time synthetic event generation with Sigma-like detection engine
+                Interactive detection laboratory â€” Real-time synthetic event generation with Sigma-like detection engine
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -379,3 +379,5 @@ export function LabPage() {
     </div>
   );
 }
+
+export default LabPage;

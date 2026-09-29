@@ -1,18 +1,29 @@
 import useSWR from 'swr';
-import type { ProjectFrontmatter, WriteupFrontmatter } from '@/lib/projects';
+import type { ProjectFrontmatter } from '@/lib/projects';
+import type { WriteupFrontmatter } from '@/lib/writeups';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+// O FastAPI devolve `detail` como texto (erros normais) ou lista (erros 422 de validação).
+async function readErrorMessage(response: Response, fallback: string): Promise<string> {
+  try {
+    const body = await response.json();
+    if (typeof body?.detail === 'string') return body.detail;
+  } catch {
+    // resposta sem JSON: usa a mensagem padrão
+  }
+  return fallback;
+}
 
 async function fetcher<T>(url: string): Promise<T> {
   const response = await fetch(`${API_BASE}${url}`, {
     headers: { 'Content-Type': 'application/json' },
   });
-  
+
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-    throw new Error(error.detail || `HTTP ${response.status}`);
+    throw new Error(await readErrorMessage(response, `HTTP ${response.status}`));
   }
-  
+
   return response.json();
 }
 
@@ -35,12 +46,11 @@ export async function submitContact(data: ContactFormData): Promise<ContactRespo
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  
+
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Failed to send message' }));
-    throw new Error(error.detail || 'Failed to send message');
+    throw new Error(await readErrorMessage(response, 'Failed to send message'));
   }
-  
+
   return response.json();
 }
 
@@ -75,7 +85,7 @@ export interface GitHubStats {
 
 export function useGitHubStats() {
   return useSWR<GitHubStats>('/api/v1/github/stats', fetcher, {
-    refreshInterval: 3600000, // 1 hour
+    refreshInterval: 3600000, // 1 hora
     dedupingInterval: 300000, // 5 min
   });
 }
@@ -159,7 +169,7 @@ export interface LabStats {
 }
 
 export function useLabEvents() {
-  // WebSocket connection handled in component
+  // A conexão WebSocket é feita dentro do componente do laboratório.
   return null;
 }
 

@@ -1,54 +1,46 @@
 import json
 import logging
 import sys
-from datetime import datetime, timezone
 from typing import Any
 
+from app.core.config import settings
 
-class JsonFormatter(logging.Formatter):
-    """Custom JSON log formatter for structured logging."""
 
-    def format(self, record: logging.LogRecord) -> str:
-        log_entry: dict[str, Any] = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "level": record.levelname,
-            "logger": record.name,
-            "message": record.getMessage(),
-            "module": record.module,
-            "function": record.funcName,
-            "line": record.lineno,
-        }
+class InterceptHandler(logging.Handler):
+    """Intercept standard logging to structlog / uvicorn."""
+    def emit(self, record: logging.LogRecord) -> None:
+        # Default to stderr; can be replaced with structlog configuration
+        print(
+            json.dumps({
+                "timestamp": self._format_time(record.created),
+                "level": record.levelname,
+                "logger": record.name,
+                "message": record.getMessage(),
+                "module": record.module,
+                "line": record.lineno,
+                "trace_id": getattr(record, "trace_id", None),
+            }, default=str),
+            file=sys.stderr,
+        )
 
-        # Add extra fields if present
-        if hasattr(record, "request_id"):
-            log_entry["request_id"] = record.request_id
-        if hasattr(record, "event_id"):
-            log_entry["event_id"] = record.event_id
-
-        # Include exception info if present
-        if record.exc_info:
-            log_entry["exception"] = self.formatException(record.exc_info)
-
-        # Include stack info if present
-        if record.stack_info:
-            log_entry["stack"] = self.formatStack(record.stack_info)
-
-        return json.dumps(log_entry, ensure_ascii=False)
+    @staticmethod
+    def _format_time(timestamp: float) -> str:
+        from datetime import datetime, timezone
+        return datetime.fromtimestamp(timestamp, tz=timezone.utc).isoformat()
 
 
 def setup_logging() -> None:
-    """Configure application logging with JSON format."""
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
+    """Configure application logging."""
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
 
-    # Handler para stdout (JSON lines)
- handler = logging.StreamHandler(sys.stdout)
- handler.setFormatter(JsonFormatter())
+    handler = InterceptHandler()
+    formatter = logging.Formatter("%(message)s")
+    handler.setFormatter(formatter)
+    logger.handlers = []
+    logger.addHandler(handler)
 
- # Evitar duplicated handlers
- if not root_logger.handlers:
-    root_logger.addHandler(handler)
-
- # Reduzer ruido de bibliotecas third-party
- for _name in ["uvicorn", "fastapi", "asyncio"]:
-    logging.getLogger(_name).setLevel(logging.WARNING)
+    # Reduce noise from third-party libraries
+    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+    logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING if not settings.debug else logging.INFO)
+    logging.getLogger("asyncio").setLevel(logging.WARNING)

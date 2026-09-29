@@ -1,63 +1,38 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
-import redis.asyncio as redis
-from redis.exceptions import RedisError
+from fastapi import APIRouter, Depends
 
 from app.core.config import settings
-from app.database.session import get_db
+from app.core.deps import get_db_session
+from app.schemas.status import HealthResponse, ReadinessResponse
 
-router = APIRouter(tags=["health"])
-
-
-@router.get("/health/live", tags=["health"], summary="Liveness check")
-async def live_check():
-    """Liveness check - verifies the application is running.
-    Does not depend on external services.
-    """
-    return {"status": "alive"}
+router = APIRouter(prefix="/health", tags=["health"])
 
 
-@router.get("/health/ready", tags=["health"], summary="Readiness check")
-async def ready_check(db: AsyncSession = Depends(get_db)):
-    """Readiness check - verifies the application is ready to serve traffic.
-    Checks connectivity to PostgreSQL and Redis.
-    Returns 503 if any dependency is unavailable.
-    """
-    checks: dict[str, any] = {"status": "ready", "checks": {}}
+@router.get("/live", response_model=HealthResponse)
+async def liveness():
+    """Verifica que o processo está vivo."""
+    return HealthResponse(status="ok")
 
-    # Check PostgreSQL
+
+@router.get("/ready", response_model=ReadinessResponse)
+async def readiness(db=Depends(get_db_session)):
+    """Verifica que dependências (DB, cache) estão prontas."""
+    checks: dict[str, str] = {}
+
     try:
+        from sqlalchemy import text
         await db.execute(text("SELECT 1"))
-        checks["checks"]["postgres"] = "healthy"
-    except SQLAlchemyError as e:
-        checks["checks"]["postgres"] = f"unhealthy: {str(e)}"
+        checks["database"] = "ok"
+    except Exception:
+        checks["database"] = "fail"
 
-    # Check Redis
-    redis_client = None
     try:
-        redis_client = redis.Redis(
-            host=settings.redis_host,
-            port=settings.redis_port,
-            password=settings.redis_password if settings.redis_password != "changeme_default_must_overwrite" else None,
-            decode_responses=True,
-            socket_connect_timeout=2,
-            socket_timeout=2,
-        )
-        await redis_client.ping()
-        checks["checks"]["redis"] = "healthy"
-    except RedisError as e:
-        checks["checks"]["redis"] = f"unhealthy: {str(e)}"
-    finally:
-        if redis_client:
-            await redis_client.close()
+        await settings.redis.ping()
+        checks["cache"] = "ok"
+    except Exception:
+        checks["cache"] = "fail"
 
-    if checks["checks"]["postgres"] != "healthy" or checks["checks"]["redis"] != "healthy":
-        checks["status"] = "not_ready"
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=checks,
-        )
-
-    return checks
+    all_ok = all(v == "ok" for v in checks.values())
+    return ReadinessResponse(
+        status="ok" if all_ok else "degraded",
+        checks=checks,
+    )

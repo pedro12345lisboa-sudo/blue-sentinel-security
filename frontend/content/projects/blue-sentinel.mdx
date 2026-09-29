@@ -1,6 +1,6 @@
 ---
-title: 'Blue-Sentinel Portfolio Platform'
-description: 'Full-stack cybersecurity portfolio with interactive detection lab, real-time metrics, and synthetic event generation.'
+title: 'Plataforma de Portfólio Blue-Sentinel'
+description: 'Portfólio full-stack de cibersegurança com laboratório de detecção interativo, métricas em tempo real e geração de eventos sintéticos.'
 date: '2024-01-15'
 tags: ['Next.js', 'FastAPI', 'PostgreSQL', 'Redis', 'WebSocket', 'Sigma', 'Docker', 'TypeScript', 'Python']
 highlight: true
@@ -9,55 +9,54 @@ links:
   github: 'https://github.com/blue-sentinel/blue-sentinel'
   demo: '/lab'
 ---
+# Plataforma de Portfólio Blue-Sentinel
 
-# Blue-Sentinel Portfolio Platform
+Um portfólio completo mostrando expertise em Blue Team / Detection Engineering. Construído como aplicação full-stack com frontend Next.js static-first e backend FastAPI para recursos dinâmicos.
 
-A complete portfolio platform showcasing Blue Team / Detection Engineering expertise. Built as a **full-stack application** with a static-first Next.js frontend and a FastAPI backend for dynamic features.
+## Declaração de Problema
 
-## Problem Statement
+Portfólios tradicionais são estáticos — mostram *o que* você fez mas não *como* você pensa. Para um engenheiro de segurança, demonstrar capacidades de detecção em tempo real, métricas interativas e laboratórios fornece muito mais sinal do que um resumo em PDF.
 
-Traditional portfolios are static — they show *what* you've done but not *how* you think. For a security engineer, demonstrating real-time detection capabilities, live metrics, and interactive labs provides far more signal than a PDF resume.
-
-## Architecture
+## Arquitetura
 
 ```mermaid
 flowchart TD
-    Visitor[Visitor] -->|HTTPS| Frontend[Next.js Frontend]
-    Frontend -->|Static Assets| CDN[CDN / Edge]
-    Frontend -->|REST + WS| Backend[FastAPI Backend]
+    Visitante[Visitante] -->|HTTPS| Frontend[Frontend Next.js]
+    Frontend -->|Assets Estáticos| CDN[CDN / Edge]
+    Frontend -->|REST + WS| Backend[Backend FastAPI]
     Backend -->|SQL| Postgres[(PostgreSQL)]
     Backend -->|Cache/Queue| Redis[(Redis)]
-    Backend -->|Showcase| Agent[C++ Agent]
+    Backend -->|Mostrar| Agente[Agente C++]
 ```
 
-### Technology Choices
+### Escolhas de Tecnologia
 
-| Layer | Technology | Rationale |
-|-------|------------|-----------|
-| Frontend | Next.js 14, TypeScript, Tailwind | Static/ISR, excellent DX, React ecosystem |
-| Backend | FastAPI, Pydantic, SQLAlchemy 2.0 | Async, auto OpenAPI, Python security ecosystem |
-| Database | PostgreSQL 16 | ACID, JSONB, mature, reliable |
-| Cache/Queue | Redis 7 | Sub-ms latency, pub/sub, streams, TTL |
-| Agent | C++20, CMake, eBPF/ETW | Performance, cross-platform, systems programming |
+| Camada | Tecnologia | Justificativa |
+|--------|------------|---------------|
+| Frontend | Next.js 14, TypeScript, Tailwind | SSG/ISR, excelente DX, ecossistema React |
+| Backend | FastAPI, Pydantic, SQLAlchemy 2.0 | Async, OpenAPI automático, ecossistema Python |
+| Database | PostgreSQL 16 | ACID, JSONB, madura, confiável |
+| Cache/Queue | Redis 7 | Latência sub-ms, pub/sub, streams, TTL |
+| Agente | C++20, CMake, eBPF/ETW | Performance, cross-platform, systems programming |
 
-## Key Features
+## Recursos Principais
 
-### 1. Static-First Portfolio
+### 1. Portfólio Static-First
 
-All core pages (`/`, `/about`, `/projects`, `/writeups`, `/security`, `/resume`) are **pre-rendered at build time** (SSG) or use **Incremental Static Regeneration** (ISR). The site works completely without the backend running.
+Todas as páginas principais (`/`, `/about`, `/projects`, `/writeups`, `/security`, `/resume`) são **pré-renderadas no build time** (SSG) ou usam **Incremental Static Regeneration** (ISR). O site funciona completamente sem o backend rodando.
 
 ```typescript
 // next.config.js
-output: 'standalone', // Minimal Docker image
+output: 'standalone', // Imagem Docker mínima
 images: { formats: ['image/avif', 'image/webp'] },
 ```
 
-### 2. Interactive Detection Lab (`/lab`)
+### 2. Laboratório de Detecção Interativo (`/lab`)
 
-Real-time WebSocket connection to backend that generates **synthetic security events** and evaluates them against Sigma-like detection rules.
+Conexão WebSocket em tempo real com backend que gera **eventos de segurança sintéticos** e os avalia contra regras Sigma-like.
 
-<Callout type="info" title="Synthetic Events Only">
-All events in the lab are **synthetic** — generated programmatically for demonstration. No real telemetry, no production data.
+<Callout type="info" title="Eventos Sintéticos">
+Todos os eventos do lab são **sintéticos** — gerados programaticamente para demonstração. Nenhum telemetry real, nenhum dado de produção.
 </Callout>
 
 ```python
@@ -69,76 +68,76 @@ class DetectionEngine:
                 yield Alert(rule=rule, event=event, severity=rule.severity)
 ```
 
-### 3. Real-Time System Status (`/status`)
+### 3. Status em Tempo Real (`/status`)
 
-Live metrics dashboard showing CPU, memory, disk, network, and service health (PostgreSQL, Redis, API endpoints).
+Painel de métricas ao vivo mostrando CPU, memória, disco, rede e saúde de serviços (PostgreSQL, Redis, endpoints de API).
 
-### 4. Contact Form with Anti-Spam
+### 4. Formulário de Contato com Anti-Spam
 
-- Zod + Pydantic validation
-- Redis rate limiting (sliding window)
-- Honeypot field
-- Async email via background worker
+- Validação Zod + Pydantic
+- Rate limiting Redis (janela deslizante)
+- Campo honeypot
+- Email assíncrono via worker
 
-## Detection Engineering Showcase
+## Engenharia de Detecção em Destaque
 
-The lab demonstrates **7 active Sigma rules** covering:
+O lab demonstra **7 regras Sigma ativas** que cobrem:
 
-| Rule | MITRE Technique | Status |
-|------|----------------|--------|
-| PowerShell EncodedCommand | T1059.001 | ✅ Active |
-| Suspicious Network Connection | T1071.001 | ✅ Active |
-| Ingress Tool Transfer | T1105 | ✅ Active |
-| Registry Run Key Persistence | T1547.001 | ✅ Active |
-| System Information Discovery | T1082 | ⏸️ Inactive |
-| DNS Exfiltration | T1071.004 | ⏸️ Inactive |
-| Credential Dumping | T1003 | ⏸️ Inactive |
+| Regra | Técnica MITRE | Status |
+|------|--------------|--------|
+| PowerShell EncodedCommand | T1059.001 | ✅ Ativa |
+| Suspicious Network Connection | T1071.001 | ✅ Ativa |
+| Ingress Tool Transfer | T1105 | ✅ Ativa |
+| Registry Run Key Persistence | T1547.001 | ✅ Ativa |
+| System Information Discovery | T1082 | ⏸️ Inativa |
+| DNS Exfiltration | T1071.004 | ⏸️ Inativa |
+| Credential Dumping | T1003 | ⏸️ Inativa |
 
-## Security by Design
+## Segurança por Design
 
-- **Network segmentation**: Separate Docker networks (`frontend-net` public, `backend-net` internal)
-- **No exposed DB ports**: PostgreSQL and Redis only accessible within `backend-net`
-- **Non-root containers**: All services run as unprivileged users
-- **Secrets via env**: `.env.example` with placeholders, Docker secrets in production
-- **Rate limiting**: All public endpoints protected
-- **Structured logging**: JSON logs for audit trail
+- **Segmentação de rede**: Redes Docker separadas (`frontend-net` pública, `backend-net` interna)
+- **Portas de DB não expostas**: PostgreSQL e Redis apenas acessíveis dentro do `backend-net`
+- **Containers não-root**: Todos os serviços rodam como usuários não privilegiados
+- **Segredos via env**: `.env.example` com placeholders, Docker secrets em produção
+- **Rate limiting**: Todos os endpoints públicos protegidos
+- **Log estruturado**: JSON logs para trilha de auditoria
 
-## Deployment
+## Deploy
 
 ```bash
-# Development
+# Desenvolvimento
 docker compose -f docker-compose.yml -f docker-compose.override.yml up
 
-# Production
+# Produção
 docker compose up --build -d
 ```
 
-### Health Checks
+### Verificações de Saúde
 
 ```bash
 # Liveness
 curl http://localhost:8000/api/v1/health/live
 # {"status": "alive"}
 
-# Readiness (checks DB + Redis)
+# Readiness (verifica DB + Redis)
 curl http://localhost:8000/api/v1/health/ready
 # {"status": "ready", "checks": {"postgres": "healthy", "redis": "healthy"}}
 ```
 
-## Lessons Learned
+## Lições Aprendidas
 
-1. **Static-first pays off**: 99th percentile page loads < 100ms. Backend can be down and portfolio still works.
-2. **Python for detection**: Sigma ecosystem is mature in Python. Rewriting in Go/Rust would be months of work.
-3. **WebSocket for lab**: Server-sent events or polling would add complexity. Native WebSocket is clean.
-4. **Redis streams > lists**: For the email queue, streams provide exactly-once semantics and consumer groups.
+1. **Static-first paga o retorno**: 99th percentile page loads < 100ms. Backend pode estar fora do ar e o portfólio ainda funciona.
+2. **Python para detecção**: Ecossistema Sigma está maduro em Python. Reescrever em Go/Rust seria meses de trabalho.
+3. **WebSocket para lab**: Server-sent events ou polling adicionariam complexidade. WebSocket nativo é limpo.
+4. **Redis streams > lists**: Para a fila de e-mail, streams proporcionam semântica exactly-once e consumer groups.
 
-## Future Work
+## Trabalhos Futuros
 
-- [ ] Three.js SOC visualization in hero
-- [ ] MITRE ATT&CK coverage heatmap
-- [ ] Rule testing playground (YARA + Sigma)
-- [ ] Multi-tenant lab for team demos
+- [ ] Visualização Three.js SOC no hero
+- [ ] Heatmap de cobertura MITRE ATT&CK
+- [ ] Playground de teste de regras (YARA + Sigma)
+- [ ] Lab multi-tenant para demos de equipe
 
 ---
 
-*Built with ♥ for the Blue Team community. All code open source under MIT license.*
+*Construído com ♥ para a comunidade Blue Team. Todo código de código aberto sob licença MIT.*
