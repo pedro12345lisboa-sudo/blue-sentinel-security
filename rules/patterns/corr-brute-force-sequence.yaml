@@ -1,0 +1,28 @@
+id: corr-brute-force-sequence
+title: Brute force sequence ending in a successful logon
+description: >
+  Five or more failed logons for the same [host, user] inside a 300 second
+  window, followed by a successful authentication from the same group.
+  The success turns a noisy failure streak into a likely compromise.
+severity: critical
+window_seconds: 300
+group_by: [host, user]
+stages:
+  - id: failed_logons
+    min_events: 5
+    source:
+      rule_ids: [bs-auth-failed-logons]
+  - id: success
+    min_events: 1
+    source:
+      event:
+        category: auth
+        action: logon
+mitre: [T1110.001, T1078]
+false_positives:
+  - Password vaults or service accounts cycling through expired credentials
+  - Availability tests that authenticate with wrong credentials on purpose
+response:
+  - Lock or rotate the credential and review the session that followed
+  - Check whether the account performed privileged actions
+  - Require MFA and rate-limit authentication from the source

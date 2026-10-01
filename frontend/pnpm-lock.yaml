@@ -65,9 +65,6 @@ importers:
       next:
         specifier: ^14.2.15
         version: 14.2.15(@babel/core@7.29.7(supports-color@8.1.1))(@playwright/test@1.63.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      next-i18next:
-        specifier: ^16.3.1
-        version: 16.3.1(@types/react@18.3.31)(i18next@26.4.2(typescript@5.9.3))(next@14.2.15(@babel/core@7.29.7(supports-color@8.1.1))(@playwright/test@1.63.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-i18next@17.0.15(i18next@26.4.2(typescript@5.9.3))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3))(react@18.3.1)
       next-mdx-remote:
         specifier: ^5.0.0
         version: 5.0.0(@types/react@18.3.31)(react@18.3.1)(supports-color@8.1.1)
@@ -1310,11 +1307,6 @@ packages:
   '@types/hast@3.0.5':
     resolution: {integrity: sha512-rp/ezSWaD1m44dPKICGhiskI13nVr7qTloFwDa/IYkhhf5nzwP+zIQcIJh3WIFSBOy/H1PzB40jPjMDksN4F+g==}
 
-  '@types/hoist-non-react-statics@3.3.7':
-    resolution: {integrity: sha512-PQTyIulDkIDro8P+IHbKCsw7U2xxBYflVzW/FgWdCAePD9xGSidgA76/GeJ6lBKoblyhf9pBY763gbrN+1dI8g==}
-    peerDependencies:
-      '@types/react': '*'
-
   '@types/json5@0.0.29':
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
 
@@ -2473,18 +2465,12 @@ packages:
   hast-util-whitespace@3.0.0:
     resolution: {integrity: sha512-88JUN06ipLwsnv+dVn+OIYOvAuvBMy/Qoi6O7mQHxdPXpjy+Cd6xRkWwux7DKO+4sYILtLBRIKgsdpS2gQc7qw==}
 
-  hoist-non-react-statics@3.3.2:
-    resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
-
   html-encoding-sniffer@4.0.0:
     resolution: {integrity: sha512-Y22oTqIU4uuPgEemfz7NDJz6OeKf12Lsu+QC+s3BVpda64lTiMYCyGwg5ki4vFxkMwQdeZDl2adZoqUgdFuTgQ==}
     engines: {node: '>=18'}
 
   html-escaper@2.0.2:
     resolution: {integrity: sha512-H2iMtd0I4Mt5eYiapRdIDjp+XzelXQ0tFE4JS7YFwFevXXMmOp9myNrUvCg0D6ws8iqkRPBfKHgbwig1SmlLfg==}
-
-  html-parse-stringify@4.0.1:
-    resolution: {integrity: sha512-0zHsZJrK7S3K2aucXWL6ycoYJ/iNtIcFHC/nYQgFklPtrv5LpJctIiSCroWZWeuoXvuyFdzp6KzjJQ+OT5MfFw==}
 
   http-proxy-agent@7.0.2:
     resolution: {integrity: sha512-T1gkAiYYDWYx3V5Bmyu7HcfcvL7mUrTWiM6yOfa3PIphViJ/gFPbvidQ+veqSOHci/PxBcDabeUNCzpOODJZig==}
@@ -2493,17 +2479,6 @@ packages:
   https-proxy-agent@7.0.6:
     resolution: {integrity: sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw==}
     engines: {node: '>= 14'}
-
-  i18next-resources-to-backend@1.2.3:
-    resolution: {integrity: sha512-8Y/LLAm5fqZc2ckQxtTWbu75ndjNLzF7mcYl6rhc4g+WBopIsG3YhdYqF5qhJy64tlYhlU2KSSnEgW3gGHLqwg==}
-
-  i18next@26.4.2:
-    resolution: {integrity: sha512-RX+R0VLg13IbvRuJSxnqykUFS9vQZTl8wYpWPCIUDWVrSGjsQywB5Y+pjzrkboxGAuYfJZVH1InFTdgBdxq6ug==}
-    peerDependencies:
-      typescript: ^5 || ^6 || ^7
-    peerDependenciesMeta:
-      typescript:
-        optional: true
 
   iconv-lite@0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
@@ -3040,15 +3015,6 @@ packages:
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
 
-  next-i18next@16.3.1:
-    resolution: {integrity: sha512-VVtXI4TYqsKPr5sVq5/kSpNWdjvlMwu2HpgLX4cvXBVB+t3LsjYMH2O8bs7xthBRREv+FIE3ihUg5ijmomzySA==}
-    engines: {node: '>=20'}
-    peerDependencies:
-      i18next: '>= 23.7.13'
-      next: '>= 14.1.0'
-      react: '>= 18.0.0'
-      react-i18next: '>= 14.0.0'
-
   next-mdx-remote@5.0.0:
     resolution: {integrity: sha512-RNNbqRpK9/dcIFZs/esQhuLA8jANqlH694yqoDBK8hkVdJUndzzGmnPHa2nyi90N4Z9VmzuSWNRpr5ItT3M7xQ==}
     engines: {node: '>=14', npm: '>=7'}
@@ -3381,22 +3347,6 @@ packages:
       react: ^16.8.0 || ^17 || ^18 || ^19
     peerDependenciesMeta:
       '@types/react':
-        optional: true
-
-  react-i18next@17.0.15:
-    resolution: {integrity: sha512-7uYpx/oBkesLto7cOzOmfITlUBaXHCAcFahmgETMfWr8nbbWRRnVGvz8wsH/xpbNcyoH+NpCcnOQEqWPMO6/hw==}
-    peerDependencies:
-      i18next: '>= 26.2.0'
-      react: '>= 16.8.0'
-      react-dom: '*'
-      react-native: '*'
-      typescript: ^5 || ^6 || ^7
-    peerDependenciesMeta:
-      react-dom:
-        optional: true
-      react-native:
-        optional: true
-      typescript:
         optional: true
 
   react-is@16.13.1:
@@ -5214,11 +5164,6 @@ snapshots:
     dependencies:
       '@types/unist': 3.0.3
 
-  '@types/hoist-non-react-statics@3.3.7(@types/react@18.3.31)':
-    dependencies:
-      '@types/react': 18.3.31
-      hoist-non-react-statics: 3.3.2
-
   '@types/json5@0.0.29': {}
 
   '@types/mdast@4.0.4':
@@ -6616,17 +6561,11 @@ snapshots:
     dependencies:
       '@types/hast': 3.0.5
 
-  hoist-non-react-statics@3.3.2:
-    dependencies:
-      react-is: 16.13.1
-
   html-encoding-sniffer@4.0.0:
     dependencies:
       whatwg-encoding: 3.1.1
 
   html-escaper@2.0.2: {}
-
-  html-parse-stringify@4.0.1: {}
 
   http-proxy-agent@7.0.2(supports-color@8.1.1):
     dependencies:
@@ -6641,14 +6580,6 @@ snapshots:
       debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
-
-  i18next-resources-to-backend@1.2.3:
-    dependencies:
-      '@babel/runtime': 7.29.7
-
-  i18next@26.4.2(typescript@5.9.3):
-    optionalDependencies:
-      typescript: 5.9.3
 
   iconv-lite@0.6.3:
     dependencies:
@@ -7377,18 +7308,6 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  next-i18next@16.3.1(@types/react@18.3.31)(i18next@26.4.2(typescript@5.9.3))(next@14.2.15(@babel/core@7.29.7(supports-color@8.1.1))(@playwright/test@1.63.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-i18next@17.0.15(i18next@26.4.2(typescript@5.9.3))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3))(react@18.3.1):
-    dependencies:
-      '@types/hoist-non-react-statics': 3.3.7(@types/react@18.3.31)
-      hoist-non-react-statics: 3.3.2
-      i18next: 26.4.2(typescript@5.9.3)
-      i18next-resources-to-backend: 1.2.3
-      next: 14.2.15(@babel/core@7.29.7(supports-color@8.1.1))(@playwright/test@1.63.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react: 18.3.1
-      react-i18next: 17.0.15(i18next@26.4.2(typescript@5.9.3))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
-    transitivePeerDependencies:
-      - '@types/react'
-
   next-mdx-remote@5.0.0(@types/react@18.3.31)(react@18.3.1)(supports-color@8.1.1):
     dependencies:
       '@babel/code-frame': 7.29.7
@@ -7668,17 +7587,6 @@ snapshots:
       react: 18.3.1
     optionalDependencies:
       '@types/react': 18.3.31
-
-  react-i18next@17.0.15(i18next@26.4.2(typescript@5.9.3))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3):
-    dependencies:
-      '@babel/runtime': 7.29.7
-      html-parse-stringify: 4.0.1
-      i18next: 26.4.2(typescript@5.9.3)
-      react: 18.3.1
-      use-sync-external-store: 1.7.0(react@18.3.1)
-    optionalDependencies:
-      react-dom: 18.3.1(react@18.3.1)
-      typescript: 5.9.3
 
   react-is@16.13.1: {}
 

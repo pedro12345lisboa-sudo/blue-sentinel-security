@@ -1,6 +1,6 @@
 # Voz e tom — Blue-Sentinel
 
-Guia de escrita do portfólio. Serve para o `frontend/content/site.ts`, os `.mdx` em `frontend/content/pt/` e qualquer texto novo de interface. A versão em inglês deve seguir as mesmas regras, com um arquivo `docs/content/voice-and-tone-en.md`.
+Guia de escrita do portfólio. Serve para as mensagens de interface (`frontend/messages/pt-BR.json` e a tradução em `frontend/messages/en.json`), os `.mdx` em `frontend/content/pt/` e `frontend/content/en/` e qualquer texto novo de interface. A versão em inglês deve seguir as mesmas regras, com um arquivo `docs/content/voice-and-tone-en.md`.
 
 ## Para quem escrevemos
 
@@ -58,20 +58,22 @@ Regra: placeholder nunca vira frase incompleta na interface. Quando o texto depe
 
 - Título de página: até 60 caracteres, começa pelo assunto, termina com `| Blue-Sentinel`.
 - Descrição: até 160 caracteres, frase completa, sem clickbait, com a palavra-chave principal no começo.
-- Todo texto de SEO vive em `site.ts` → `seo`, um objeto por página.
+- Todo texto de SEO vive em `messages/*.json` → `seo`, um objeto por página.
 
 ## Onde vive cada texto
 
 | Texto | Arquivo |
 |-------|---------|
-| Hero, seções da home, nav, rodapé, microcopy, SEO, avisos | `frontend/content/site.ts` |
+| Hero, seções da home, nav, rodapé, microcopy, SEO, avisos | `frontend/messages/pt-BR.json` + `frontend/messages/en.json` |
 | Sobre (narrativa, foco, trajetória, certificações, filosofia) | `frontend/content/pt/about.mdx` |
 | Perguntas frequentes | `frontend/content/pt/faq.mdx` |
 | Case studies | `frontend/content/pt/projects/*.mdx` |
 | Artigos | `frontend/content/pt/writeups/*.mdx` |
 | Este guia | `docs/content/voice-and-tone.md` |
 
-Componente não guarda texto. Se um string aparecer dentro de `.tsx`, ele deveria estar em `content/`.
+Componente não guarda texto. Se um string aparecer dentro de `.tsx`, ele deveria estar em `frontend/messages/`.
+
+O script `scripts/development/check_i18n.mjs` roda no CI e falha se as duas mensagens divergirem de chave/tamanho ou se aparecer texto português hardcoded em componente.
 
 ## Checklist antes de publicar
 

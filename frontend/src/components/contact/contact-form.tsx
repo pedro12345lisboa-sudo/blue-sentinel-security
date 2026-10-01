@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,24 +16,36 @@ import {
   ToastTitle,
   ToastDescription,
 } from '@/components/ui/toast';
-import { site } from '../../../content/site';
+import { useSite } from '@/i18n';
+import {
+  ApiError,
+  extractErrorCode,
+  statusCodeToErrorCode,
+  translateApiError,
+} from '@/services/api';
+import type { Messages } from '@/i18n';
 
-const f = site.pages.contact.form;
-const m = site.microcopy;
+function buildContactSchema(site: Messages) {
+  const m = site.microcopy;
+  return z.object({
+    name: z.string().min(2, m.form.errorName).max(100, m.form.errorMax),
+    email: z.string().email(m.form.errorEmail),
+    subject: z.string().min(5, m.form.errorSubject).max(200, m.form.errorMax),
+    message: z.string().min(20, m.form.errorMessage).max(5000, m.form.errorMax),
+    honeypot: z.string().optional(),
+  });
+}
 
-const contactSchema = z.object({
-  name: z.string().min(2, m.form.errorName).max(100, m.form.errorMax),
-  email: z.string().email(m.form.errorEmail),
-  subject: z.string().min(5, m.form.errorSubject).max(200, m.form.errorMax),
-  message: z.string().min(20, m.form.errorMessage).max(5000, m.form.errorMax),
-  honeypot: z.string().optional(),
-});
-
-type ContactFormData = z.infer<typeof contactSchema>;
+type ContactFormData = z.infer<ReturnType<typeof buildContactSchema>>;
 
 type ToastState = { open: boolean; type: 'success' | 'error'; message: string };
 
 export function ContactForm() {
+  const site = useSite();
+  const f = site.pages.contact.form;
+  const m = site.microcopy;
+  const contactSchema = useMemo(() => buildContactSchema(site), [site]);
+
   const [toast, setToast] = useState<ToastState>({
     open: false,
     type: 'success',
@@ -79,14 +91,13 @@ export function ContactForm() {
       });
 
       if (!response.ok) {
-        let detail = m.toasts.errorBody;
+        let code = '';
         try {
-          const error = await response.json();
-          if (typeof error.detail === 'string') detail = error.detail;
+          code = extractErrorCode(await response.json());
         } catch {
-          // resposta sem JSON: mantém a mensagem padrão
+          // resposta sem JSON: o tradutor cai no código genérico
         }
-        throw new Error(detail);
+        throw new ApiError(code || statusCodeToErrorCode(response.status), response.status);
       }
 
       setToast({
@@ -100,8 +111,8 @@ export function ContactForm() {
         open: true,
         type: 'error',
         message:
-          error instanceof Error
-            ? error.message
+          error instanceof ApiError
+            ? translateApiError(error, site)
             : m.toasts.errorBody,
       });
     } finally {

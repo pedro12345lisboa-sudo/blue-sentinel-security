@@ -2,9 +2,8 @@ import { Metadata } from 'next';
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
-import { contentDir } from './content';
-
-const projectsDirectory = contentDir('projects');
+import { readMdx, resolveContentPath } from './content';
+import { defaultLocale, getSite, pageMetadata, type Locale } from '@/i18n';
 
 export interface ProjectFrontmatter {
   title: string;
@@ -13,6 +12,7 @@ export interface ProjectFrontmatter {
   tags: string[];
   highlight?: boolean;
   icon?: string;
+  status?: string;
   links?: {
     github?: string;
     demo?: string;
@@ -22,66 +22,74 @@ export interface ProjectFrontmatter {
   slug: string;
 }
 
-function getAllProjects(): ProjectFrontmatter[] {
-  if (!fs.existsSync(projectsDirectory)) {
+export interface ProjectDocument {
+  frontmatter: ProjectFrontmatter;
+  content: string;
+  untranslated: boolean;
+}
+
+export function getAllProjects(locale: Locale = defaultLocale): ProjectFrontmatter[] {
+  const { dir } = resolveContentPath(locale, 'projects');
+  if (!fs.existsSync(dir)) {
     return [];
   }
 
-  const fileNames = fs.readdirSync(projectsDirectory);
-  const projects = fileNames
+  const fileNames = fs.readdirSync(dir);
+  return fileNames
     .filter((fileName) => fileName.endsWith('.mdx'))
     .map((fileName) => {
-      const fullPath = path.join(projectsDirectory, fileName);
-      const fileContents = fs.readFileSync(fullPath, 'utf8');
-      const { data } = matter(fileContents);
+      const fullPath = path.join(dir, fileName);
+      const { data } = matter(fs.readFileSync(fullPath, 'utf8'));
       return {
         ...data,
         slug: fileName.replace(/\.mdx$/, ''),
       } as ProjectFrontmatter;
     })
     .sort((a, b) => (new Date(b.date) > new Date(a.date) ? 1 : -1));
-
-  return projects;
 }
 
-function getProjectBySlug(slug: string): { frontmatter: ProjectFrontmatter; content: string } | null {
-  const fullPath = path.join(projectsDirectory, `${slug}.mdx`);
-  if (!fs.existsSync(fullPath)) {
-    return null;
-  }
-
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
-  const { data, content } = matter(fileContents);
-  return {
-    frontmatter: { ...data, slug } as ProjectFrontmatter,
-    content,
-  };
+export function getProjectBySlug(locale: Locale, slug: string): ProjectDocument | null {
+  const doc = readMdx<ProjectFrontmatter>(locale, 'projects', `${slug}.mdx`);
+  if (!doc) return null;
+  return { ...doc, frontmatter: { ...doc.frontmatter, slug } };
 }
 
-export async function generateStaticParams() {
-  const projects = getAllProjects();
-  return projects.map((project) => ({
-    slug: project.slug,
-  }));
+export async function generateStaticParams(locale: Locale = defaultLocale) {
+  return getAllProjects(locale).map((project) => ({ slug: project.slug }));
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
-  const project = getProjectBySlug(slug);
+export function generateMetadata({
+  params,
+}: {
+  params: { slug: string; locale: string };
+}): Metadata {
+  const locale = (params.locale as Locale) ?? defaultLocale;
+  const site = getSite(locale);
+  const project = getProjectBySlug(locale, params.slug);
+
   if (!project) {
-    return { title: 'Projeto não encontrado | Blue-Sentinel' };
+    return pageMetadata(locale, {
+      title: site.pages.projects.detail.notFound,
+      path: `/projects/${params.slug}`,
+      type: 'article',
+    });
   }
 
-  return {
+  const base = pageMetadata(locale, {
     title: project.frontmatter.title,
     description: project.frontmatter.description,
+    path: `/projects/${params.slug}`,
+    type: 'article',
+    image: project.frontmatter.thumbnail,
+  });
+
+  return {
+    ...base,
     openGraph: {
-      title: project.frontmatter.title,
-      description: project.frontmatter.description,
-      type: 'article',
+      ...base.openGraph,
+      type: 'article' as const,
       publishedTime: project.frontmatter.date,
       tags: project.frontmatter.tags,
     },
   };
 }
-export { getAllProjects, getProjectBySlug };

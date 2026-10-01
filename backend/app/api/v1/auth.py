@@ -34,7 +34,7 @@ def create_access_token(user_id: int) -> str:
 @router.post(
     "/login",
     response_model=TokenResponse,
-    responses={401: {"description": "Credenciais inválidas"}},
+    responses={401: {"description": "Invalid credentials"}},
 )
 async def login(payload: LoginRequest, db=Depends(get_db_session)):
     result = await db.execute(
@@ -45,11 +45,11 @@ async def login(payload: LoginRequest, db=Depends(get_db_session)):
     if not user or not pwd_context.verify(payload.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciais inválidas",
+            detail={"code": "UNAUTHORIZED", "message": "Invalid credentials"},
         )
 
     if not user.is_active:
-        raise HTTPException(status_code=403, detail="Conta desativada")
+        raise HTTPException(status_code=403, detail={"code": "FORBIDDEN", "message": "Account disabled"})
 
     token = create_access_token(user.id)
     user.last_login = datetime.now(timezone.utc)

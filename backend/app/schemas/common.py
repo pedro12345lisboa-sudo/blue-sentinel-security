@@ -4,10 +4,15 @@ from pydantic import BaseModel, Field
 
 
 class ErrorResponse(BaseModel):
-    """RFC 9457 problem+json error format."""
+    """RFC 9457 problem+json error format.
+
+    `code` is a stable machine-readable error code; the frontend translates it
+    via `site.errors[code]`. Never put user-facing localized text here.
+    """
     type: str = Field(default="about:blank")
     title: str
     status: int
+    code: str = "ERROR"
     detail: str | None = None
     instance: str | None = None
     request_id: str = Field(default_factory=lambda: uuid.uuid4().hex)
@@ -17,6 +22,7 @@ class ErrorResponse(BaseModel):
             "type": "about:blank",
             "title": "Validation Error",
             "status": 422,
+            "code": "VALIDATION_ERROR",
             "detail": "name: Field required",
             "request_id": "a1b2c3d4e5f6",
         }

@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { site } from '../../../content/site';
 import { Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSite } from '@/i18n';
 
 interface CodeBlockProps {
   children?: React.ReactNode;
@@ -13,6 +13,7 @@ interface CodeBlockProps {
 }
 
 export function CodeBlock({ children, className, language, filename }: CodeBlockProps) {
+  const site = useSite();
   const [copied, setCopied] = useState(false);
   const code = typeof children === 'string' ? children : '';
 

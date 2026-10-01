@@ -1,0 +1,53 @@
+title: Windows Audit Log Cleared
+id: bs-audit-log-cleared
+status: experimental
+description: >
+  The Windows Security event log was cleared (Event 1102) - a classic
+  anti-forensics step. Synthetic lab rule - matches only fabricated
+  BLUE-SENTINEL lab events.
+author: Blue Sentinel
+date: 2024/06/01
+references:
+  - https://attack.mitre.org/techniques/T1070/001/
+logsource:
+  product: windows
+  service: security
+detection:
+  selection:
+    category: auth
+    action: audit_clear
+    event_id: '1102'
+    product: windows
+  condition: selection
+level: critical
+falsepositives:
+  - Legitimate log rotation or an administrator resetting the audit trail
+  - Image builds that start from a clean audit baseline
+response:
+  - Preserve the host state (memory and logs) before touching it again
+  - Correlate with process creation to see who ran the clear command
+  - Restore the auditing policy and enable central log forwarding
+tags:
+  - attack.t1070_001
+lab_samples:
+  match:
+    - timestamp: '2024-04-02T22:40:12Z'
+      category: auth
+      action: audit_clear
+      event_id: '1102'
+      host: SRV-DEMO-02
+      user: admin.demo
+      ip: 198.51.100.20
+      product: windows
+      process: System
+      message: The audit log was cleared.
+  no_match:
+    - timestamp: '2024-04-02T22:00:00Z'
+      category: auth
+      action: audit_policy_change
+      event_id: '4719'
+      host: SRV-DEMO-02
+      user: admin.demo
+      ip: 198.51.100.20
+      product: windows
+      message: System audit policy was changed.

@@ -1,43 +1,46 @@
-import Link from 'next/link';
 import { Github, Linkedin, Mail, ExternalLink, Shield } from 'lucide-react';
-import { site } from '../../../content/site';
+import { LocalizedLink, type Messages } from '@/i18n';
 
 const socialIcons: Record<string, typeof Github> = {
-  GitHub: Github,
-  LinkedIn: Linkedin,
-  'E-mail': Mail,
+  repository: Github,
+  linkedin: Linkedin,
+  general: Mail,
 };
 
-const socialHref: Record<string, string> = {
-  repository: site.contacts.repository,
-  linkedin: site.contacts.linkedin,
-  general: `mailto:${site.contacts.general}`,
-};
+interface FooterProps {
+  site: Messages;
+}
 
-export function Footer() {
+export function Footer({ site }: FooterProps) {
   const currentYear = new Date().getFullYear();
   const { nav, footer } = site;
+
+  const socialHref: Record<string, string> = {
+    repository: site.contacts.repository,
+    linkedin: site.contacts.linkedin,
+    general: `mailto:${site.contacts.general}`,
+  };
 
   return (
     <footer className="border-t border-border/50 bg-background/50" role="contentinfo">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="xl:grid xl:grid-cols-3 xl:gap-8">
           <div className="space-y-8">
-            <Link href="/" className="flex items-center gap-2" aria-label={nav.ariaHome}>
+            <LocalizedLink href="/" className="flex items-center gap-2" aria-label={nav.ariaHome}>
               <Shield className="h-6 w-6 text-primary" aria-hidden="true" />
               <span className="text-xl font-mono font-bold text-foreground">{site.brand.name}</span>
-            </Link>
+            </LocalizedLink>
             <p className="text-base text-muted-foreground max-w-xs">
               {footer.description}
             </p>
             <div className="flex items-center gap-6">
               {nav.social.map((item) => {
-                const Icon = socialIcons[item.name] ?? ExternalLink;
+                const Icon = socialIcons[item.hrefKey] ?? ExternalLink;
                 const href = socialHref[item.hrefKey] ?? '#';
                 const isExternal = !href.startsWith('mailto:');
                 return (
                   <a
-                    key={item.name}
+                    key={item.hrefKey}
                     href={href}
                     target={isExternal ? '_blank' : undefined}
                     rel={isExternal ? 'noopener noreferrer' : undefined}
@@ -58,12 +61,12 @@ export function Footer() {
               <ul className="space-y-3">
                 {nav.items.map((item) => (
                   <li key={item.href}>
-                    <Link
+                    <LocalizedLink
                       href={item.href}
                       className="text-sm text-muted-foreground hover:text-primary transition-colors"
                     >
                       {item.name}
-                    </Link>
+                    </LocalizedLink>
                   </li>
                 ))}
               </ul>
@@ -73,12 +76,12 @@ export function Footer() {
               <ul className="space-y-3">
                 {nav.resources.map((item) => (
                   <li key={item.href}>
-                    <Link
+                    <LocalizedLink
                       href={item.href}
                       className="text-sm text-muted-foreground hover:text-primary transition-colors"
                     >
                       {item.name}
-                    </Link>
+                    </LocalizedLink>
                   </li>
                 ))}
               </ul>

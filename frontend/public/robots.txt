@@ -1,5 +1,0 @@
-# Blue-Sentinel Portfolio
-User-agent: *
-Allow: /
-
-Sitemap: https://blue-sentinel.local/sitemap.xml

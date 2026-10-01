@@ -1,0 +1,66 @@
+title: Outbound Connection to a Non-Standard Port or Lab Range
+id: bs-net-suspicious-outbound
+status: experimental
+description: >
+  An outbound connection on a port that is not web/DNS, or to the
+  documented lab test range. Synthetic lab rule - matches only fabricated
+  BLUE-SENTINEL lab events (RFC 5737 documentation addresses).
+author: Blue Sentinel
+date: 2024/06/01
+references:
+  - https://attack.mitre.org/techniques/T1071/001/
+logsource:
+  product: windows
+  category: network_connection
+detection:
+  selection:
+    category: network
+    action: outbound_connection
+  nonstandard:
+    port|notin: [80, 443, 53, 8080, 8443]
+  lab_range:
+    destination_ip|cidr: '198.51.100.0/24'
+  condition: selection and (nonstandard or lab_range)
+level: critical
+falsepositives:
+  - Custom business applications that legitimately use uncommon ports
+  - Monitoring agents that report to an internal lab range
+response:
+  - Identify the process that opened the connection
+  - Block the destination and look for repeated beacons
+  - Isolate the host if the destination is unknown to the environment
+tags:
+  - attack.t1071_001
+lab_samples:
+  match:
+    - timestamp: '2024-05-21T18:31:00Z'
+      category: network
+      action: outbound_connection
+      host: WS-DEMO-01
+      user: jsilva
+      ip: 198.51.100.20
+      product: windows
+      process: powershell.exe
+      destination_ip: 198.51.100.66
+      port: 4444
+    - timestamp: '2024-05-21T18:32:00Z'
+      category: network
+      action: outbound_connection
+      host: WS-DEMO-01
+      user: jsilva
+      ip: 198.51.100.20
+      product: windows
+      process: chrome.exe
+      destination_ip: 198.51.100.66
+      port: 443
+  no_match:
+    - timestamp: '2024-05-21T18:29:00Z'
+      category: network
+      action: outbound_connection
+      host: WS-DEMO-01
+      user: jsilva
+      ip: 198.51.100.20
+      product: windows
+      process: chrome.exe
+      destination_ip: 203.0.113.10
+      port: 443

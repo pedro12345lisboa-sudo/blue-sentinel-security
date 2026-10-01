@@ -10,29 +10,29 @@ test.describe('Home -> Project -> Contact Flow', () => {
     await expect(page.locator('h1')).toContainText('Portfólio');
     
     // Navigate to projects
-    await page.click('a[href="/projects"]');
-    await expect(page).toHaveURL('/projects');
+    await page.click('a[href="/pt-BR/projects"]');
+    await expect(page).toHaveURL('/pt-BR/projects');
     await expect(page.locator('h1')).toContainText('Projetos');
     
     // Click on first project (if exists)
-    const projectLink = page.locator('a[href^="/projects/"]').first();
+    const projectLink = page.locator('a[href^="/pt-BR/projects/"]').first();
     if (await projectLink.count() > 0) {
       await projectLink.click();
-      await expect(page).toHaveURL(/\/projects\/.+/);
+      await expect(page).toHaveURL(/\/pt-BR\/projects\/.+/);
       
       // Verify project detail page
       await expect(page.locator('h1')).toBeVisible();
       await expect(page.locator('text=Ver código-fonte')).toBeVisible();
       
       // Navigate to contact from project page
-      await page.click('a[href="/contact"]');
+      await page.click('a[href="/pt-BR/contact"]');
     } else {
       // Navigate to contact from home
-      await page.click('a[href="/contact"]');
+      await page.click('a[href="/pt-BR/contact"]');
     }
     
     // Verify contact page
-    await expect(page).toHaveURL('/contact');
+    await expect(page).toHaveURL('/pt-BR/contact');
     await expect(page.locator('h1')).toContainText('Fale comigo');
     
     // Fill contact form
@@ -55,13 +55,13 @@ test.describe('Navigation and Accessibility', () => {
     
     // Check all nav links
     const navLinks = [
-      { href: '/about', text: 'Sobre' },
-      { href: '/projects', text: 'Projetos' },
-      { href: '/writeups', text: 'Artigos' },
-      { href: '/lab', text: 'Laboratório' },
-      { href: '/status', text: 'Status' },
-      { href: '/security', text: 'Segurança' },
-      { href: '/resume', text: 'Currículo' },
+      { href: '/pt-BR/about', text: 'Sobre' },
+      { href: '/pt-BR/projects', text: 'Projetos' },
+      { href: '/pt-BR/writeups', text: 'Artigos' },
+      { href: '/pt-BR/lab', text: 'Laboratório' },
+      { href: '/pt-BR/status', text: 'Status' },
+      { href: '/pt-BR/security', text: 'Segurança' },
+      { href: '/pt-BR/resume', text: 'Currículo' },
     ];
     
     for (const link of navLinks) {

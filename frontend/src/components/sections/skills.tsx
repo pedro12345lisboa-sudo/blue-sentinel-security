@@ -3,11 +3,12 @@
 import { useEffect, useRef } from 'react';
 import { Shield, Code, Terminal, Zap } from 'lucide-react';
 import { useReducedMotion, useGSAP, useInView } from '@/hooks';
-import { site } from '../../../content/site';
+import { useSite } from '@/i18n';
 
 const groupIcons = { Shield, Code, Terminal, Zap };
 
 export function Skills() {
+  const site = useSite();
   const reducedMotion = useReducedMotion();
   const { gsap } = useGSAP();
   const sectionRef = useRef<HTMLElement>(null);

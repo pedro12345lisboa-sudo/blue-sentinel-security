@@ -1,0 +1,87 @@
+---
+title: 'Sentinel Agent — C++20 telemetry agent'
+description: 'C++20 endpoint agent for telemetry collection and rule evaluation: design, architectural decisions and repository status.'
+date: '2024-05-02'
+tags: ['C++20', 'CMake', 'eBPF', 'ETW', 'HMAC', 'Sigma']
+highlight: true
+icon: 'Code'
+status: 'under construction'
+links:
+  github: 'https://github.com/pedro12345lisboa-sudo/blue-sentinel-security'
+---
+
+# Sentinel Agent
+
+An endpoint telemetry agent written in C++20. The design is locked in and documented; the code does not exist yet — `agent/` today is just directory structure.
+
+## Problem
+
+Learning detection only in the SIEM hides the hardest part: where the event comes from. Without collecting process, network and filesystem data at the source, you cannot understand cost, format, event loss or what counts as noise.
+
+## Context
+
+A study project running alongside the portfolio. The repository has the `agent/` tree with `include/`, `src/core/`, `src/platform/linux/`, `src/platform/windows/` and `tests/`, plus an empty `CMakeLists.txt`. No `.cpp` file is versioned. So this case study describes design and decisions, not results — once the code exists, the numbers go here.
+
+## Solution
+
+The planned design, in four blocks:
+
+1. **Per-platform collectors** — Linux with eBPF/auditd, Windows with ETW, each behind a common interface.
+2. **Normalization** — events converted to a single JSON schema before any rule.
+3. **Evaluation engine** — Sigma/YARA rules loaded from disk, evaluated locally.
+4. **Transport** — HMAC-SHA256 authentication per message, with a local queue for when the network drops.
+
+## Architecture
+
+```text
+┌────────────────────────────────────────────┐
+│               Sentinel Agent               │
+│                                            │
+│  [Coletores Linux/Windows]                 │
+│         │                                  │
+│         ▼                                  │
+│  [Normalizador — schema único]             │
+│         │                                  │
+│         ▼                                  │
+│  [Avaliação de regras Sigma/YARA]          │
+│         │                                  │
+│         ▼                                  │
+│  [Fila local + HMAC-SHA256] ──▶ backend    │
+└────────────────────────────────────────────┘
+```
+
+## Technical decisions and why
+
+| Decision | Why |
+|---------|---------|
+| C++20 with CMake | Direct access to system APIs (eBPF, ETW) with no heavy runtime. CMake covers both OSes in the same project. |
+| Abstract platform layer | Keeps detection logic independent of the OS; swapping a collector does not touch a rule. |
+| Normalize before detecting | A rule is written against a single schema. Without this, each platform becomes its own dialect. |
+| Per-message HMAC | Prevents captured traffic from being replayed. Cheaper than per-connection TLS in a high-event environment. |
+| Local queue with controlled drop | An unstable network must not lock up the monitored host. Retention policy declared before writing code. |
+| Tests in `tests/` from day one | The test tree already exists in the scaffold; do not leave it for "later". |
+
+## Challenges
+
+- **No code yet.** The scaffold is empty (`CMakeLists.txt` with no content). Every "result" is a promise until the first build passes.
+- **eBPF requires kernel and privilege.** Collecting without running as root is part of the planned challenge, not a solved one.
+- **Collection cost is unknown.** With no real measurement, any overhead number would be invented.
+
+## Results
+
+- Status: **under construction** — directory structure versioned, no code.
+- [MEASURED METRIC — e.g.: idle CPU overhead].
+- [MEASURED METRIC — e.g.: events per second per core].
+- [MEASURED METRIC — e.g.: test coverage].
+
+## Lessons
+
+1. **Writing the case study before the code exposes the facade.** That is what led me to mark the status as under construction instead of describing a product that does not exist.
+2. **A documented design counts as a contract.** The four blocks above are what the first version has to deliver.
+3. **An empty scaffold is not progress.** The next metric is simple: the build either passes or it does not.
+
+## Links
+
+- [Source code](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security)
+- [Agent tree](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/tree/main/agent)
+- [Article on the architecture]([ARTICLE URL])

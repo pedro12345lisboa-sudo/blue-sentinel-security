@@ -1,34 +1,22 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { formatDate as intlFormatDate, formatRelativeTime as intlFormatRelativeTime } from '@/i18n/format';
+import { defaultLocale, type Locale } from '@/i18n/config';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(date: string | Date, locale: string = 'pt-BR'): string {
-  const d = new Date(date);
-  return d.toLocaleDateString(locale, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+export function formatDate(date: string | Date, locale: Locale = defaultLocale): string {
+  return intlFormatDate(date, locale, { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-export function formatRelativeTime(date: string | Date): string {
-  const d = new Date(date);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return 'Hoje';
-  if (diffDays === 1) return 'Ontem';
-  if (diffDays < 7) return `${diffDays} dias atrás`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} semana${Math.floor(diffDays / 7) > 1 ? 's' : ''} atrás`;
-  if (diffDays < 365) {
-    const months = Math.floor(diffDays / 30);
-    return `${months} ${months > 1 ? 'meses' : 'mês'} atrás`;
-  }
-  return `${Math.floor(diffDays / 365)} ano${Math.floor(diffDays / 365) > 1 ? 's' : ''} atrás`;
+export function formatRelativeTime(
+  date: string | Date,
+  locale: Locale = defaultLocale,
+  now?: Date
+): string {
+  return intlFormatRelativeTime(date, locale, now);
 }
 
 export function readingTime(text: string): number {

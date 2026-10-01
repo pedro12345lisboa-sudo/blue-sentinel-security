@@ -1,9 +1,9 @@
 'use client';
 
-import { site } from '../../../content/site';
 
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useSite } from '@/i18n';
 
 interface Heading {
   id: string;
@@ -17,6 +17,7 @@ interface TableOfContentsProps {
 }
 
 export function TableOfContents({ headings, className }: TableOfContentsProps) {
+  const site = useSite();
   const [activeId, setActiveId] = useState<string>('');
 
   useEffect(() => {

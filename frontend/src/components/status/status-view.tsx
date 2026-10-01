@@ -34,10 +34,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useReducedMotion } from '@/hooks';
-import { site } from '../../../content/site';
-
-const page = site.pages.status;
-const lastUpdatedLabel = site.microcopy.misc.lastUpdated;
+import {
+  defaultLocale,
+  formatNumber,
+  formatPercent,
+  formatTime,
+  useLocale,
+  useSite,
+  type Locale,
+} from '@/i18n';
 
 const API = '/api/backend/api/v1';
 const POLL_MS = 10_000;
@@ -81,30 +86,33 @@ function getLevel(health: HealthPayload | null): Level {
   return 'healthy';
 }
 
+const LEVEL_LABEL_KEYS: Record<Level, 'HEALTHY' | 'DEGRADED' | 'UNHEALTHY' | 'UNKNOWN'> = {
+  healthy: 'HEALTHY',
+  degraded: 'DEGRADED',
+  unhealthy: 'UNHEALTHY',
+  unknown: 'UNKNOWN',
+};
+
 const LEVEL_UI: Record<
   Level,
-  { label: string; variant: 'success' | 'destructive' | 'outline'; className: string; icon: ReactNode }
+  { variant: 'success' | 'destructive' | 'outline'; className: string; icon: ReactNode }
 > = {
   healthy: {
-    label: page.levels.HEALTHY,
     variant: 'success',
     className: '',
     icon: <CheckCircle className="h-4 w-4" aria-hidden="true" />,
   },
   degraded: {
-    label: page.levels.DEGRADED,
     variant: 'outline',
     className: 'border-warning text-warning',
     icon: <AlertTriangle className="h-4 w-4" aria-hidden="true" />,
   },
   unhealthy: {
-    label: page.levels.UNHEALTHY,
     variant: 'destructive',
     className: '',
     icon: <XCircle className="h-4 w-4" aria-hidden="true" />,
   },
   unknown: {
-    label: page.levels.UNKNOWN,
     variant: 'outline',
     className: '',
     icon: <Minus className="h-4 w-4" aria-hidden="true" />,
@@ -114,22 +122,25 @@ const LEVEL_UI: Record<
 const clampPct = (value?: number) =>
   Math.min(100, Math.max(0, typeof value === 'number' && Number.isFinite(value) ? value : 0));
 
-const fmtPct = (value?: number) =>
-  typeof value === 'number' && Number.isFinite(value) ? `${value.toFixed(1)}%` : '—';
+const fmtPct = (value?: number, locale: Locale = defaultLocale) =>
+  typeof value === 'number' && Number.isFinite(value)
+    ? formatPercent(value, locale, 1)
+    : '—';
 
-function formatBytes(bytes?: number) {
-  if (!bytes || bytes <= 0) return '0 B';
+function formatBytes(bytes?: number, locale: Locale = defaultLocale) {
+  if (!bytes || bytes <= 0) return `0 B`;
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
-  return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(2))} ${units[i]}`;
+  const amount = parseFloat((bytes / Math.pow(1024, i)).toFixed(2));
+  return `${formatNumber(amount, locale, { maximumFractionDigits: 2 })} ${units[i]}`;
 }
 
-function formatUptime(seconds?: number) {
+function formatUptime(seconds?: number, locale: Locale = defaultLocale) {
   if (!seconds || seconds < 0) return '—';
   const d = Math.floor(seconds / 86400);
   const h = Math.floor((seconds % 86400) / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  return `${d}d ${h}h ${m}m`;
+  return `${formatNumber(d, locale)}d ${formatNumber(h, locale)}h ${formatNumber(m, locale)}m`;
 }
 
 interface MetricCardProps {
@@ -271,6 +282,8 @@ interface ServiceCardProps {
 }
 
 function ServiceCard({ icon, title, status, latency, className, style }: ServiceCardProps) {
+  const site = useSite();
+  const page = site.pages.status;
   const known = status !== undefined;
   const ok = isOk(status);
   return (
@@ -319,6 +332,10 @@ const ENDPOINTS = [
 ];
 
 export function StatusView() {
+  const site = useSite();
+  const locale = useLocale();
+  const page = site.pages.status;
+  const lastUpdatedLabel = site.microcopy.misc.lastUpdated;
   const reducedMotion = useReducedMotion();
   const [mounted, setMounted] = useState(false);
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
@@ -352,11 +369,7 @@ export function StatusView() {
             [
               ...prev,
               {
-                time: new Date().toLocaleTimeString('pt-BR', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  second: '2-digit',
-                }),
+                time: formatTime(new Date(), locale),
                 cpu: m.cpu,
                 memory: m.memory?.percentage ?? 0,
                 disk: m.disk?.percentage ?? 0,
@@ -380,7 +393,7 @@ export function StatusView() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     load();
@@ -390,6 +403,7 @@ export function StatusView() {
 
   const level = getLevel(health);
   const levelUi = LEVEL_UI[level];
+  const levelLabel = page.levels[LEVEL_LABEL_KEYS[level]];
   const visible = mounted || reducedMotion;
   const revealClass = visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4';
   const delay = (i: number): CSSProperties | undefined =>
@@ -409,13 +423,13 @@ export function StatusView() {
               <p className="mt-1 text-muted-foreground">
                 {page.description}
                 {lastUpdate &&
-                  ` ${lastUpdatedLabel}: ${lastUpdate.toLocaleTimeString('pt-BR')}.`}
+                  ` ${lastUpdatedLabel}: ${formatTime(lastUpdate, locale)}.`}
               </p>
             </div>
             <div className="flex items-center gap-3">
               <Badge variant={levelUi.variant} className={`gap-1.5 ${levelUi.className}`}>
                 {levelUi.icon}
-                {levelUi.label}
+                {levelLabel}
               </Badge>
               <Button
                 variant="ghost"
@@ -457,7 +471,7 @@ export function StatusView() {
             icon={<Cpu className="h-6 w-6" aria-hidden="true" />}
             iconClass="bg-primary/10 text-primary"
             label={page.gauges.cpu}
-            value={fmtPct(metrics?.cpu)}
+            value={fmtPct(metrics?.cpu, locale)}
             pct={metrics ? metrics.cpu : 0}
             barClass="bg-primary"
             className={revealClass}
@@ -467,12 +481,12 @@ export function StatusView() {
             icon={<MemoryStick className="h-6 w-6" aria-hidden="true" />}
             iconClass="bg-success/10 text-success"
             label={page.gauges.memory}
-            value={fmtPct(metrics?.memory?.percentage)}
+            value={fmtPct(metrics?.memory?.percentage, locale)}
             pct={metrics?.memory?.percentage ?? 0}
             barClass="bg-success"
             badge={
               metrics?.memory
-                ? `${formatBytes(metrics.memory.used)} / ${formatBytes(metrics.memory.total)}`
+                ? `${formatBytes(metrics.memory.used, locale)} / ${formatBytes(metrics.memory.total, locale)}`
                 : undefined
             }
             className={revealClass}
@@ -482,12 +496,12 @@ export function StatusView() {
             icon={<HardDrive className="h-6 w-6" aria-hidden="true" />}
             iconClass="bg-warning/10 text-warning"
             label={page.gauges.disk}
-            value={fmtPct(metrics?.disk?.percentage)}
+            value={fmtPct(metrics?.disk?.percentage, locale)}
             pct={metrics?.disk?.percentage ?? 0}
             barClass="bg-warning"
             badge={
               metrics?.disk
-                ? `${formatBytes(metrics.disk.used)} / ${formatBytes(metrics.disk.total)}`
+                ? `${formatBytes(metrics.disk.used, locale)} / ${formatBytes(metrics.disk.total, locale)}`
                 : undefined
             }
             className={revealClass}
@@ -497,7 +511,7 @@ export function StatusView() {
             icon={<Activity className="h-6 w-6" aria-hidden="true" />}
             iconClass="bg-primary/10 text-primary"
             label={page.gauges.uptime}
-            value={formatUptime(metrics?.uptime)}
+            value={formatUptime(metrics?.uptime, locale)}
             badge={
               metrics?.network
                 ? `↓ ${(metrics.network.rx / 1024 / 1024).toFixed(1)} MB/s`
@@ -547,7 +561,7 @@ export function StatusView() {
               <CardTitle className="flex items-center justify-between gap-2">
                 <span>{page.gauges.disk}</span>
                 <Badge variant="outline" className="font-mono text-xs">
-                  {fmtPct(metrics?.disk?.percentage)}
+                  {fmtPct(metrics?.disk?.percentage, locale)}
                 </Badge>
               </CardTitle>
             </CardHeader>

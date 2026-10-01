@@ -3,11 +3,11 @@
 import { useEffect, useRef } from 'react';
 import { Shield, FileText, Code, Terminal, Zap, Award } from 'lucide-react';
 import { useCounter, useReducedMotion, useGSAP, useInView } from '@/hooks';
-import { site } from '../../../content/site';
+import { useSite, type Messages } from '@/i18n';
 
 const counterIcons = { Shield, FileText, Code, Terminal, Zap, Award };
 
-type CounterItem = (typeof site.sections.counters.items)[number];
+type CounterItem = Messages['sections']['counters']['items'][number];
 
 function CounterCard({ counter }: { counter: CounterItem }) {
   const Icon = counterIcons[counter.icon as keyof typeof counterIcons] ?? Shield;
@@ -36,6 +36,7 @@ function CounterCard({ counter }: { counter: CounterItem }) {
 }
 
 export function Counters() {
+  const site = useSite();
   const reducedMotion = useReducedMotion();
   const { gsap } = useGSAP();
   const sectionRef = useRef<HTMLElement>(null);

@@ -1,13 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import { Terminal, Play, Pause, RotateCcw, Zap, Shield, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useReducedMotion, useGSAP, useInView } from '@/hooks';
-import { site } from '../../../content/site';
+import { useSite, LocalizedLink } from '@/i18n';
 
 const typeIcons: Record<string, typeof Terminal> = {
   process: Terminal,
@@ -17,6 +16,7 @@ const typeIcons: Record<string, typeof Terminal> = {
 };
 
 export function LabTeaser() {
+  const site = useSite();
   const reducedMotion = useReducedMotion();
   const { gsap } = useGSAP();
   const sectionRef = useRef<HTMLElement>(null);
@@ -80,10 +80,10 @@ export function LabTeaser() {
               {labTeaser.description}
             </p>
           </div>
-          <Link href={labTeaser.cta.href} className="btn-primary self-center whitespace-nowrap">
+          <LocalizedLink href={labTeaser.cta.href} className="btn-primary self-center whitespace-nowrap">
             {labTeaser.cta.label}
             <Terminal className="h-4 w-4 ml-2" aria-hidden="true" />
-          </Link>
+          </LocalizedLink>
         </div>
 
         <div ref={ref} className="grid gap-6 lg:grid-cols-3">

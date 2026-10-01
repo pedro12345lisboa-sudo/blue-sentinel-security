@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useReducedMotion, useInView } from '@/hooks';
+import { formatNumber, useLocale } from '@/i18n';
 
 interface UseCounterOptions {
   end: number;
@@ -23,6 +24,7 @@ export function useCounter({
   const [count, setCount] = useState(start);
   const [ref, isInView] = useInView<HTMLDivElement>({ triggerOnce: true, rootMargin: '0px 0px -50px 0px' });
   const reducedMotion = useReducedMotion();
+  const locale = useLocale();
 
   useEffect(() => {
     if (!isInView) return;
@@ -47,7 +49,10 @@ export function useCounter({
     requestAnimationFrame(animate);
   }, [isInView, end, duration, start, decimals, reducedMotion]);
 
-  const formattedCount = `${prefix}${count.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}${suffix}`;
+  const formattedCount = `${prefix}${formatNumber(count, locale, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })}${suffix}`;
 
   return { ref, count: formattedCount, isInView };
 }

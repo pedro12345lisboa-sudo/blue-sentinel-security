@@ -62,7 +62,8 @@ blue-sentinel/
 │   │   └── ...
 │   └── requirements.txt
 ├── docs/
-│   └── architecture/   # ADRs, overview diagrams (Mermaid)
+│   ├── architecture/   # ADRs, overview diagrams (Mermaid)
+│   └── security/       # Detection catalog & severity model (lab rules)
 ├── docker-compose.yml
 ├── docker-compose.override.yml.example
 └── .env.example
@@ -75,7 +76,7 @@ blue-sentinel/
 - **SOC Visual Identity**: Dark theme, cyan/blue/green accent colors, grid patterns, glow effects
 - **GSAP Animations**: Scroll-triggered reveals, counter animations, text reveals (respects `prefers-reduced-motion`)
 - **MDX Content**: Projects and writeups as `.mdx` files with frontmatter, custom components
-- **Interactive Lab** (`/lab`): Real-time WebSocket synthetic events + Sigma-like detection
+- **Interactive Lab** (`/lab`): Real-time WebSocket synthetic events + Sigma/YARA/correlation detection with auto-incident timeline
 - **System Status** (`/status`): Live metrics (CPU, RAM, disk, network, DB/Redis latency) with Recharts
 - **Contact Form**: Zod validation, react-hook-form, rate-limited, async email via worker
 - **Accessibility**: WCAG AA, semantic HTML, keyboard navigation, skip links, focus management

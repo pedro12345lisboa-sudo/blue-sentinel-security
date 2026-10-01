@@ -1,0 +1,1212 @@
+{
+  "brand": {
+    "name": "blue-sentinel",
+    "fullName": "Blue-Sentinel",
+    "version": "v0.1.0",
+    "tagline": "Blue Team Cybersecurity Portfolio"
+  },
+  "contacts": {
+    "general": "contact@blue-sentinel.local",
+    "security": "security@blue-sentinel.local",
+    "issues": "https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/issues",
+    "repository": "https://github.com/pedro12345lisboa-sudo/blue-sentinel-security",
+    "linkedin": "[LINKEDIN URL]",
+    "github": "[GITHUB URL]",
+    "phone": "[YOUR PHONE]"
+  },
+  "profile": {
+    "name": "[YOUR NAME]",
+    "title": "[YOUR ROLE — e.g. Blue Team / Detection Engineering]",
+    "location": "[YOUR LOCATION — e.g. Remote, Portugal]",
+    "summary": "[N YEARS] of study and hands-on practice in Blue Team. I write detections with Sigma and MITRE ATT&CK, build tools in Python, TypeScript and C++20, and document every technical decision. [The strongest metric you have ever measured.]",
+    "experience": [
+      {
+        "role": "[ROLE]",
+        "company": "[COMPANY, PERSONAL PROJECT OR COMMUNITY PROJECT]",
+        "period": "[YEAR] — present",
+        "location": "[LOCATION or Remote]",
+        "description": "[1–2 sentences on scope: what you covered, with which technologies and for how many users/systems.]",
+        "achievements": [
+          "[Measurable achievement: what changed and how you measured it.]",
+          "[Measurable achievement: what changed and how you measured it.]"
+        ],
+        "technologies": [
+          "[TECHNOLOGY]",
+          "[TECHNOLOGY]"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "[DEGREE]",
+        "school": "[INSTITUTION]",
+        "period": "[YEAR] — [YEAR]",
+        "details": "[Focus of study, thesis or relevant coursework in security.]"
+      }
+    ]
+  },
+  "seo": {
+    "home": {
+      "title": "Blue-Sentinel | Blue Team and Detection Engineering",
+      "description": "Defensive security portfolio: detection case studies, technical articles and an interactive lab with synthetic events.",
+      "ogTitle": "Blue-Sentinel | Blue Team Cybersecurity Portfolio",
+      "ogDescription": "Detection engineering projects, defensive automation and an interactive detection lab."
+    },
+    "about": {
+      "title": "About | Blue-Sentinel",
+      "description": "My Blue Team journey, what I am studying and building right now, and the kind of opportunity I am looking for."
+    },
+    "projects": {
+      "title": "Projects | Blue-Sentinel",
+      "description": "Security case studies: full-stack portfolio, detection lab and a C++ agent for endpoint telemetry."
+    },
+    "writeups": {
+      "title": "Articles | Blue-Sentinel",
+      "description": "Technical articles on Sigma rules, threat hunting and security agent development in C++."
+    },
+    "lab": {
+      "title": "Detection Lab | Blue-Sentinel",
+      "description": "Interactive lab with synthetic events and rules mapped to MITRE ATT&CK. Strictly educational use."
+    },
+    "status": {
+      "title": "Status | Blue-Sentinel",
+      "description": "Service health, API latency and platform resource metrics for Blue-Sentinel."
+    },
+    "security": {
+      "title": "Security | Blue-Sentinel",
+      "description": "Site security measures: network segmentation, input validation, rate limiting and responsible disclosure."
+    },
+    "resume": {
+      "title": "Résumé | Blue-Sentinel",
+      "description": "Résumé of [YOUR NAME]: education, certifications, technical skills and defensive security projects."
+    },
+    "contact": {
+      "title": "Contact | Blue-Sentinel",
+      "description": "Get in touch about Blue Team roles and internships, collaboration, or to report a vulnerability."
+    },
+    "faq": {
+      "title": "FAQ | Blue-Sentinel",
+      "description": "Answers about the lab, ethical use, opportunities, technologies and how to report issues."
+    },
+    "notFound": {
+      "title": "Page not found | Blue-Sentinel"
+    },
+    "error": {
+      "title": "Server error | Blue-Sentinel"
+    }
+  },
+  "nav": {
+    "items": [
+      {
+        "name": "About",
+        "href": "/about"
+      },
+      {
+        "name": "Projects",
+        "href": "/projects"
+      },
+      {
+        "name": "Articles",
+        "href": "/writeups"
+      },
+      {
+        "name": "Lab",
+        "href": "/lab"
+      },
+      {
+        "name": "Status",
+        "href": "/status"
+      },
+      {
+        "name": "Security",
+        "href": "/security"
+      },
+      {
+        "name": "Résumé",
+        "href": "/resume"
+      },
+      {
+        "name": "FAQ",
+        "href": "/faq"
+      }
+    ],
+    "contact": {
+      "name": "Contact",
+      "href": "/contact"
+    },
+    "mainLabel": "Main navigation",
+    "footerLabel": "Footer navigation",
+    "columns": {
+      "navigation": "Navigation",
+      "resources": "Resources",
+      "social": "Social"
+    },
+    "resources": [
+      {
+        "name": "Security",
+        "href": "/security"
+      },
+      {
+        "name": "Résumé",
+        "href": "/resume"
+      },
+      {
+        "name": "Frequently asked questions",
+        "href": "/faq"
+      },
+      {
+        "name": "Contact",
+        "href": "/contact"
+      }
+    ],
+    "social": [
+      {
+        "name": "GitHub",
+        "hrefKey": "repository"
+      },
+      {
+        "name": "LinkedIn",
+        "hrefKey": "linkedin"
+      },
+      {
+        "name": "Email",
+        "hrefKey": "general"
+      }
+    ],
+    "ariaHome": "Blue-Sentinel — Home",
+    "skipToContent": "Skip to main content",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "hero": {
+    "activeVariant": 0,
+    "variants": [
+      {
+        "id": "portfolio",
+        "title": "Blue Team and Detection Engineering portfolio",
+        "subtitle": "I build detection rules, automations and defensive tools. Here you can see the process, the code and a detection lab running in the browser."
+      },
+      {
+        "id": "alerta-confiavel",
+        "title": "From raw event to an alert you can trust",
+        "subtitle": "I am [YOUR NAME], focused on Blue Team: I write detections with Sigma and MITRE ATT&CK, automate repetitive tasks and document every technical decision."
+      },
+      {
+        "id": "construido-em-publico",
+        "title": "Defensive security built in public",
+        "subtitle": "Detailed case studies, technical articles and open source — including a lab that generates synthetic events and evaluates rules live."
+      }
+    ],
+    "badges": [
+      "Defensive security",
+      "Detection engineering",
+      "Automation"
+    ],
+    "ctas": {
+      "primary": {
+        "label": "View projects",
+        "href": "/projects"
+      },
+      "secondary": {
+        "label": "Open the lab",
+        "href": "/lab"
+      }
+    },
+    "highlights": [
+      {
+        "icon": "Shield",
+        "label": "Defensive only"
+      },
+      {
+        "icon": "Code",
+        "label": "Open source"
+      },
+      {
+        "icon": "Zap",
+        "label": "Live lab"
+      }
+    ],
+    "visual": {
+      "label": "Placeholder for the 3D visualization",
+      "title": "Three.js slot",
+      "hint": "Interactive SOC visualization coming soon",
+      "fallback": "🛡️"
+    }
+  },
+  "sections": {
+    "skills": {
+      "title": "Technical skills",
+      "description": "Areas of study and practice built through the projects in this repository: detection, tool development and lab infrastructure.",
+      "groups": [
+        {
+          "title": "Detection and response",
+          "icon": "Shield",
+          "items": [
+            "Sigma rules",
+            "MITRE ATT&CK mapping",
+            "Threat hunting",
+            "Log analysis",
+            "Alert tuning",
+            "YARA"
+          ]
+        },
+        {
+          "title": "Development",
+          "icon": "Code",
+          "items": [
+            "Python (FastAPI)",
+            "TypeScript (Next.js)",
+            "C++20",
+            "REST and WebSocket APIs",
+            "PostgreSQL and SQLAlchemy",
+            "Testing (Vitest, Playwright)"
+          ]
+        },
+        {
+          "title": "Infrastructure",
+          "icon": "Terminal",
+          "items": [
+            "Docker and Docker Compose",
+            "Network segmentation",
+            "PostgreSQL 16",
+            "Redis 7",
+            "Non-root containers",
+            "Per-environment secrets management"
+          ]
+        },
+        {
+          "title": "Tools",
+          "icon": "Zap",
+          "items": [
+            "Git and GitHub",
+            "Playwright (e2e)",
+            "Vitest (unit tests)",
+            "Mermaid (documentation)",
+            "Figma (design tokens)",
+            "Blender (3D assets)"
+          ]
+        }
+      ]
+    },
+    "featuredProjects": {
+      "title": "Featured projects",
+      "description": "Case studies in the same format: problem, context, solution, architecture, technical decisions and results.",
+      "cta": {
+        "label": "View all projects",
+        "href": "/projects"
+      },
+      "labels": {
+        "highlight": "Featured",
+        "code": "Code",
+        "demo": "Demo",
+        "docs": "Documentation",
+        "ariaCode": "Open source code on GitHub",
+        "ariaDemo": "Open live demo",
+        "ariaDocs": "Open documentation",
+        "moreTags": "more tags"
+      },
+      "empty": "No projects published yet."
+    },
+    "labTeaser": {
+      "title": "Interactive detection lab",
+      "description": "A stream of synthetic security events evaluated against Sigma-style rules. Alerts appear as events enter the queue.",
+      "cta": {
+        "label": "Open the lab",
+        "href": "/lab"
+      },
+      "stream": {
+        "ariaLabel": "Security event stream",
+        "live": "Live",
+        "paused": "Paused",
+        "connected": "WebSocket connected",
+        "ariaRunning": "Lab running",
+        "ariaStopped": "Lab paused",
+        "ariaPause": "Pause the event stream",
+        "ariaResume": "Resume the event stream",
+        "ariaRestart": "Restart the event stream",
+        "new": "NEW",
+        "generating": "Generating synthetic events every 3s",
+        "alerts": "0 alerts triggered"
+      },
+      "rules": {
+        "title": "Detection rules",
+        "active": "Active",
+        "inactive": "Inactive",
+        "summaryActive": "active rules of",
+        "summaryTail": "on the dashboard",
+        "items": [
+          {
+            "name": "PowerShell EncodedCommand",
+            "mitre": "T1059.001",
+            "status": "active"
+          },
+          {
+            "name": "Suspicious Network Connection",
+            "mitre": "T1071.001",
+            "status": "active"
+          },
+          {
+            "name": "Ingress Tool Transfer",
+            "mitre": "T1105",
+            "status": "active"
+          },
+          {
+            "name": "Registry Run Key Persistence",
+            "mitre": "T1547.001",
+            "status": "active"
+          },
+          {
+            "name": "System Information Discovery",
+            "mitre": "T1082",
+            "status": "inactive"
+          },
+          {
+            "name": "DNS Exfiltration",
+            "mitre": "T1071.004",
+            "status": "inactive"
+          }
+        ]
+      },
+      "events": [
+        {
+          "type": "process",
+          "name": "powershell.exe",
+          "detail": "Encoded command execution",
+          "severity": "high",
+          "mitre": "T1059.001"
+        },
+        {
+          "type": "network",
+          "name": "svchost.exe",
+          "detail": "Outbound connection to 192.168.1.100:4444",
+          "severity": "critical",
+          "mitre": "T1071.001"
+        },
+        {
+          "type": "file",
+          "name": "temp.exe",
+          "detail": "Write to C:\\Users\\Public\\",
+          "severity": "medium",
+          "mitre": "T1105"
+        },
+        {
+          "type": "registry",
+          "name": "reg.exe",
+          "detail": "Modification of the HKCU\\Run key",
+          "severity": "high",
+          "mitre": "T1547.001"
+        },
+        {
+          "type": "process",
+          "name": "cmd.exe",
+          "detail": "whoami /priv execution",
+          "severity": "low",
+          "mitre": "T1082"
+        },
+        {
+          "type": "network",
+          "name": "chrome.exe",
+          "detail": "DNS lookup for malicious.domain",
+          "severity": "medium",
+          "mitre": "T1071.004"
+        }
+      ]
+    },
+    "counters": {
+      "title": "Work in numbers",
+      "description": "Projects, rules and articles that document what was built. Fill in each value with your own measured metric.",
+      "items": [
+        {
+          "icon": "Shield",
+          "label": "Security projects",
+          "value": null,
+          "placeholder": "[MEASURED METRIC]",
+          "suffix": ""
+        },
+        {
+          "icon": "FileText",
+          "label": "Detection rules",
+          "value": null,
+          "placeholder": "[MEASURED METRIC]",
+          "suffix": ""
+        },
+        {
+          "icon": "Code",
+          "label": "Technical articles",
+          "value": null,
+          "placeholder": "[MEASURED METRIC]",
+          "suffix": ""
+        },
+        {
+          "icon": "Terminal",
+          "label": "Lab hours",
+          "value": null,
+          "placeholder": "[MEASURED METRIC]",
+          "suffix": ""
+        },
+        {
+          "icon": "Zap",
+          "label": "Automations built",
+          "value": null,
+          "placeholder": "[MEASURED METRIC]",
+          "suffix": ""
+        },
+        {
+          "icon": "Award",
+          "label": "Certifications",
+          "value": null,
+          "placeholder": "[MEASURED METRIC]",
+          "suffix": ""
+        }
+      ]
+    },
+    "cta": {
+      "badge": "Let's work together",
+      "title": "Want to strengthen detection in your environment?",
+      "description": "I am open to conversations about Blue Team roles and internships, freelance detection projects and collaboration on open source security tools.",
+      "primary": {
+        "label": "Get in touch",
+        "href": "/contact"
+      },
+      "secondary": {
+        "label": "Download résumé",
+        "href": "/resume"
+      },
+      "emailNote": {
+        "prefix": "Prefer email?",
+        "addressKey": "general"
+      }
+    }
+  },
+  "pages": {
+    "about": {
+      "focus": {
+        "title": "Focus areas",
+        "description": "Where I concentrate my study and practice today."
+      },
+      "timeline": {
+        "title": "Journey and studies",
+        "description": "Periods, roles and what came out of each one.",
+        "present": "present",
+        "empty": "No periods registered yet."
+      },
+      "certifications": {
+        "title": "Certifications",
+        "description": "Credentials earned and the certification path in progress.",
+        "status": {
+          "active": "active",
+          "planned": "planned"
+        },
+        "empty": "No certifications registered yet."
+      }
+    },
+    "projects": {
+      "title": "Projects",
+      "titleAccent": "blue-sentinel",
+      "description": "Security projects covering detection, automation and systems programming. Each case study brings the problem, architecture, technical decisions and results.",
+      "filters": {
+        "label": "Filter projects by technology",
+        "all": "All technologies",
+        "count": "projects",
+        "countOne": "project"
+      },
+      "highlightedTitle": "Featured projects",
+      "allTitle": "All projects",
+      "labels": {
+        "code": "Code",
+        "demo": "Demo",
+        "highlight": "Featured",
+        "moreTags": "more tags"
+      },
+      "empty": "No projects match the filter.",
+      "emptyAll": "No projects published yet.",
+      "detail": {
+        "back": "Back to projects",
+        "highlight": "Featured project",
+        "viewSource": "View source code",
+        "liveDemo": "Live demo",
+        "docs": "Documentation",
+        "title": "Project details",
+        "type": "Type",
+        "typeValue": "Security tool",
+        "status": "Status",
+        "statusValue": "Active",
+        "license": "License",
+        "licenseValue": "MIT",
+        "language": "Language",
+        "languageFallback": "Multiple",
+        "technologies": "Core technologies",
+        "related": "Related",
+        "allProjects": "All projects",
+        "allWriteups": "Technical articles",
+        "lab": "Detection lab",
+        "notFound": "Project not found",
+        "minRead": "min read"
+      }
+    },
+    "writeups": {
+      "title": "Technical articles",
+      "description": "In-depth writing on detection engineering, threat hunting and security systems programming, drawn from practice.",
+      "filters": {
+        "label": "Filter articles by topic",
+        "all": "All topics",
+        "count": "articles",
+        "countOne": "article"
+      },
+      "labels": {
+        "read": "Read",
+        "minRead": "min read",
+        "min": "min",
+        "tags": "tags",
+        "published": "Published on",
+        "readingTime": "Reading time",
+        "category": "Category",
+        "series": "Series",
+        "info": "About the article",
+        "tagsTitle": "Tags",
+        "moreReading": "Related reading",
+        "allWriteups": "All articles",
+        "relatedProjects": "Security projects",
+        "relatedLab": "Detection lab",
+        "back": "Back to articles",
+        "share": "Share this article",
+        "notFound": "Article not found"
+      },
+      "empty": "No articles published yet."
+    },
+    "lab": {
+      "title": "Detection Lab",
+      "titleAccent": "blue-sentinel",
+      "description": "Interactive lab — real-time synthetic events with a Sigma, YARA and correlation detection engine. Strictly educational and defensive use.",
+      "status": {
+        "live": "Live",
+        "paused": "Paused",
+        "idle": "Idle",
+        "completed": "Completed",
+        "connecting": "Connecting"
+      },
+      "connection": {
+        "connected": "Connected to the lab",
+        "connecting": "Connecting to the lab...",
+        "disconnected": "Disconnected",
+        "failed": "Could not connect to the lab.",
+        "retry": "Try again"
+      },
+      "controls": {
+        "title": "Session",
+        "start": "Start",
+        "pause": "Pause",
+        "resume": "Resume",
+        "restart": "Restart",
+        "speed": "Speed",
+        "reloadRules": "Reload rules",
+        "scenario": "Running scenario",
+        "reloaded": "Rules reloaded from disk.",
+        "reloadFailed": "Some rules failed to reload; keeping the previous version.",
+        "waiting": "Pick a scenario to begin."
+      },
+      "scenarios": {
+        "title": "Detection scenarios",
+        "subtitle": "Each scenario is a timeline of synthetic logs. No real data is collected and no attack is executed.",
+        "run": "Run scenario",
+        "events": "events",
+        "eventOne": "event",
+        "expectedRules": "Expected rules",
+        "expectedSeverity": "Final severity",
+        "brute-force": {
+          "title": "Credential brute force",
+          "description": "Six failed logons followed by a success from the same source — the correlator has to close the sequence (T1110.001)."
+        },
+        "after-hours-login": {
+          "title": "After-hours login",
+          "description": "Successful logon at 03:14 from a country never seen for the account, followed by discovery commands (T1078)."
+        },
+        "temp-process": {
+          "title": "Process from a temp folder",
+          "description": "PowerShell launched from the Temp folder with an encoded command line and an outbound connection to an uncommon port (T1059.001 / T1071.001)."
+        },
+        "log-clearing": {
+          "title": "Audit log clearing",
+          "description": "Auditing disabled, the Security log cleared with wevtutil and the evtx file deleted — classic anti-forensics (T1070.001)."
+        },
+        "sqli-web": {
+          "title": "SQL Injection in web logs",
+          "description": "Access log lines with classic SQL Injection probes. Only detected — nothing is sent or executed (T1190)."
+        }
+      },
+      "stream": {
+        "title": "Event queue",
+        "eventsCount": "events",
+        "eventOne": "event",
+        "search": "Search events...",
+        "searchAria": "Search events by host, user or command",
+        "severityAll": "All severities",
+        "filterSeverity": "Filter by severity",
+        "categoryAll": "All categories",
+        "filterCategory": "Filter by category",
+        "empty": "No event matches the filters.",
+        "emptyIdle": "Pick a scenario and start the session to watch the events arrive.",
+        "alert": "ALERT",
+        "matched": "Raised an alert",
+        "autoScroll": "Auto scroll"
+      },
+      "stats": {
+        "title": "Session statistics",
+        "total": "Events",
+        "alerts": "Alerts",
+        "critical": "Critical",
+        "high": "High",
+        "suppressed": "Deduplicated",
+        "correlation": "Correlations"
+      },
+      "alerts": {
+        "title": "Alert panel",
+        "count": "alerts",
+        "countOne": "alert",
+        "empty": "No alerts yet.",
+        "emptyIdle": "When a rule fires, the alert shows up here with the full explanation.",
+        "select": "View explanation",
+        "selected": "Selected",
+        "kind": {
+          "sigma": "Sigma",
+          "yara": "YARA",
+          "correlation": "Correlation"
+        }
+      },
+      "severity": {
+        "informational": "Informational",
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "critical": "Critical"
+      },
+      "explain": {
+        "title": "Alert explanation",
+        "rule": "Rule",
+        "kind": "Type",
+        "level": "Level",
+        "mitre": "MITRE ATT&CK techniques",
+        "matchedLog": "Matching log",
+        "matchedFields": "Fields that matched",
+        "field": "Field",
+        "operator": "Operator",
+        "expected": "Rule expects",
+        "actual": "Event has",
+        "why": "Why it is suspicious",
+        "falsePositives": "Possible false positives",
+        "response": "How to respond",
+        "condition": "Condition",
+        "logsource": "Log source",
+        "strings": "YARA strings",
+        "stages": "Correlation stages",
+        "window": "Time window",
+        "groupBy": "Grouped by",
+        "source": "Rule file",
+        "empty": "Select an alert from the list to see the rule that fired, the matching log and the response steps.",
+        "loadFailed": "Could not load the rule details.",
+        "close": "Close"
+      },
+      "incident": {
+        "title": "Incident timeline",
+        "emptyIdle": "The incident is assembled automatically when severity reaches high or critical.",
+        "notCreated": "No incident was opened in this run.",
+        "by": "Opened by",
+        "status": "Status",
+        "severity": "Severity",
+        "tags": "MITRE tags",
+        "timeline": "Incident events",
+        "open": "open",
+        "resolved": "closed",
+        "expectedRules": "Scenario expected rules",
+        "response": "Recommendation"
+      },
+      "report": {
+        "title": "Run summary",
+        "events": "Events processed",
+        "alerts": "Alerts raised",
+        "suppressed": "Alerts deduplicated",
+        "correlation": "Correlations fired",
+        "rulesFired": "Rules fired",
+        "missing": "Expected rules that did not fire",
+        "unexpected": "Extra rules fired",
+        "none": "None",
+        "finalSeverity": "Final severity",
+        "expectedSeverity": "Expected severity",
+        "engine": "YARA engine",
+        "budget": "Slowest rule evaluation",
+        "matched": "Matches expectations"
+      },
+      "rules": {
+        "title": "Loaded rules",
+        "count": "rules",
+        "empty": "No rules loaded.",
+        "sigma": "Sigma",
+        "yara": "YARA",
+        "correlation": "Correlation"
+      },
+      "errors": {
+        "UNKNOWN_SCENARIO": "Unknown scenario.",
+        "ALREADY_STARTED": "The session is already running.",
+        "NOT_RUNNING": "The session is not running.",
+        "NOT_PAUSED": "The session is not paused.",
+        "SESSION_EXPIRED": "The session expired. Create a new one.",
+        "BAD_MESSAGE": "Invalid message sent to the lab.",
+        "RUNTIME_ERROR": "Error while running the scenario.",
+        "SESSION_FAILED": "Could not start the lab session.",
+        "WS_CLOSED": "The connection to the lab was closed.",
+        "RATE_LIMIT": "Too many sessions created right now. Wait a moment and try again."
+      }
+    },
+    "status": {
+      "title": "Platform status",
+      "description": "Live health and resource metrics. No placeholder data: if the backend is down, the page shows the real state.",
+      "refresh": "Refresh metrics",
+      "levels": {
+        "HEALTHY": "HEALTHY",
+        "DEGRADED": "DEGRADED",
+        "UNHEALTHY": "UNHEALTHY",
+        "UNKNOWN": "UNKNOWN"
+      },
+      "overview": "Resource overview",
+      "charts": "Resource charts",
+      "services": "Services and APIs",
+      "gauges": {
+        "cpu": "CPU usage",
+        "memory": "Memory usage",
+        "disk": "Disk usage",
+        "uptime": "Uptime"
+      },
+      "loading": "Loading metrics...",
+      "error": "Could not load metrics.",
+      "empty": "No data right now.",
+      "offline": "The backend did not respond. Data appears when the API comes back — nothing is made up here."
+    },
+    "security": {
+      "title": "Security architecture",
+      "description": "Transparency about how this portfolio protects itself. Security through obscurity is not security: the measures are here and in the source code.",
+      "measuresTitle": "Defensive measures",
+      "threatTitle": "Threat model",
+      "threatDescription": "Threats relevant to a portfolio with a public form and API, with the corresponding mitigation and the real implementation status.",
+      "disclosureTitle": "Responsible disclosure",
+      "disclosureIntro": "If you find a vulnerability in Blue-Sentinel, please report it responsibly.",
+      "disclosureEmail": "Email",
+      "disclosureGithub": "GitHub Security Advisories",
+      "disclosureReport": "Report via GitHub",
+      "disclosureSlack": "Response within [TIMEFRAME] and fix within [TIMEFRAME]. There is no bug bounty programme: this is a personal portfolio, not a production service.",
+      "status": {
+        "implemented": "Implemented",
+        "partial": "Partial",
+        "planned": "Planned"
+      },
+      "verified": "Verified in the repository",
+      "mitigated": "Mitigated",
+      "partial": "Partial",
+      "columns": {
+        "threat": "Threat",
+        "mitigation": "Mitigation",
+        "status": "Status"
+      },
+      "measures": [
+        {
+          "category": "Network security",
+          "items": [
+            {
+              "title": "Network segmentation",
+              "description": "Docker Compose with separate networks (frontend-net and backend-net). Database and Redis only talk inside the internal network.",
+              "status": "implemented",
+              "icon": "Globe"
+            },
+            {
+              "title": "No exposed database ports",
+              "description": "PostgreSQL and Redis do not publish ports on the host. The only exposed ports are 3000 (site) and 8000 (API).",
+              "status": "implemented",
+              "icon": "Database"
+            },
+            {
+              "title": "TLS termination",
+              "description": "In production, a reverse proxy in front of the stack terminates TLS. Inside the trusted network, internal communication runs over HTTP.",
+              "status": "planned",
+              "icon": "Lock"
+            }
+          ]
+        },
+        {
+          "category": "Application security",
+          "items": [
+            {
+              "title": "Input validation",
+              "description": "Zod schemas on the frontend form and Pydantic models on the backend. Standardised error messages in problem+json.",
+              "status": "implemented",
+              "icon": "Search"
+            },
+            {
+              "title": "Rate limiting",
+              "description": "Limit of 5 messages per hour per email on the contact form, with a 429 response and Retry-After header.",
+              "status": "implemented",
+              "icon": "AlertTriangle"
+            },
+            {
+              "title": "Honeypot",
+              "description": "Hidden field in the form. When filled in by a bot, the message is silently accepted and discarded.",
+              "status": "implemented",
+              "icon": "Shield"
+            },
+            {
+              "title": "Restrictive CORS",
+              "description": "Allowed origins come from an environment variable; in production there is no origin wildcard.",
+              "status": "implemented",
+              "icon": "Code"
+            },
+            {
+              "title": "Security headers",
+              "description": "X-Content-Type-Options, Referrer-Policy and X-DNS-Prefetch-Control via next.config. CSP and HSTS are not enabled yet.",
+              "status": "partial",
+              "icon": "Shield"
+            },
+            {
+              "title": "Dependency scanning",
+              "description": "Dependabot, npm audit and pip-audit scheduled in the CI pipeline.",
+              "status": "planned",
+              "icon": "Code"
+            }
+          ]
+        },
+        {
+          "category": "Data protection",
+          "items": [
+            {
+              "title": "Secrets management",
+              "description": "No secrets in the repository. .env.example with placeholders and Docker secrets in production.",
+              "status": "implemented",
+              "icon": "Lock"
+            },
+            {
+              "title": "Non-root containers",
+              "description": "Containers must run as an unprivileged user; the final user setting in the compose file is pending.",
+              "status": "partial",
+              "icon": "Shield"
+            },
+            {
+              "title": "Minimal data volume",
+              "description": "The database stores only contact messages, lab sessions and audit logs.",
+              "status": "implemented",
+              "icon": "Database"
+            },
+            {
+              "title": "Structured logging",
+              "description": "Logging configured at API startup with a structured format for the audit trail.",
+              "status": "implemented",
+              "icon": "Search"
+            }
+          ]
+        },
+        {
+          "category": "Monitoring and response",
+          "items": [
+            {
+              "title": "Health checks",
+              "description": "/health/live (liveness) and /health/ready (checks the database) endpoints with a Docker healthcheck in compose.",
+              "status": "implemented",
+              "icon": "CheckCircle"
+            },
+            {
+              "title": "Rate limiting on the lab WebSocket",
+              "description": "At most 3 simultaneous connections per IP, short-lived tickets and ping/pong every 30s.",
+              "status": "implemented",
+              "icon": "AlertTriangle"
+            },
+            {
+              "title": "Exposed metrics",
+              "description": "Prometheus-style metrics endpoint at /metrics.",
+              "status": "planned",
+              "icon": "Code"
+            },
+            {
+              "title": "security.txt",
+              "description": "/.well-known/security.txt file with the responsible disclosure channel.",
+              "status": "planned",
+              "icon": "AlertTriangle"
+            }
+          ]
+        }
+      ],
+      "threats": [
+        {
+          "threat": "SQL Injection",
+          "mitigation": "All data access goes through the SQLAlchemy ORM with parameterised queries. No raw SQL with user input.",
+          "status": "mitigated"
+        },
+        {
+          "threat": "XSS",
+          "mitigation": "React escapes output by default. No dangerouslySetInnerHTML with external data.",
+          "status": "mitigated"
+        },
+        {
+          "threat": "Form abuse",
+          "mitigation": "Silent honeypot, limit of 5 submissions per hour per email and a 429 response with Retry-After.",
+          "status": "mitigated"
+        },
+        {
+          "threat": "Secret leakage",
+          "mitigation": "No secrets committed; .env.example contains placeholders only.",
+          "status": "mitigated"
+        },
+        {
+          "threat": "CSRF",
+          "mitigation": "Form submitted as JSON with no session cookie. CSRF tokens for session-based operations are planned.",
+          "status": "partial"
+        },
+        {
+          "threat": "DoS / brute force",
+          "mitigation": "Rate limiting on the contact form and per-IP connection limits on the WebSocket. Edge protection (proxy) is left for production.",
+          "status": "partial"
+        },
+        {
+          "threat": "Container escape",
+          "mitigation": "Non-root user, read-only filesystem and reduced capabilities on deploy.",
+          "status": "planned"
+        },
+        {
+          "threat": "Supply chain",
+          "mitigation": "Dependencies pinned by lockfile and automatic vulnerability scanning in CI.",
+          "status": "planned"
+        }
+      ],
+      "disclosure": {
+        "emailLabel": "Email",
+        "githubLabel": "GitHub Security Advisories"
+      }
+    },
+    "resume": {
+      "title": "Résumé / CV",
+      "updatedAt": "Last updated",
+      "actions": {
+        "pdf": "Save as PDF",
+        "github": "GitHub"
+      },
+      "sections": {
+        "summary": "Professional summary",
+        "experience": "Experience",
+        "education": "Education",
+        "projects": "Projects",
+        "skills": "Technical skills",
+        "certifications": "Certifications",
+        "achievements": "Highlights",
+        "contact": "Contact"
+      },
+      "labels": {
+        "degree": "Education",
+        "remote": "Remote",
+        "active": "active",
+        "planned": "planned",
+        "noExperience": "No experience registered — fill in the content/site.ts file.",
+        "noEducation": "No education registered.",
+        "noCertifications": "No certifications registered.",
+        "footerStack": "Built with Next.js · Styled with Tailwind · Open source on GitHub"
+      }
+    },
+    "contact": {
+      "title": "Get in touch",
+      "description": "Have a role, a project, or found a security issue? Fill in the form or write directly by email.",
+      "channels": {
+        "ariaLabel": "Contact channels",
+        "email": {
+          "title": "Email",
+          "hint": "General contact"
+        },
+        "issues": {
+          "title": "GitHub Issues",
+          "link": "Open an issue",
+          "hint": "Feature requests and bugs"
+        },
+        "security": {
+          "title": "Security",
+          "hint": "Responsible disclosure only"
+        }
+      },
+      "form": {
+        "title": "Send a message",
+        "description": "All fields are required. I reply within [RESPONSE TIME].",
+        "labels": {
+          "name": "Name",
+          "email": "Email",
+          "subject": "Subject",
+          "message": "Message"
+        },
+        "placeholders": {
+          "name": "Your name",
+          "email": "you@email.com",
+          "message": "Tell me about the project, the opportunity or just say hello..."
+        },
+        "subjects": [
+          {
+            "value": "general",
+            "label": "General subject"
+          },
+          {
+            "value": "collaboration",
+            "label": "Collaboration / partnership"
+          },
+          {
+            "value": "speaking",
+            "label": "Talk or content"
+          },
+          {
+            "value": "security",
+            "label": "Vulnerability report"
+          },
+          {
+            "value": "other",
+            "label": "Other"
+          }
+        ],
+        "submit": "Send message",
+        "submitting": "Sending...",
+        "privacy": "No spam. Your email is only used to reply to this message.",
+        "allRequired": "All fields are required."
+      }
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "description": "Quick answers about the lab, the projects and how to get in touch."
+    }
+  },
+  "footer": {
+    "description": "Blue Team cybersecurity portfolio. Detection engineering, threat hunting and defensive security automation.",
+    "builtWith": "Built with Next.js, FastAPI and Docker.",
+    "ethical": "Strictly defensive and educational. No real secrets in the code.",
+    "copyright": "All rights reserved."
+  },
+  "microcopy": {
+    "buttons": {
+      "viewProjects": "View projects",
+      "viewAll": "View all",
+      "openLab": "Open the lab",
+      "contact": "Get in touch",
+      "back": "Back",
+      "backHome": "Back to home",
+      "retry": "Try again",
+      "send": "Send",
+      "copy": "Copy link",
+      "copied": "Link copied",
+      "share": "Share",
+      "readMore": "Read more",
+      "external": "Open in new tab"
+    },
+    "codeBlock": {
+      "copy": "Copy",
+      "copied": "Copied",
+      "ariaCopy": "Copy code"
+    },
+    "toc": {
+      "title": "On this page",
+      "aria": "Table of contents"
+    },
+    "share": {
+      "share": "Share",
+      "onX": "Share on X",
+      "onLinkedIn": "Share on LinkedIn",
+      "copyLink": "Copy link",
+      "copied": "Link copied"
+    },
+    "projectCard": {
+      "code": "Code",
+      "demo": "Demo"
+    },
+    "loading": {
+      "page": "Loading page...",
+      "content": "Loading content...",
+      "metrics": "Loading metrics...",
+      "events": "Connecting to the lab...",
+      "sending": "Sending message...",
+      "generic": "Loading..."
+    },
+    "empty": {
+      "projects": "No projects published yet.",
+      "projectsFiltered": "No projects match the filter.",
+      "writeups": "No articles published yet.",
+      "events": "No events match the filters.",
+      "search": "No results for this search.",
+      "metrics": "No data right now."
+    },
+    "notFound": {
+      "code": "404",
+      "title": "Page not found",
+      "description": "The address does not exist or has changed. Go back home or browse the projects."
+    },
+    "serverError": {
+      "code": "500",
+      "title": "Something failed on the server",
+      "description": "The error was logged. Try again in a moment; if it persists, let me know on the contact page."
+    },
+    "toasts": {
+      "successTitle": "Message sent",
+      "successBody": "Message sent successfully. I will reply soon.",
+      "errorTitle": "Error",
+      "errorBody": "Could not send. Please try again.",
+      "rateLimited": "Message limit reached. Try again later."
+    },
+    "form": {
+      "honeypotLabel": "Website",
+      "errorName": "The name needs at least 2 characters.",
+      "errorEmail": "Invalid email.",
+      "errorSubject": "The subject needs at least 5 characters.",
+      "errorMessage": "The message needs at least 20 characters.",
+      "errorMax": "Text is too long.",
+      "required": "Required field."
+    },
+    "dialog": {
+      "close": "Close"
+    },
+    "misc": {
+      "highlight": "Featured",
+      "new": "New",
+      "verified": "Verified",
+      "live": "Live",
+      "version": "Version",
+      "lastUpdated": "Last updated",
+      "readingTime": "min read",
+      "tags": "tags"
+    }
+  },
+  "notices": {
+    "lab": {
+      "title": "Ethical and educational use",
+      "body": "All events in this lab are synthetic and generated for demonstration. There is no real telemetry, no production data, and nothing here should be used against systems you do not own or are not authorised to test. Single purpose: studying detection in a defensive way.",
+      "short": "100% synthetic events. Educational and strictly defensive use."
+    },
+    "defensive": {
+      "title": "Defensive only",
+      "body": "All content on this site is defensive security. There are no offensive payloads, real credentials or attack instructions."
+    }
+  },
+  "i18n": {
+    "languageLabel": "Language",
+    "languageSelector": "Select language",
+    "languages": {
+      "pt-BR": "Português (Brasil)",
+      "en": "English"
+    },
+    "switchTo": {
+      "pt-BR": "View this site in Português (Brasil)",
+      "en": "View this site in English"
+    },
+    "untranslatedTitle": "Content not translated yet",
+    "untranslatedBody": "This page is not available in this language yet. Showing the Português (Brasil) version."
+  },
+  "errors": {
+    "RATE_LIMIT": "Message limit reached. Try again later.",
+    "VALIDATION_ERROR": "Some fields need fixing. Please check the submitted data.",
+    "NOT_FOUND": "What you are looking for could not be found.",
+    "UNAUTHORIZED": "You do not have permission to access this resource.",
+    "FORBIDDEN": "Access denied.",
+    "METHOD_NOT_ALLOWED": "Operation not allowed.",
+    "CONFLICT": "This conflicts with the current data.",
+    "TIMEOUT": "The request took too long. Please try again.",
+    "SERVICE_UNAVAILABLE": "Service temporarily unavailable. Please try again.",
+    "INTERNAL_ERROR": "Something failed on the server. Try again in a moment.",
+    "HTTP_ERROR": "The operation could not be completed. Please try again.",
+    "UNKNOWN": "The operation could not be completed. Please try again.",
+    "NETWORK": "Connection failed. Check your network and try again."
+  }
+}

@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  i18n:
+    name: i18n consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check message parity and hardcoded pt-BR text
+        run: node scripts/development/check_i18n.mjs
+
+  frontend:
+    name: frontend (lint, type-check, test, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+      - name: Type check
+        run: pnpm type-check
+      - name: Unit tests
+        run: pnpm test
+      - name: Build
+        run: pnpm build
+
+  backend:
+    name: backend tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Syntax check
+        run: python -m compileall -q app main.py
+      - name: Run tests
+        # exit code 5 = no tests collected (suite ainda vazia); não falha o CI
+        run: |
+          python -m pytest -q
+          status=$?
+          if [ "$status" -ne 0 ] && [ "$status" -ne 5 ]; then exit "$status"; fi

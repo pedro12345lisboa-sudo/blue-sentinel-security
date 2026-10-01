@@ -34,11 +34,12 @@ class RateLimitError(BlueSentinelError):
             message="Rate limit exceeded",
             code="RATE_LIMIT",
             status_code=429,
-            retry_after=retry_after,
         )
+        self.retry_after = retry_after
 
 
 async def blue_sentinel_error_handler(request: Request, exc: BlueSentinelError):
+    headers = {"Retry-After": str(exc.retry_after)} if isinstance(exc, RateLimitError) else None
     return JSONResponse(
         status_code=exc.status_code,
         content={
@@ -46,17 +47,24 @@ async def blue_sentinel_error_handler(request: Request, exc: BlueSentinelError):
             "message": exc.message,
             "request_id": exc.request_id,
         },
+        headers=headers,
     )
 
 
 async def http_exception_handler(request: Request, exc: FastAPIHTTPException):
+    detail = exc.detail
+    code = "HTTP_ERROR"
+    if isinstance(detail, dict):
+        code = str(detail.get("code") or code)
+        detail = detail.get("message")
     return JSONResponse(
         status_code=exc.status_code,
         content={
-            "error": "HTTP_ERROR",
-            "message": exc.detail,
+            "error": code,
+            "message": detail,
             "request_id": getattr(request.state, "request_id", None),
         },
+        headers=getattr(exc, "headers", None),
     )
 
 

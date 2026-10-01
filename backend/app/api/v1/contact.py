@@ -43,7 +43,8 @@ async def submit_contact(
             content=ErrorResponse(
                 title="Too Many Requests",
                 status=exc.status_code,
-                detail="Limite de mensagens atingido. Tente novamente mais tarde.",
+                code=exc.code,
+                detail=exc.message,
             ).model_dump(),
             headers={"Retry-After": str(exc.retry_after)},
         )
@@ -53,6 +54,7 @@ async def submit_contact(
             content=ErrorResponse(
                 title="Request Error",
                 status=exc.status_code,
+                code=exc.code,
                 detail=exc.message,
             ).model_dump(),
         )

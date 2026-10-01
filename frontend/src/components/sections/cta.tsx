@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { Mail, ArrowRight, Send } from 'lucide-react';
 import { useReducedMotion, useGSAP, useInView } from '@/hooks';
-import { site } from '../../../content/site';
+import { useSite, LocalizedLink } from '@/i18n';
 
 export function CTA() {
+  const site = useSite();
   const reducedMotion = useReducedMotion();
   const { gsap } = useGSAP();
   const sectionRef = useRef<HTMLElement>(null);
@@ -54,15 +54,15 @@ export function CTA() {
         </p>
 
         <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Link href={cta.primary.href} className="btn-primary w-full max-w-xs group">
+          <LocalizedLink href={cta.primary.href} className="btn-primary w-full max-w-xs group">
             <Mail className="h-4 w-4 mr-2" aria-hidden="true" />
             {cta.primary.label}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-          </Link>
-          <Link href={cta.secondary.href} className="btn-outline w-full max-w-xs">
+          </LocalizedLink>
+          <LocalizedLink href={cta.secondary.href} className="btn-outline w-full max-w-xs">
             <Send className="h-4 w-4 mr-2" aria-hidden="true" />
             {cta.secondary.label}
-          </Link>
+          </LocalizedLink>
         </div>
 
         <p className="mt-8 text-sm text-muted-foreground/70">

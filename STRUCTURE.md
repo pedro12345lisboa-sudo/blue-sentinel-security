@@ -125,8 +125,6 @@ Comece só com `frontend/`, `backend/` e `docs/`. Crie o resto quando precisar.
 ./frontend/public/images/.gitkeep
 ./frontend/public/models
 ./frontend/public/models/.gitkeep
-./frontend/public/robots.txt
-./frontend/public/sitemap.xml
 ./frontend/src
 ./frontend/src/app
 ./frontend/src/app/.gitkeep

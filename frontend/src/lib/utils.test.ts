@@ -13,43 +13,57 @@ describe('Utils', () => {
 
     it('supports different locales', () => {
       const date = new Date(2024, 0, 15);
-      expect(formatDate(date, 'en-US')).toBe('January 15, 2024');
+      expect(formatDate(date, 'en')).toBe('January 15, 2024');
     });
   });
 
   describe('formatRelativeTime', () => {
-    it('returns "Hoje" for today', () => {
-      expect(formatRelativeTime(new Date())).toBe('Hoje');
+    const now = new Date(2024, 5, 15, 12, 0, 0);
+
+    it('formats the current moment', () => {
+      expect(formatRelativeTime(now, 'pt-BR', now)).toBe('este minuto');
+      expect(formatRelativeTime(now, 'en', now)).toBe('this minute');
     });
 
-    it('returns "Ontem" for yesterday', () => {
-      const yesterday = new Date();
+    it('formats yesterday per locale', () => {
+      const yesterday = new Date(now);
       yesterday.setDate(yesterday.getDate() - 1);
-      expect(formatRelativeTime(yesterday)).toBe('Ontem');
+      expect(formatRelativeTime(yesterday, 'pt-BR', now)).toBe('ontem');
+      expect(formatRelativeTime(yesterday, 'en', now)).toBe('yesterday');
     });
 
-    it('returns days ago for recent dates', () => {
-      const threeDaysAgo = new Date();
+    it('formats days ago per locale', () => {
+      const threeDaysAgo = new Date(now);
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-      expect(formatRelativeTime(threeDaysAgo)).toBe('3 dias atrás');
+      expect(formatRelativeTime(threeDaysAgo, 'pt-BR', now)).toBe('há 3 dias');
+      expect(formatRelativeTime(threeDaysAgo, 'en', now)).toBe('3 days ago');
     });
 
-    it('returns weeks ago for older dates', () => {
-      const twoWeeksAgo = new Date();
+    it('formats weeks ago per locale', () => {
+      const twoWeeksAgo = new Date(now);
       twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-      expect(formatRelativeTime(twoWeeksAgo)).toBe('2 semanas atrás');
+      expect(formatRelativeTime(twoWeeksAgo, 'pt-BR', now)).toBe('há 2 semanas');
+      expect(formatRelativeTime(twoWeeksAgo, 'en', now)).toBe('2 weeks ago');
     });
 
-    it('returns months ago for older dates', () => {
-      const twoMonthsAgo = new Date();
+    it('formats months ago per locale', () => {
+      const twoMonthsAgo = new Date(now);
       twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
-      expect(formatRelativeTime(twoMonthsAgo)).toBe('2 meses atrás');
+      expect(formatRelativeTime(twoMonthsAgo, 'pt-BR', now)).toBe('há 2 meses');
+      expect(formatRelativeTime(twoMonthsAgo, 'en', now)).toBe('2 months ago');
     });
 
-    it('returns years ago for very old dates', () => {
-      const twoYearsAgo = new Date();
+    it('formats years ago per locale', () => {
+      const twoYearsAgo = new Date(now);
       twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
-      expect(formatRelativeTime(twoYearsAgo)).toBe('2 anos atrás');
+      expect(formatRelativeTime(twoYearsAgo, 'pt-BR', now)).toBe('há 2 anos');
+      expect(formatRelativeTime(twoYearsAgo, 'en', now)).toBe('2 years ago');
+    });
+
+    it('defaults to pt-BR', () => {
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      expect(formatRelativeTime(yesterday, undefined, now)).toBe('ontem');
     });
   });
 

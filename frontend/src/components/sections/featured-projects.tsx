@@ -1,11 +1,10 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { ArrowRight, Github, ExternalLink, Shield, Code, Zap, Terminal, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useReducedMotion, useGSAP, useInView } from '@/hooks';
-import { site } from '../../../content/site';
+import { useSite, LocalizedLink } from '@/i18n';
 
 export interface FeaturedProject {
   slug: string;
@@ -24,6 +23,7 @@ interface FeaturedProjectsProps {
 }
 
 export function FeaturedProjects({ projects }: FeaturedProjectsProps) {
+  const site = useSite();
   const reducedMotion = useReducedMotion();
   const { gsap } = useGSAP();
   const sectionRef = useRef<HTMLElement>(null);
@@ -63,10 +63,10 @@ export function FeaturedProjects({ projects }: FeaturedProjectsProps) {
               {featuredProjects.description}
             </p>
           </div>
-          <Link href={featuredProjects.cta.href} className="btn-outline self-center whitespace-nowrap">
+          <LocalizedLink href={featuredProjects.cta.href} className="btn-outline self-center whitespace-nowrap">
             {featuredProjects.cta.label}
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </Link>
+          </LocalizedLink>
         </div>
 
         <div ref={ref} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -110,34 +110,34 @@ export function FeaturedProjects({ projects }: FeaturedProjectsProps) {
                 </div>
                 <div className="flex items-center gap-3 pt-4 border-t border-border/50">
                   {project.links?.github && (
-                    <Link
+                    <LocalizedLink
                       href={project.links.github}
                       className="btn-ghost text-xs gap-1.5"
                       aria-label={`${featuredProjects.labels.ariaCode}: ${project.title}`}
                     >
                       <Github className="h-3.5 w-3.5" aria-hidden="true" />
                       {featuredProjects.labels.code}
-                    </Link>
+                    </LocalizedLink>
                   )}
                   {project.links?.demo && (
-                    <Link
+                    <LocalizedLink
                       href={project.links.demo}
                       className="btn-ghost text-xs gap-1.5"
                       aria-label={`${featuredProjects.labels.ariaDemo}: ${project.title}`}
                     >
                       <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                       {featuredProjects.labels.demo}
-                    </Link>
+                    </LocalizedLink>
                   )}
                   {project.links?.docs && (
-                    <Link
+                    <LocalizedLink
                       href={project.links.docs}
                       className="btn-ghost text-xs gap-1.5"
                       aria-label={`${featuredProjects.labels.ariaDocs}: ${project.title}`}
                     >
                       <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                       {featuredProjects.labels.docs}
-                    </Link>
+                    </LocalizedLink>
                   )}
                 </div>
               </article>

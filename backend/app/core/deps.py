@@ -22,7 +22,7 @@ async def get_current_user(
     if credentials is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token ausente",
+            detail={"code": "UNAUTHORIZED", "message": "Authentication token missing"},
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -31,7 +31,7 @@ async def get_current_user(
     if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido ou expirado",
+            detail={"code": "UNAUTHORIZED", "message": "Invalid or expired authentication token"},
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -41,7 +41,7 @@ async def get_current_user(
     if not user or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuário não encontrado ou inativo",
+            detail={"code": "UNAUTHORIZED", "message": "User not found or inactive"},
         )
 
     return {
@@ -57,6 +57,6 @@ def require_admin(
     if not current_user.get("is_superuser"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Permissão de administrador necessária",
+            detail={"code": "FORBIDDEN", "message": "Administrator permission required"},
         )
     return current_user

@@ -1,10 +1,10 @@
 'use client';
 
-import { site } from '../../../content/site';
 
 import { useEffect, useState } from 'react';
 import { Share2, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useSite } from '@/i18n';
 
 interface ShareButtonsProps {
   title: string;
@@ -28,6 +28,7 @@ function LinkedInIcon({ className }: { className?: string }) {
 }
 
 export function ShareButtons({ title, variant = 'compact' }: ShareButtonsProps) {
+  const site = useSite();
   const [url, setUrl] = useState('');
   const [copied, setCopied] = useState(false);
 

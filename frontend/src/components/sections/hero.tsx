@@ -1,15 +1,15 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { ArrowRight, Terminal, Shield, Code, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useReducedMotion, useGSAP } from '@/hooks';
-import { site } from '../../../content/site';
+import { useSite, LocalizedLink } from '@/i18n';
 
 const highlightIcons = { Shield, Code, Zap };
 
 export function Hero() {
+  const site = useSite();
   const reducedMotion = useReducedMotion();
   const { gsap } = useGSAP();
   const heroRef = useRef<HTMLDivElement>(null);
@@ -90,20 +90,20 @@ export function Hero() {
             </p>
 
             <div ref={ctaRef} className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link
+              <LocalizedLink
                 href={site.hero.ctas.primary.href}
                 className="btn-primary w-full max-w-xs"
               >
                 {site.hero.ctas.primary.label}
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-              <Link
+              </LocalizedLink>
+              <LocalizedLink
                 href={site.hero.ctas.secondary.href}
                 className="btn-outline w-full max-w-xs"
               >
                 <Terminal className="h-4 w-4 mr-2" aria-hidden="true" />
                 {site.hero.ctas.secondary.label}
-              </Link>
+              </LocalizedLink>
             </div>
 
             <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground">

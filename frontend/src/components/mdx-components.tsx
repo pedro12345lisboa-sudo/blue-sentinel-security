@@ -1,5 +1,5 @@
-import { site } from '../../content/site';
 import { cn } from '@/lib/utils';
+import type { Messages } from '@/i18n';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,9 +9,10 @@ import { TableOfContents } from '@/components/common/table-of-contents';
 
 interface MDXComponentsProps {
   components?: Record<string, React.ComponentType<Record<string, unknown>>>;
+  site: Messages;
 }
 
-export function MDXComponents({ components }: MDXComponentsProps) {
+export function MDXComponents({ components, site }: MDXComponentsProps) {
   return {
     ...components,
     h1: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
