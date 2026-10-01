@@ -14,12 +14,6 @@
     "jsx-a11y/click-events-have-key-events": "warn",
     "jsx-a11y/no-noninteractive-element-interactions": "warn",
     "react/no-unescaped-entities": "off",
-    "tailwindcss/no-custom-classname": "off",
-    "tailwindcss/enforce-consistent-line-clamp": "warn"
-  },
-  "settings": {
-    "tailwindcss": {
-      "config": "tailwind.config.js"
-    }
+    "tailwindcss/no-custom-classname": "off"
   }
 }

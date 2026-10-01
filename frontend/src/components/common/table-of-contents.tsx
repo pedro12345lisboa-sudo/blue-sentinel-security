@@ -1,5 +1,7 @@
 'use client';
 
+import { site } from '../../../content/site';
+
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -40,8 +42,8 @@ export function TableOfContents({ headings, className }: TableOfContentsProps) {
   if (headings.length === 0) return null;
 
   return (
-    <nav className={cn('sticky top-24 space-y-1 max-h-[calc(100vh-8rem)] overflow-y-auto', className)} aria-label="Table of contents">
-      <h3 className="mb-3 text-sm font-semibold text-foreground uppercase tracking-wider">On this page</h3>
+    <nav className={cn('sticky top-24 space-y-1 max-h-[calc(100vh-8rem)] overflow-y-auto', className)} aria-label={site.microcopy.toc.aria}>
+      <h3 className="mb-3 text-sm font-semibold text-foreground uppercase tracking-wider">{site.microcopy.toc.title}</h3>
       <ul className="space-y-1">
         {headings.map((heading) => (
           <li key={heading.id}>

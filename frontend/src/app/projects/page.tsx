@@ -6,18 +6,18 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAllProjects, ProjectFrontmatter } from '@/lib/projects';
+import { site } from '../../../content/site';
 
 export const metadata: Metadata = {
-  title: 'Projects',
-  description: 'Security projects: detection engineering, threat hunting frameworks, automation pipelines, and systems programming.',
+  title: site.seo.projects.title,
+  description: site.seo.projects.description,
 };
-
-const allTags = ['Detection', 'Automation', 'C++', 'Python', 'Go', 'Sigma', 'eBPF', 'MITRE ATT&CK', 'SIEM', 'SOAR'];
 
 export default function ProjectsPage() {
   const projects = getAllProjects();
-  const highlightedProjects = projects.filter((p) => p.frontmatter.highlight);
-  const regularProjects = projects.filter((p) => !p.frontmatter.highlight);
+  const allTags = Array.from(new Set(projects.flatMap((project) => project.tags))).sort();
+  const highlightedProjects = projects.filter((p) => p.highlight);
+  const regularProjects = projects.filter((p) => !p.highlight);
 
   const getIcon = (iconName?: string) => {
     switch (iconName) {
@@ -37,11 +37,11 @@ export default function ProjectsPage() {
         <div className="container-wide relative">
           <div className="max-w-3xl">
             <h1 className="mb-4 text-display-lg font-display font-bold tracking-tight">
-              <span className="font-mono text-primary">blue-sentinel</span> Projects
+              <span className="font-mono text-primary">{site.pages.projects.titleAccent}</span>{' '}
+              {site.pages.projects.title}
             </h1>
             <p className="text-lg text-muted-foreground text-balance">
-              Selected security projects spanning detection engineering, automation, threat hunting, and systems programming.
-              Each project includes source code, documentation, and live demos where applicable.
+              {site.pages.projects.description}
             </p>
           </div>
         </div>
@@ -51,13 +51,13 @@ export default function ProjectsPage() {
         <div className="container-wide">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <label htmlFor="tag-filter" className="sr-only">Filter by tag</label>
+              <label htmlFor="tag-filter" className="sr-only">{site.pages.projects.filters.label}</label>
               <select
                 id="tag-filter"
                 className="input-base w-auto min-w-[200px] bg-background"
-                aria-label="Filter projects by technology"
+                aria-label={site.pages.projects.filters.label}
               >
-                <option value="">All Technologies</option>
+                <option value="">{site.pages.projects.filters.all}</option>
                 {allTags.map((tag) => (
                   <option key={tag} value={tag}>{tag}</option>
                 ))}
@@ -65,7 +65,12 @@ export default function ProjectsPage() {
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Tag className="h-4 w-4" aria-hidden="true" />
-              <span>{projects.length} projects</span>
+              <span>
+                {projects.length}{' '}
+                {projects.length === 1
+                  ? site.pages.projects.filters.countOne
+                  : site.pages.projects.filters.count}
+              </span>
             </div>
           </div>
         </div>
@@ -75,7 +80,7 @@ export default function ProjectsPage() {
         <section className="section-sm" aria-labelledby="highlighted-title">
           <div className="container-wide">
             <h2 id="highlighted-title" className="mb-8 text-center heading-section text-display-md">
-              Featured Projects
+              {site.pages.projects.highlightedTitle}
             </h2>
             <div className="grid gap-6 lg:grid-cols-2">
               {highlightedProjects.map((project) => (
@@ -86,38 +91,40 @@ export default function ProjectsPage() {
                   >
                     <div className="mb-4 flex items-center justify-between">
                       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                        {getIcon(project.frontmatter.icon)}
+                        {getIcon(project.icon)}
                       </div>
-                      {project.frontmatter.highlight && (
-                        <Badge variant="success">Destaque</Badge>
+                      {project.highlight && (
+                        <Badge variant="success">{site.pages.projects.labels.highlight}</Badge>
                       )}
                     </div>
                     <CardTitle className="mb-2 text-xl group-hover:text-primary transition-colors">
-                      {project.frontmatter.title}
+                      {project.title}
                     </CardTitle>
-                    <p className="mb-4 text-muted-foreground">{project.frontmatter.description}</p>
+                    <p className="mb-4 text-muted-foreground">{project.description}</p>
                     <div className="mb-4 flex flex-wrap gap-2">
-                      {project.frontmatter.tags.slice(0, 5).map((tag) => (
+                      {project.tags.slice(0, 5).map((tag) => (
                         <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
                       ))}
-                      {project.frontmatter.tags.length > 5 && (
-                        <Badge variant="ghost" className="text-xs">+{project.frontmatter.tags.length - 5}</Badge>
+                      {project.tags.length > 5 && (
+                        <Badge variant="ghost" className="text-xs">
+                          +{project.tags.length - 5} {site.pages.projects.labels.moreTags}
+                        </Badge>
                       )}
                     </div>
                     <div className="flex items-center gap-3 pt-4 border-t border-border/50">
-                      {project.frontmatter.links?.github && (
+                      {project.links?.github && (
                         <Button variant="ghost" size="sm" asChild>
-                          <a href={project.frontmatter.links.github} target="_blank" rel="noopener noreferrer">
+                          <a href={project.links.github} target="_blank" rel="noopener noreferrer">
                             <Github className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
-                            Code
+                            {site.pages.projects.labels.code}
                           </a>
                         </Button>
                       )}
-                      {project.frontmatter.links?.demo && (
+                      {project.links?.demo && (
                         <Button variant="ghost" size="sm" asChild>
-                          <a href={project.frontmatter.links.demo}>
+                          <a href={project.links.demo}>
                             <ArrowRight className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
-                            Demo
+                            {site.pages.projects.labels.demo}
                           </a>
                         </Button>
                       )}
@@ -133,7 +140,7 @@ export default function ProjectsPage() {
       <section className="section" aria-labelledby="all-projects-title">
         <div className="container-wide">
           <h2 id="all-projects-title" className="mb-8 text-center heading-section text-display-md">
-            All Projects
+            {site.pages.projects.allTitle}
           </h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {regularProjects.map((project) => (
@@ -144,36 +151,38 @@ export default function ProjectsPage() {
                 >
                   <div className="mb-4 flex items-center justify-between">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      {getIcon(project.frontmatter.icon)}
+                      {getIcon(project.icon)}
                     </div>
-                    <span className="text-xs font-mono text-muted-foreground">{project.frontmatter.date.split('-')[0]}</span>
+                    <span className="text-xs font-mono text-muted-foreground">{project.date.split('-')[0]}</span>
                   </div>
                   <CardTitle className="mb-2 group-hover:text-primary transition-colors">
-                    {project.frontmatter.title}
+                    {project.title}
                   </CardTitle>
-                  <p className="mb-4 text-sm text-muted-foreground line-clamp-2">{project.frontmatter.description}</p>
+                  <p className="mb-4 text-sm text-muted-foreground line-clamp-2">{project.description}</p>
                   <div className="mb-4 flex flex-wrap gap-1.5">
-                    {project.frontmatter.tags.slice(0, 4).map((tag) => (
+                    {project.tags.slice(0, 4).map((tag) => (
                       <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
                     ))}
-                    {project.frontmatter.tags.length > 4 && (
-                      <Badge variant="ghost" className="text-xs">+{project.frontmatter.tags.length - 4}</Badge>
+                    {project.tags.length > 4 && (
+                      <Badge variant="ghost" className="text-xs">
+                        +{project.tags.length - 4} {site.pages.projects.labels.moreTags}
+                      </Badge>
                     )}
                   </div>
                   <div className="flex items-center gap-2 pt-4 border-t border-border/50">
-                    {project.frontmatter.links?.github && (
+                    {project.links?.github && (
                       <Button variant="ghost" size="sm" asChild>
-                        <a href={project.frontmatter.links.github} target="_blank" rel="noopener noreferrer" className="text-xs gap-1.5">
+                        <a href={project.links.github} target="_blank" rel="noopener noreferrer" className="text-xs gap-1.5">
                           <Github className="h-3 w-3" aria-hidden="true" />
-                          Code
+                          {site.pages.projects.labels.code}
                         </a>
                       </Button>
                     )}
-                    {project.frontmatter.links?.demo && (
+                    {project.links?.demo && (
                       <Button variant="ghost" size="sm" asChild>
-                        <a href={project.frontmatter.links.demo} className="text-xs gap-1.5">
+                        <a href={project.links.demo} className="text-xs gap-1.5">
                           <ExternalLink className="h-3 w-3" aria-hidden="true" />
-                          Demo
+                          {site.pages.projects.labels.demo}
                         </a>
                       </Button>
                     )}
@@ -185,7 +194,11 @@ export default function ProjectsPage() {
 
           {regularProjects.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No additional projects yet. Check back soon!</p>
+              <p className="text-muted-foreground">
+                {projects.length === 0
+                  ? site.pages.projects.emptyAll
+                  : site.pages.projects.empty}
+              </p>
             </div>
           )}
         </div>

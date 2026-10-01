@@ -7,16 +7,16 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { getAllWriteups, WriteupFrontmatter } from '@/lib/writeups';
+import { site } from '../../../content/site';
 
 export const metadata: Metadata = {
-  title: 'Technical Writeups',
-  description: 'Deep-dive articles on detection engineering, threat hunting, malware analysis, and security automation.',
+  title: site.seo.writeups.title,
+  description: site.seo.writeups.description,
 };
-
-const allTags = ['Detection', 'Threat Hunting', 'Malware Analysis', 'Automation', 'eBPF', 'Sigma', 'YARA', 'MITRE ATT&CK', 'Forensics', 'Blue Team'];
 
 export default function WriteupsPage() {
   const writeups = getAllWriteups();
+  const allTags = Array.from(new Set(writeups.flatMap((writeup) => writeup.tags))).sort();
 
   return (
     <div className="min-h-screen">
@@ -26,11 +26,10 @@ export default function WriteupsPage() {
         <div className="container-wide relative">
           <div className="max-w-3xl">
             <h1 className="mb-4 text-display-lg font-display font-bold tracking-tight">
-              Technical Writeups
+              {site.pages.writeups.title}
             </h1>
             <p className="text-lg text-muted-foreground text-balance">
-              Deep-dive articles on detection engineering, threat hunting methodologies, malware analysis techniques,
-              and security automation patterns. Written for practitioners, by a practitioner.
+              {site.pages.writeups.description}
             </p>
           </div>
         </div>
@@ -40,13 +39,13 @@ export default function WriteupsPage() {
         <div className="container-wide">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <label htmlFor="tag-filter" className="sr-only">Filter by tag</label>
+              <label htmlFor="tag-filter" className="sr-only">{site.pages.writeups.filters.label}</label>
               <select
                 id="tag-filter"
                 className="input-base w-auto min-w-[200px] bg-background"
-                aria-label="Filter writeups by topic"
+                aria-label={site.pages.writeups.filters.label}
               >
-                <option value="">All Topics</option>
+                <option value="">{site.pages.writeups.filters.all}</option>
                 {allTags.map((tag) => (
                   <option key={tag} value={tag}>{tag}</option>
                 ))}
@@ -54,7 +53,12 @@ export default function WriteupsPage() {
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Tag className="h-4 w-4" aria-hidden="true" />
-              <span>{writeups.length} articles</span>
+              <span>
+                {writeups.length}{' '}
+                {writeups.length === 1
+                  ? site.pages.writeups.filters.countOne
+                  : site.pages.writeups.filters.count}
+              </span>
             </div>
           </div>
         </div>
@@ -75,7 +79,7 @@ export default function WriteupsPage() {
                     </span>
                     {writeup.series && (
                       <Badge variant="secondary" className="text-xs">
-                        {writeup.series}
+                        {site.pages.writeups.labels.series}: {writeup.series}
                       </Badge>
                     )}
                   </div>
@@ -94,11 +98,12 @@ export default function WriteupsPage() {
                   <div className="flex items-center gap-4 pt-4 border-t border-border/50">
                     <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <Clock className="h-3.5 w-3.5" aria-hidden="true" />
-                      {writeup.readingTime || Math.ceil(writeup.description.split(/\s+/).length / 200)} min
+                      {writeup.readingTime || Math.ceil(writeup.description.split(/\s+/).length / 200)}{' '}
+                      {site.pages.writeups.labels.min}
                     </span>
                     <Button variant="ghost" size="sm" asChild className="ml-auto">
                       <a href={`/writeups/${writeup.slug}`}>
-                        Read
+                        {site.pages.writeups.labels.read}
                         <ArrowRight className="h-3.5 w-3.5 ml-1.5" aria-hidden="true" />
                       </a>
                     </Button>
@@ -110,7 +115,7 @@ export default function WriteupsPage() {
 
           {writeups.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No writeups yet. Check back soon!</p>
+              <p className="text-muted-foreground">{site.pages.writeups.empty}</p>
             </div>
           )}
         </div>

@@ -1,0 +1,943 @@
+export const locale = 'pt';
+
+export const site = {
+  brand: {
+    name: 'blue-sentinel',
+    fullName: 'Blue-Sentinel',
+    version: 'v0.1.0',
+    tagline: 'Portfólio de Cybersecurity Blue Team',
+  },
+
+  contacts: {
+    general: 'contact@blue-sentinel.local',
+    security: 'security@blue-sentinel.local',
+    issues: 'https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/issues',
+    repository: 'https://github.com/pedro12345lisboa-sudo/blue-sentinel-security',
+    linkedin: '[URL DO LINKEDIN]',
+    github: '[URL DO GITHUB]',
+    phone: '[SEU TELEFONE]',
+  },
+
+  profile: {
+    name: '[SEU NOME]',
+    title: '[SEU CARGO — ex.: Blue Team / Detection Engineering]',
+    location: '[SUA LOCALIZAÇÃO — ex.: Remoto, Brasil]',
+    summary:
+      '[N ANOS] de estudo e prática em Blue Team. Escrevo detecção com Sigma e MITRE ATT&CK, construo ferramentas em Python, TypeScript e C++20 e documento cada decisão técnica. [Métrica mais forte que você já mediu.]',
+    experience: [
+      {
+        role: '[CARGO]',
+        company: '[EMPRESA, PROJETO PRÓPRIO OU PROJETO COMUNITÁRIO]',
+        period: '[ANO] — presente',
+        location: '[LOCAL ou Remoto]',
+        description:
+          '[1–2 frases sobre o escopo: o que você cobria, com quais tecnologias e para quantos usuários/sistemas.]',
+        achievements: [
+          '[Realização mensurável: o que mudou e como você mediu.]',
+          '[Realização mensurável: o que mudou e como você mediu.]',
+        ],
+        technologies: ['[TECNOLOGIA]', '[TECNOLOGIA]'],
+      },
+    ],
+    education: [
+      {
+        degree: '[FORMAÇÃO]',
+        school: '[INSTITUIÇÃO]',
+        period: '[ANO] — [ANO]',
+        details: '[Foco de estudo, TCC ou disciplinas relevantes para segurança.]',
+      },
+    ],
+  },
+
+  seo: {
+    home: {
+      title: 'Blue-Sentinel | Blue Team e Detection Engineering',
+      description:
+        'Portfólio de segurança defensiva: case studies de detecção, artigos técnicos e um laboratório interativo com eventos sintéticos.',
+      ogTitle: 'Blue-Sentinel | Portfólio de Cybersecurity Blue Team',
+      ogDescription:
+        'Projetos de detection engineering, automação defensiva e um laboratório de detecção interativo.',
+    },
+    about: {
+      title: 'Sobre | Blue-Sentinel',
+      description:
+        'Trajetória em Blue Team, o que estou estudando e construindo agora, e o tipo de oportunidade que procuro.',
+    },
+    projects: {
+      title: 'Projetos | Blue-Sentinel',
+      description:
+        'Case studies de segurança: portfólio full-stack, laboratório de detecção e agente C++ para telemetria de endpoint.',
+    },
+    writeups: {
+      title: 'Artigos | Blue-Sentinel',
+      description:
+        'Artigos técnicos sobre Sigma rules, threat hunting e desenvolvimento de agentes de segurança em C++.',
+    },
+    lab: {
+      title: 'Laboratório de Detecção | Blue-Sentinel',
+      description:
+        'Laboratório interativo com eventos sintéticos e regras mapeadas para MITRE ATT&CK. Uso estritamente educacional.',
+    },
+    status: {
+      title: 'Status | Blue-Sentinel',
+      description:
+        'Saúde dos serviços, latência da API e métricas de recursos da plataforma Blue-Sentinel.',
+    },
+    security: {
+      title: 'Segurança | Blue-Sentinel',
+      description:
+        'Medidas de segurança do site: segmentação de rede, validação de entrada, rate limiting e divulgação responsável.',
+    },
+    resume: {
+      title: 'Currículo | Blue-Sentinel',
+      description:
+        'Currículo de [SEU NOME]: formação, certificações, competências técnicas e projetos de segurança defensiva.',
+    },
+    contact: {
+      title: 'Contato | Blue-Sentinel',
+      description:
+        'Fale comigo sobre vagas e estágios em Blue Team, colaboração ou para reportar uma vulnerabilidade.',
+    },
+    faq: {
+      title: 'Perguntas frequentes | Blue-Sentinel',
+      description:
+        'Respostas sobre o laboratório, uso ético, oportunidades, tecnologias e como reportar problemas.',
+    },
+    notFound: {
+      title: 'Página não encontrada | Blue-Sentinel',
+    },
+    error: {
+      title: 'Erro no servidor | Blue-Sentinel',
+    },
+  },
+
+  nav: {
+    items: [
+      { name: 'Sobre', href: '/about' },
+      { name: 'Projetos', href: '/projects' },
+      { name: 'Artigos', href: '/writeups' },
+      { name: 'Laboratório', href: '/lab' },
+      { name: 'Status', href: '/status' },
+      { name: 'Segurança', href: '/security' },
+      { name: 'Currículo', href: '/resume' },
+      { name: 'FAQ', href: '/faq' },
+    ],
+    contact: { name: 'Contato', href: '/contact' },
+    mainLabel: 'Navegação principal',
+    footerLabel: 'Navegação do rodapé',
+    columns: { navigation: 'Navegação', resources: 'Recursos', social: 'Redes' },
+    resources: [
+      { name: 'Segurança', href: '/security' },
+      { name: 'Currículo', href: '/resume' },
+      { name: 'Perguntas frequentes', href: '/faq' },
+      { name: 'Contato', href: '/contact' },
+    ],
+    social: [
+      { name: 'GitHub', hrefKey: 'repository' },
+      { name: 'LinkedIn', hrefKey: 'linkedin' },
+      { name: 'E-mail', hrefKey: 'general' },
+    ],
+    ariaHome: 'Blue-Sentinel — Início',
+    skipToContent: 'Pular para o conteúdo principal',
+    openMenu: 'Abrir menu',
+    closeMenu: 'Fechar menu',
+  },
+
+  hero: {
+    activeVariant: 0,
+    variants: [
+      {
+        id: 'portfolio',
+        title: 'Portfólio de Blue Team e Detection Engineering',
+        subtitle:
+          'Construo regras de detecção, automações e ferramentas defensivas. Aqui você vê o processo, o código e um laboratório de detecção rodando no navegador.',
+      },
+      {
+        id: 'alerta-confiavel',
+        title: 'Do evento bruto ao alerta em que dá para confiar',
+        subtitle:
+          'Sou [SEU NOME], focado em Blue Team: escrevo detecção com Sigma e MITRE ATT&CK, automatizo tarefas repetitivas e documento cada decisão técnica.',
+      },
+      {
+        id: 'construido-em-publico',
+        title: 'Segurança defensiva construída em público',
+        subtitle:
+          'Case studies detalhados, artigos técnicos e código aberto — incluindo um laboratório que gera eventos sintéticos e avalia regras ao vivo.',
+      },
+    ],
+    badges: ['Segurança defensiva', 'Detection engineering', 'Automação'],
+    ctas: {
+      primary: { label: 'Ver projetos', href: '/projects' },
+      secondary: { label: 'Abrir o laboratório', href: '/lab' },
+    },
+    highlights: [
+      { icon: 'Shield', label: 'Só defensiva' },
+      { icon: 'Code', label: 'Open source' },
+      { icon: 'Zap', label: 'Laboratório ao vivo' },
+    ],
+    visual: {
+      label: 'Espaço reservado para a visualização 3D',
+      title: 'Slot do Three.js',
+      hint: 'Visualização interativa do SOC em breve',
+      fallback: '🛡️',
+    },
+  },
+
+  sections: {
+    skills: {
+      title: 'Competências técnicas',
+      description:
+        'Áreas de estudo e prática construídas nos projetos deste repositório: detecção, desenvolvimento de ferramentas e infraestrutura do laboratório.',
+      groups: [
+        {
+          title: 'Detecção e resposta',
+          icon: 'Shield',
+          items: [
+            'Sigma rules',
+            'MITRE ATT&CK mapping',
+            'Threat hunting',
+            'Análise de logs',
+            'Alert tuning',
+            'YARA',
+          ],
+        },
+        {
+          title: 'Desenvolvimento',
+          icon: 'Code',
+          items: [
+            'Python (FastAPI)',
+            'TypeScript (Next.js)',
+            'C++20',
+            'API REST e WebSocket',
+            'PostgreSQL e SQLAlchemy',
+            'Testes (Vitest, Playwright)',
+          ],
+        },
+        {
+          title: 'Infraestrutura',
+          icon: 'Terminal',
+          items: [
+            'Docker e Docker Compose',
+            'Redes segmentadas',
+            'PostgreSQL 16',
+            'Redis 7',
+            'Containers não-root',
+            'Gestão de segredos por ambiente',
+          ],
+        },
+        {
+          title: 'Ferramentas',
+          icon: 'Zap',
+          items: [
+            'Git e GitHub',
+            'Playwright (e2e)',
+            'Vitest (unit tests)',
+            'Mermaid (documentação)',
+            'Figma (design tokens)',
+            'Blender (assets 3D)',
+          ],
+        },
+      ],
+    },
+
+    featuredProjects: {
+      title: 'Projetos em destaque',
+      description:
+        'Case studies no mesmo formato: problema, contexto, solução, arquitetura, decisões técnicas e resultados.',
+      cta: { label: 'Ver todos os projetos', href: '/projects' },
+      labels: {
+        highlight: 'Destaque',
+        code: 'Código',
+        demo: 'Demo',
+        docs: 'Documentação',
+        ariaCode: 'Abrir código-fonte no GitHub',
+        ariaDemo: 'Abrir demonstração',
+        ariaDocs: 'Abrir documentação',
+        moreTags: 'mais tags',
+      },
+      empty: 'Nenhum projeto publicado ainda.',
+    },
+
+    labTeaser: {
+      title: 'Laboratório de detecção interativo',
+      description:
+        'Fluxo de eventos de segurança sintéticos avaliado contra regras tipo Sigma. Os alertas aparecem conforme os eventos entram na fila.',
+      cta: { label: 'Abrir o laboratório', href: '/lab' },
+      stream: {
+        ariaLabel: 'Fluxo de eventos de segurança',
+        live: 'Ao vivo',
+        paused: 'Pausado',
+        connected: 'WebSocket conectado',
+        ariaRunning: 'Laboratório em execução',
+        ariaStopped: 'Laboratório pausado',
+        ariaPause: 'Pausar o fluxo de eventos',
+        ariaResume: 'Retomar o fluxo de eventos',
+        ariaRestart: 'Reiniciar o fluxo de eventos',
+        new: 'NOVO',
+        generating: 'Gerando eventos sintéticos a cada 3s',
+        alerts: '0 alertas disparados',
+      },
+      rules: {
+        title: 'Regras de detecção',
+        active: 'Ativa',
+        inactive: 'Inativa',
+        summaryActive: 'regras ativas de',
+        summaryTail: 'no painel',
+        items: [
+          { name: 'PowerShell EncodedCommand', mitre: 'T1059.001', status: 'active' },
+          { name: 'Suspicious Network Connection', mitre: 'T1071.001', status: 'active' },
+          { name: 'Ingress Tool Transfer', mitre: 'T1105', status: 'active' },
+          { name: 'Registry Run Key Persistence', mitre: 'T1547.001', status: 'active' },
+          { name: 'System Information Discovery', mitre: 'T1082', status: 'inactive' },
+          { name: 'DNS Exfiltration', mitre: 'T1071.004', status: 'inactive' },
+        ],
+      },
+      events: [
+        { type: 'process', name: 'powershell.exe', detail: 'Execução de comando codificado', severity: 'high', mitre: 'T1059.001' },
+        { type: 'network', name: 'svchost.exe', detail: 'Conexão de saída para 192.168.1.100:4444', severity: 'critical', mitre: 'T1071.001' },
+        { type: 'file', name: 'temp.exe', detail: 'Escrita em C:\\Users\\Public\\', severity: 'medium', mitre: 'T1105' },
+        { type: 'registry', name: 'reg.exe', detail: 'Modificação da chave HKCU\\Run', severity: 'high', mitre: 'T1547.001' },
+        { type: 'process', name: 'cmd.exe', detail: 'Execução de whoami /priv', severity: 'low', mitre: 'T1082' },
+        { type: 'network', name: 'chrome.exe', detail: 'Consulta DNS para malicious.domain', severity: 'medium', mitre: 'T1071.004' },
+      ],
+    },
+
+    counters: {
+      title: 'Números do trabalho',
+      description:
+        'Projeto, regras e artigos que documentam o que foi construído. Preencha cada valor com a sua métrica medida.',
+      items: [
+        { icon: 'Shield', label: 'Projetos de segurança', value: null, placeholder: '[MÉTRICA MEDIDA]', suffix: '' },
+        { icon: 'FileText', label: 'Regras de detecção', value: null, placeholder: '[MÉTRICA MEDIDA]', suffix: '' },
+        { icon: 'Code', label: 'Artigos técnicos', value: null, placeholder: '[MÉTRICA MEDIDA]', suffix: '' },
+        { icon: 'Terminal', label: 'Horas de laboratório', value: null, placeholder: '[MÉTRICA MEDIDA]', suffix: '' },
+        { icon: 'Zap', label: 'Automações criadas', value: null, placeholder: '[MÉTRICA MEDIDA]', suffix: '' },
+        { icon: 'Award', label: 'Certificações', value: null, placeholder: '[MÉTRICA MEDIDA]', suffix: '' },
+      ],
+    },
+
+    cta: {
+      badge: 'Vamos trabalhar juntos',
+      title: 'Quer reforçar a detecção do seu ambiente?',
+      description:
+        'Estou aberto a conversar sobre vagas e estágios em Blue Team, projetos freelance de detecção e colaboração em ferramentas de segurança open source.',
+      primary: { label: 'Entrar em contato', href: '/contact' },
+      secondary: { label: 'Baixar currículo', href: '/resume' },
+      emailNote: { prefix: 'Prefere e-mail?', addressKey: 'general' },
+    },
+  },
+
+  pages: {
+    about: {
+      focus: {
+        title: 'Áreas de foco',
+        description: 'Onde concentro estudo e prática hoje.',
+      },
+      timeline: {
+        title: 'Trajetória e estudos',
+        description: 'Períodos, papéis e o que ficou de cada um.',
+        present: 'presente',
+        empty: 'Nenhum período cadastrado ainda.',
+      },
+      certifications: {
+        title: 'Certificações',
+        description: 'Credenciais obtidas e trilha de certificação em andamento.',
+        status: { active: 'ativa', planned: 'planejada' },
+        empty: 'Nenhuma certificação cadastrada ainda.',
+      },
+    },
+
+    projects: {
+      title: 'Projetos',
+      titleAccent: 'blue-sentinel',
+      description:
+        'Projetos de segurança que cobrem detecção, automação e programação de sistemas. Cada case study traz problema, arquitetura, decisões técnicas e resultados.',
+      filters: {
+        label: 'Filtrar projetos por tecnologia',
+        all: 'Todas as tecnologias',
+        count: 'projetos',
+        countOne: 'projeto',
+      },
+      highlightedTitle: 'Projetos em destaque',
+      allTitle: 'Todos os projetos',
+      labels: { code: 'Código', demo: 'Demo', highlight: 'Destaque', moreTags: 'mais tags' },
+      empty: 'Nenhum projeto corresponde ao filtro.',
+      emptyAll: 'Nenhum projeto publicado ainda.',
+      detail: {
+        back: 'Voltar aos projetos',
+        highlight: 'Projeto em destaque',
+        viewSource: 'Ver código-fonte',
+        liveDemo: 'Demonstração ao vivo',
+        docs: 'Documentação',
+        title: 'Detalhes do projeto',
+        type: 'Tipo',
+        typeValue: 'Ferramenta de segurança',
+        status: 'Status',
+        statusValue: 'Ativo',
+        license: 'Licença',
+        licenseValue: 'MIT',
+        language: 'Idioma',
+        languageFallback: 'Vários',
+        technologies: 'Tecnologias principais',
+        related: 'Relacionados',
+        allProjects: 'Todos os projetos',
+        allWriteups: 'Artigos técnicos',
+        lab: 'Laboratório de detecção',
+        notFound: 'Projeto não encontrado',
+        minRead: 'min de leitura',
+      },
+    },
+
+    writeups: {
+      title: 'Artigos técnicos',
+      description:
+        'Textos aprofundados sobre detection engineering, threat hunting e programação de sistemas de segurança, escritos na prática.',
+      filters: {
+        label: 'Filtrar artigos por tema',
+        all: 'Todos os temas',
+        count: 'artigos',
+        countOne: 'artigo',
+      },
+      labels: {
+        read: 'Ler',
+        minRead: 'min de leitura',
+        min: 'min',
+        tags: 'tags',
+        published: 'Publicado em',
+        readingTime: 'Tempo de leitura',
+        category: 'Categoria',
+        series: 'Série',
+        info: 'Sobre o artigo',
+        tagsTitle: 'Tags',
+        moreReading: 'Leitura relacionada',
+        allWriteups: 'Todos os artigos',
+        relatedProjects: 'Projetos de segurança',
+        relatedLab: 'Laboratório de detecção',
+        back: 'Voltar aos artigos',
+        share: 'Compartilhar este artigo',
+        notFound: 'Artigo não encontrado',
+      },
+      empty: 'Nenhum artigo publicado ainda.',
+    },
+
+    lab: {
+      title: 'Laboratório',
+      titleAccent: 'blue-sentinel',
+      description:
+        'Laboratório interativo — geração de eventos sintéticos em tempo real com motor de detecção tipo Sigma.',
+      status: { live: 'Ao vivo', paused: 'Pausado' },
+      stream: {
+        title: 'Fluxo de eventos',
+        eventsCount: 'eventos',
+        eventOne: 'evento',
+        ariaPause: 'Pausar o fluxo',
+        ariaResume: 'Retomar o fluxo',
+        ariaClear: 'Limpar eventos',
+        ariaExport: 'Exportar eventos',
+        search: 'Buscar eventos...',
+        searchAria: 'Buscar eventos por nome ou detalhe',
+        typeAll: 'Todos os tipos',
+        severityAll: 'Todas as severidades',
+        filterType: 'Filtrar por tipo de evento',
+        filterSeverity: 'Filtrar por severidade',
+        empty: 'Nenhum evento corresponde aos filtros.',
+        alert: 'ALERTA',
+        clearHint: 'Limpar a lista de eventos',
+      },
+      stats: {
+        title: 'Estatísticas de detecção',
+        total: 'Eventos totais',
+        alerts: 'Alertas disparados',
+        critical: 'Críticos',
+        high: 'Altos',
+      },
+      rules: {
+        title: 'Regras de detecção',
+        activeCount: 'ativas',
+        active: 'Ativa',
+        inactive: 'Inativa',
+        matches: 'correspondências',
+        empty: 'Nenhuma regra carregada.',
+        items: [
+          { name: 'PowerShell EncodedCommand', mitre: 'T1059.001', status: 'active' },
+          { name: 'Conexão de Rede Suspeita', mitre: 'T1071.001', status: 'active' },
+          { name: 'Ingress Tool Transfer', mitre: 'T1105', status: 'active' },
+          { name: 'Registry Run Key Persistence', mitre: 'T1547.001', status: 'active' },
+          { name: 'System Information Discovery', mitre: 'T1082', status: 'inactive' },
+          { name: 'DNS Exfiltration Attempt', mitre: 'T1071.004', status: 'inactive' },
+        ],
+      },
+      demo: {
+        severities: ['critical', 'high', 'medium', 'low'],
+        types: ['process', 'network', 'file', 'registry', 'dns', 'auth'],
+        names: [
+          'powershell.exe',
+          'svchost.exe',
+          'cmd.exe',
+          'reg.exe',
+          'chrome.exe',
+          'notepad.exe',
+          'explorer.exe',
+        ],
+        details: [
+          'Argumentos de linha de comando suspeitos',
+          'Conexão com IP de C2 conhecido',
+          'Escrita na pasta de inicialização',
+          'Modificação de registro para persistência',
+          'Tunelamento DNS detectado',
+          'Tentativa de injeção de processo',
+          'Coleta de credenciais via LSASS',
+        ],
+        seed: [
+          { id: 1, type: 'process', name: 'powershell.exe', detail: 'Execução de comando codificado detectada', severity: 'high', mitre: 'T1059.001', alert: true },
+          { id: 2, type: 'network', name: 'svchost.exe', detail: 'Conexão de saída suspeita para 192.168.1.100:4444', severity: 'critical', mitre: 'T1071.001', alert: true },
+          { id: 3, type: 'file', name: 'temp.exe', detail: 'Escrita em C:\\Users\\Public\\temp.exe', severity: 'medium', mitre: 'T1105', alert: false },
+          { id: 4, type: 'registry', name: 'reg.exe', detail: 'Modificação da chave HKCU\\Run para persistência', severity: 'high', mitre: 'T1547.001', alert: true },
+          { id: 5, type: 'process', name: 'cmd.exe', detail: 'Execução de whoami /priv', severity: 'low', mitre: 'T1082', alert: false },
+          { id: 6, type: 'dns', name: 'chrome.exe', detail: 'Consulta DNS para malicious.domain.tld', severity: 'medium', mitre: 'T1071.004', alert: false },
+        ],
+      },
+      config: {
+        title: 'Configuração do laboratório',
+        rate: 'Intervalo de geração de eventos',
+        rateOptions: [
+          { value: '1000', label: '1 segundo' },
+          { value: '3000', label: '3 segundos' },
+          { value: '5000', label: '5 segundos' },
+          { value: '10000', label: '10 segundos' },
+        ],
+        buffer: 'Máximo de eventos no buffer',
+        bufferOptions: ['50', '100', '200', '500'],
+        autoScroll: 'Rolagem automática para novos eventos',
+        sound: 'Som em alertas críticos',
+      },
+    },
+
+    status: {
+      title: 'Status da plataforma',
+      description:
+        'Métricas ao vivo de saúde e recursos. Sem dados de placeholder: se o backend estiver fora do ar, a página mostra o estado real.',
+      refresh: 'Atualizar métricas',
+      levels: {
+        HEALTHY: 'SAUDÁVEL',
+        DEGRADED: 'DEGRADADO',
+        UNHEALTHY: 'INSTÁVEL',
+        UNKNOWN: 'DESCONHECIDO',
+      },
+      overview: 'Visão geral de recursos',
+      charts: 'Gráficos de recursos',
+      services: 'Serviços e APIs',
+      gauges: {
+        cpu: 'Uso de CPU',
+        memory: 'Uso de memória',
+        disk: 'Uso de disco',
+        uptime: 'Tempo ligado',
+      },
+      loading: 'Carregando métricas...',
+      error: 'Não foi possível carregar as métricas.',
+      empty: 'Sem dados no momento.',
+      offline:
+        'O backend não respondeu. Os dados aparecem quando a API voltar — nada é inventado aqui.',
+    },
+
+    security: {
+      title: 'Arquitetura de segurança',
+      description:
+        'Transparência sobre como este portfólio se protege. Segurança por obscuridade não é segurança: as medidas estão aqui e no código-fonte.',
+      measuresTitle: 'Medidas defensivas',
+      threatTitle: 'Modelo de ameaças',
+      threatDescription:
+        'Ameaças relevantes para um portfólio com formulário público e API, com a mitigação correspondente e o estado real de implementação.',
+      disclosureTitle: 'Divulgação responsável',
+      disclosureIntro:
+        'Se você encontrar uma vulnerabilidade no Blue-Sentinel, por favor reporte de forma responsável.',
+      disclosureEmail: 'E-mail',
+      disclosureGithub: 'GitHub Security Advisories',
+      disclosureReport: 'Reportar pelo GitHub',
+      disclosureSlack:
+        'Resposta em até [PRAZO] e correção em [PRAZO]. Não há programa de bug bounty: este é um portfólio pessoal, não um serviço de produção.',
+      status: { implemented: 'Implementado', partial: 'Parcial', planned: 'Planejado' },
+      verified: 'Verificado no repositório',
+      mitigated: 'Mitigado',
+      partial: 'Parcial',
+      columns: { threat: 'Ameaça', mitigation: 'Mitigação', status: 'Status' },
+      measures: [
+        {
+          category: 'Segurança de rede',
+          items: [
+            {
+              title: 'Segmentação de rede',
+              description:
+                'Docker Compose com redes separadas (frontend-net e backend-net). Banco e Redis só conversam dentro da rede interna.',
+              status: 'implemented',
+              icon: 'Globe',
+            },
+            {
+              title: 'Sem portas de banco expostas',
+              description:
+                'PostgreSQL e Redis não publicam porta no host. As portas expostas são apenas 3000 (site) e 8000 (API).',
+              status: 'implemented',
+              icon: 'Database',
+            },
+            {
+              title: 'Encerramento de TLS',
+              description:
+                'Em produção, um reverse proxy na frente do stack encerra o TLS. Dentro da rede confiável, comunicação interna em HTTP.',
+              status: 'planned',
+              icon: 'Lock',
+            },
+          ],
+        },
+        {
+          category: 'Segurança de aplicação',
+          items: [
+            {
+              title: 'Validação de entrada',
+              description:
+                'Schemas Zod no formulário do frontend e modelos Pydantic no backend. Mensagens de erro padronizadas em problem+json.',
+              status: 'implemented',
+              icon: 'Search',
+            },
+            {
+              title: 'Rate limiting',
+              description:
+                'Limite de 5 mensagens por hora por e-mail no formulário de contato, com resposta 429 e header Retry-After.',
+              status: 'implemented',
+              icon: 'AlertTriangle',
+            },
+            {
+              title: 'Honeypot',
+              description:
+                'Campo oculto no formulário. Quando preenchido por um robô, a mensagem é aceita em silêncio e descartada.',
+              status: 'implemented',
+              icon: 'Shield',
+            },
+            {
+              title: 'CORS restrito',
+              description:
+                'Origens permitidas vêm de variável de ambiente; em produção não há wildcard de origem.',
+              status: 'implemented',
+              icon: 'Code',
+            },
+            {
+              title: 'Headers de segurança',
+              description:
+                'X-Content-Type-Options, Referrer-Policy e X-DNS-Prefetch-Control via next.config. CSP e HSTS ainda não estão ligados.',
+              status: 'partial',
+              icon: 'Shield',
+            },
+            {
+              title: 'Varredura de dependências',
+              description:
+                'Dependabot, npm audit e pip-audit programados no pipeline de CI.',
+              status: 'planned',
+              icon: 'Code',
+            },
+          ],
+        },
+        {
+          category: 'Proteção de dados',
+          items: [
+            {
+              title: 'Gestão de segredos',
+              description:
+                'Nenhum segredo no repositório. .env.example com placeholders e Docker secrets em produção.',
+              status: 'implemented',
+              icon: 'Lock',
+            },
+            {
+              title: 'Containers não-root',
+              description:
+                'Contêineres devem rodar como usuário não privilegiado; a configuração final de user no compose está pendente.',
+              status: 'partial',
+              icon: 'Shield',
+            },
+            {
+              title: 'Volume mínimo de dados',
+              description:
+                'O banco guarda apenas mensagens de contato, sessões do laboratório e logs de auditoria.',
+              status: 'implemented',
+              icon: 'Database',
+            },
+            {
+              title: 'Log estruturado',
+              description:
+                'Logging configurado no startup da API com formato estruturado para trilha de auditoria.',
+              status: 'implemented',
+              icon: 'Search',
+            },
+          ],
+        },
+        {
+          category: 'Monitoramento e resposta',
+          items: [
+            {
+              title: 'Health checks',
+              description:
+                'Endpoints /health/live (liveness) e /health/ready (checa banco) com Docker healthcheck no compose.',
+              status: 'implemented',
+              icon: 'CheckCircle',
+            },
+            {
+              title: 'Rate limit no WebSocket do lab',
+              description:
+                'No máximo 3 conexões simultâneas por IP, ticket de vida curta e ping/pong a cada 30s.',
+              status: 'implemented',
+              icon: 'AlertTriangle',
+            },
+            {
+              title: 'Métricas expostas',
+              description:
+                'Endpoint de métricas estilo Prometheus em /metrics.',
+              status: 'planned',
+              icon: 'Code',
+            },
+            {
+              title: 'security.txt',
+              description:
+                'Arquivo /.well-known/security.txt com o canal de divulgação responsável.',
+              status: 'planned',
+              icon: 'AlertTriangle',
+            },
+          ],
+        },
+      ],
+      threats: [
+        {
+          threat: 'SQL Injection',
+          mitigation:
+            'Acesso a dados sempre via SQLAlchemy ORM com queries parametrizadas. Nenhum SQL cru com entrada do usuário.',
+          status: 'mitigated',
+        },
+        {
+          threat: 'XSS',
+          mitigation:
+            'React escapa a saída por padrão. Sem dangerouslySetInnerHTML com dados externos.',
+          status: 'mitigated',
+        },
+        {
+          threat: 'Abuso do formulário',
+          mitigation:
+            'Honeypot silencioso, limite de 5 envios por hora por e-mail e resposta 429 com Retry-After.',
+          status: 'mitigated',
+        },
+        {
+          threat: 'Vazamento de segredos',
+          mitigation:
+            'Nenhum segredo versionado; .env.example só com placeholders.',
+          status: 'mitigated',
+        },
+        {
+          threat: 'CSRF',
+          mitigation:
+            'Formulário enviado como JSON sem cookie de sessão. Tokens CSRF para operações com sessão ficam planejados.',
+          status: 'partial',
+        },
+        {
+          threat: 'DoS / força bruta',
+          mitigation:
+            'Rate limiting aplicado no contato e limite de conexões por IP no WebSocket. Proteção de borda (proxy) fica para produção.',
+          status: 'partial',
+        },
+        {
+          threat: 'Escapar de container',
+          mitigation:
+            'Usuário não-root, filesystem somente-leitura e capabilities reduzidas no deploy.',
+          status: 'planned',
+        },
+        {
+          threat: 'Cadeia de suprimentos',
+          mitigation:
+            'Dependências fixadas por lockfile e varredura automática de vulnerabilidades no CI.',
+          status: 'planned',
+        },
+      ],
+      disclosure: {
+        emailLabel: 'E-mail',
+        githubLabel: 'GitHub Security Advisories',
+      },
+    },
+
+    resume: {
+      title: 'Currículo / CV',
+      updatedAt: 'Última atualização',
+      actions: { pdf: 'Salvar em PDF', github: 'GitHub' },
+      sections: {
+        summary: 'Resumo profissional',
+        experience: 'Experiência',
+        education: 'Formação',
+        projects: 'Projetos',
+        skills: 'Competências técnicas',
+        certifications: 'Certificações',
+        achievements: 'Destaques',
+        contact: 'Contato',
+      },
+      labels: {
+        degree: 'Formação',
+        remote: 'Remoto',
+        active: 'ativa',
+        planned: 'planejada',
+        noExperience: 'Nenhuma experiência cadastrada — preencha o arquivo content/site.ts.',
+        noEducation: 'Nenhuma formação cadastrada.',
+        noCertifications: 'Nenhuma certificação cadastrada.',
+        footerStack: 'Feito com Next.js · Estilizado com Tailwind · Código aberto no GitHub',
+      },
+    },
+
+    contact: {
+      title: 'Fale comigo',
+      description:
+        'Tem uma vaga, um projeto ou achou um problema de segurança? Preencha o formulário ou escreva direto por e-mail.',
+      channels: {
+        ariaLabel: 'Canais de contato',
+        email: { title: 'E-mail', hint: 'Contato geral' },
+        issues: { title: 'GitHub Issues', link: 'Abrir uma issue', hint: 'Pedidos de recurso e bugs' },
+        security: { title: 'Segurança', hint: 'Somente divulgação responsável' },
+      },
+      form: {
+        title: 'Enviar uma mensagem',
+        description: 'Todos os campos são obrigatórios. Respondo em até [PRAZO DE RESPOSTA].',
+        labels: { name: 'Nome', email: 'E-mail', subject: 'Assunto', message: 'Mensagem' },
+        placeholders: {
+          name: 'Seu nome',
+          email: 'seu@email.com',
+          message: 'Conte sobre o projeto, a oportunidade ou diga olá...',
+        },
+        subjects: [
+          { value: 'general', label: 'Assunto geral' },
+          { value: 'collaboration', label: 'Colaboração / parceria' },
+          { value: 'speaking', label: 'Palestra ou conteúdo' },
+          { value: 'security', label: 'Reporte de vulnerabilidade' },
+          { value: 'other', label: 'Outro' },
+        ],
+        submit: 'Enviar mensagem',
+        submitting: 'Enviando...',
+        privacy: 'Sem spam. Seu e-mail serve apenas para responder esta mensagem.',
+        allRequired: 'Todos os campos são obrigatórios.',
+      },
+    },
+
+    faq: {
+      title: 'Perguntas frequentes',
+      description: 'Respostas rápidas sobre o laboratório, os projetos e como entrar em contato.',
+    },
+  },
+
+  footer: {
+    description:
+      'Portfólio de Cybersecurity Blue Team. Detection engineering, threat hunting e automação de segurança defensiva.',
+    builtWith: 'Construído com Next.js, FastAPI e Docker.',
+    ethical: 'Estritamente defensivo e educacional. Nenhum segredo real no código.',
+    copyright: 'Todos os direitos reservados.',
+  },
+
+  microcopy: {
+    buttons: {
+      viewProjects: 'Ver projetos',
+      viewAll: 'Ver todos',
+      openLab: 'Abrir o laboratório',
+      contact: 'Entrar em contato',
+      back: 'Voltar',
+      backHome: 'Voltar ao início',
+      retry: 'Tentar novamente',
+      send: 'Enviar',
+      copy: 'Copiar link',
+      copied: 'Link copiado',
+      share: 'Compartilhar',
+      readMore: 'Ler mais',
+      external: 'Abrir em nova aba',
+    },
+    codeBlock: {
+      copy: 'Copiar',
+      copied: 'Copiado',
+      ariaCopy: 'Copiar código',
+    },
+    toc: {
+      title: 'Nesta página',
+      aria: 'Sumário do artigo',
+    },
+    share: {
+      share: 'Compartilhar',
+      onX: 'Compartilhar no X',
+      onLinkedIn: 'Compartilhar no LinkedIn',
+      copyLink: 'Copiar link',
+      copied: 'Link copiado',
+    },
+    projectCard: {
+      code: 'Código',
+      demo: 'Demo',
+    },
+    loading: {
+      page: 'Carregando página...',
+      content: 'Carregando conteúdo...',
+      metrics: 'Carregando métricas...',
+      events: 'Conectando ao laboratório...',
+      sending: 'Enviando mensagem...',
+      generic: 'Carregando...',
+    },
+    empty: {
+      projects: 'Nenhum projeto publicado ainda.',
+      projectsFiltered: 'Nenhum projeto corresponde ao filtro.',
+      writeups: 'Nenhum artigo publicado ainda.',
+      events: 'Nenhum evento corresponde aos filtros.',
+      search: 'Nenhum resultado para a busca.',
+      metrics: 'Sem dados no momento.',
+    },
+    notFound: {
+      code: '404',
+      title: 'Página não encontrada',
+      description:
+        'O endereço não existe ou mudou. Volte ao início ou navegue pelos projetos.',
+    },
+    serverError: {
+      code: '500',
+      title: 'Algo falhou no servidor',
+      description:
+        'O erro foi registrado. Tente de novo em instantes; se persistir, me avise pela página de contato.',
+    },
+    toasts: {
+      successTitle: 'Mensagem enviada',
+      successBody: 'Mensagem enviada com sucesso. Respondo em breve.',
+      errorTitle: 'Erro',
+      errorBody: 'Não foi possível enviar. Tente novamente.',
+      rateLimited: 'Limite de mensagens atingido. Tente novamente mais tarde.',
+    },
+    form: {
+      honeypotLabel: 'Site',
+      errorName: 'O nome precisa de pelo menos 2 caracteres.',
+      errorEmail: 'E-mail inválido.',
+      errorSubject: 'O assunto precisa de pelo menos 5 caracteres.',
+      errorMessage: 'A mensagem precisa de pelo menos 20 caracteres.',
+      errorMax: 'Texto longo demais.',
+      required: 'Campo obrigatório.',
+    },
+    dialog: {
+      close: 'Fechar',
+    },
+    misc: {
+      highlight: 'Destaque',
+      new: 'Novo',
+      verified: 'Verificado',
+      live: 'Ao vivo',
+      version: 'Versão',
+      lastUpdated: 'Última atualização',
+      readingTime: 'min de leitura',
+      tags: 'tags',
+    },
+  },
+
+  notices: {
+    lab: {
+      title: 'Uso ético e educacional',
+      body: 'Todos os eventos deste laboratório são sintéticos, gerados para demonstração. Não há telemetria real, nem dados de produção, e nada aqui deve ser usado contra sistemas que você não possui ou não tem autorização para testar. Objetivo único: estudar detecção de forma defensiva.',
+      short: 'Eventos 100% sintéticos. Uso educacional e estritamente defensivo.',
+    },
+    defensive: {
+      title: 'Somente defensiva',
+      body: 'Todo o conteúdo deste site é de segurança defensiva. Não há payloads ofensivos, credenciais reais ou instruções de ataque.',
+    },
+  },
+};
+
+export type Site = typeof site;
+export type Locale = typeof locale;

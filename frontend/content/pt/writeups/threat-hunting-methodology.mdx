@@ -1,17 +1,17 @@
 ---
-title: 'Threat Hunting Methodology: Hypothesis-Driven Hunts'
-description: 'Structured approach to threat hunting: hypothesis generation, data source inventory, query development, and automated reporting.'
+title: 'Metodologia de Threat Hunting: Hypothesis-Driven Hunts'
+description: 'Abordagem estruturada para threat hunting: geração de hipóteses, inventário de data sources, desenvolvimento de consultas e relatórios automatizados.'
 date: '2024-03-05'
 tags: ['Threat Hunting', 'MITRE ATT&CK', 'KQL', 'Splunk', 'Blue Team', 'Methodology']
 readingTime: 22
 series: 'Detection Engineering Fundamentals'
 ---
 
-# Threat Hunting Methodology: Hypothesis-Driven Hunts
+# Metodologia de Threat Hunting: Hypothesis-Driven Hunts
 
-Threat hunting isn't "looking for bad things" — it's **structured hypothesis testing** against your environment. This methodology scales from solo analysts to dedicated hunt teams.
+Threat hunting não é "procurar coisas ruins" — é **teste estruturado de hipóteses** no seu ambiente. Essa metodologia escala de analistas solos a equipes dedicadas de hunt.
 
-## The Hunting Loop
+## O ciclo de hunt
 
 ```mermaid
 flowchart LR
@@ -23,19 +23,19 @@ flowchart LR
     Refine --> Prepare
 ```
 
-## Phase 1: Prepare — Know Your Data
+## Fase 1: Preparar — Conheça Seus Dados
 
-Before hunting, map your **data source inventory**:
+Antes de caçar, mapeie seu **inventário de data sources**:
 
-| Data Source | Coverage | Retention | Query Language | Use Case |
-|-------------|----------|-----------|----------------|----------|
-| **Sysmon** | Process, File, Net, Reg, DNS | 90 days | KQL / SPL | Endpoint visibility |
-| **EDR** | Behavioral, Memory, MITRE tags | 1 year | Vendor API | Rich context |
-| **Firewall/Proxy** | Netflow, DNS, HTTP | 1 year | KQL / SPL | Network hunting |
-| **AD/Identity** | Auth, Kerberos, Group changes | 2 years | KQL / SPL | Identity threats |
-| **Cloud (AWS/Azure/GCP)** | CloudTrail, Audit logs | 1 year | Cloud Query | Cloud hunting |
+| Data Source | Cobertura | Retenção | Linguagem de Consulta | Caso de Uso |
+|-------------|-----------|----------|----------------------|-------------|
+| **Sysmon** | Processo, Arquivo, Rede, Registro, DNS | 90 dias | KQL / SPL | Visibilidade de endpoint |
+| **EDR** | Comportamental, Memória, tags MITRE | 1 ano | API do fornecedor | Contexto rico |
+| **Firewall/Proxy** | Netflow, DNS, HTTP | 1 ano | KQL / SPL | Threat hunting de rede |
+| **AD/Identity** | Autenticação, Kerberos, mudanças de grupo | 2 anos | KQL / SPL | Ameaças de identidade |
+| **Cloud (AWS/Azure/GCP)** | CloudTrail, logs de auditoria | 1 ano | Cloud Query | Threat hunting na nuvem |
 
-**Gap Analysis:** Which MITRE techniques lack data coverage?
+**Análise de lacunas:** quais técnicas do MITRE ATT&CK não têm cobertura de dados?
 
 ```kql
 // KQL: Find techniques with NO data source
@@ -44,17 +44,17 @@ let coveredTechniques = Sysmon | summarize by Technique = tostring(MitreTechniqu
 mitreTechniques | where technique !in (coveredTechniques) | project tactic, technique
 ```
 
-## Phase 2: Hypothesize — Threat-Informed
+## Fase 2: Hipotetizar — Threat-informed
 
-**Good hypothesis:** Specific, testable, time-boxed.
+**Boa hipótese:** específica, testável, com prazo definido.
 
-| ❌ Bad Hypothesis | ✅ Good Hypothesis |
-|-------------------|-------------------|
-| "Find malware" | "APT29 uses `WMI` for lateral movement (T1047). Our Sysmon logs EventID 20 (WMI) — can we detect anomalous WMI consumer binding?" |
-| "Look for suspicious PowerShell" | "FIN7 uses `Regsvr32` to execute COM scripts (T1218.010). Do we see `regsvr32.exe` with `/s /n /u /i:http` patterns?" |
-| "Check for lateral movement" | "Adversaries use `Pass-the-Hash` (T1550.002). Can we detect NTLM auth with `LogonType=3` and `AuthenticationPackage=NTLM` where source != destination?" |
+| ❌ Hipótese ruim | ✅ Hipótese boa |
+|-------------------|-----------------|
+| "Encontrar malware" | "APT29 usa `WMI` para movimento lateral (T1047). Nosso Sysmon registra EventID 20 (WMI) — conseguimos detectar binding anômalo de consumer WMI?" |
+| "Procurar PowerShell suspeito" | "FIN7 usa `Regsvr32` para executar scripts COM (T1218.010). Vemos `regsvr32.exe` com padrões `/s /n /u /i:http`?" |
+| "Verificar movimento lateral" | "Adversários usam `Pass-the-Hash` (T1550.002). Conseguimos detectar autenticação NTLM com `LogonType=3` e `AuthenticationPackage=NTLM` onde source != destination?" |
 
-### Hypothesis Template
+### Template de hipótese
 
 ```markdown
 ## HUNT-2024-003: WMI Lateral Movement
@@ -75,7 +75,7 @@ mitreTechniques | where technique !in (coveredTechniques) | project tactic, tech
 - Generate detection rule if hypothesis confirmed
 ```
 
-## Phase 3: Collect — Query Development
+## Fase 3: Coletar — Desenvolvimento de Consultas
 
 ### KQL (Microsoft Sentinel / Defender)
 
@@ -137,27 +137,27 @@ index=sysmon EventCode=20
 }
 ```
 
-## Phase 4: Analyze — Triage & Enrichment
+## Fase 4: Analisar — Triagem e Enriquecimento
 
-### Triage Checklist
+### Checklist de triagem
 
-For each result:
+Para cada resultado:
 
-1. **Context Enrichment**
-   - Who is the user? (Admin? Service account? Compromised?)
-   - What host? (Server? Workstation? Critical asset?)
-   - What time? (Business hours? Off-hours? Maintenance window?)
+1. **Enriquecimento de contexto**
+   - Quem é o usuário? (Admin? Conta de serviço? Comprometido?)
+   - Qual host? (Servidor? Estação de trabalho? Ativo crítico?)
+   - Que horário? (Horário comercial? Fora do horário? Janela de manutenção?)
 
-2. **Behavioral Analysis**
-   - Is this the first time this consumer appears?
-   - Does the WQL query match known malicious patterns?
-   - Is there related process execution (EventID 1) shortly after?
+2. **Análise comportamental**
+   - É a primeira vez que esse consumer aparece?
+   - A consulta WQL corresponde a padrões maliciosos conhecidos?
+   - Há execução de processo relacionada (EventID 1) logo depois?
 
-3. **Threat Intelligence**
-   - IOC match on IPs, hashes, domains in the query?
-   - ATT&CK technique match confidence?
+3. **Inteligência de ameaças**
+   - IOC correspondente a IPs, hashes ou domínios na consulta?
+   - Confiança da correspondência com a técnica ATT&CK?
 
-### Enrichment Example
+### Exemplo de enriquecimento
 
 ```kql
 // Enrich with MITRE tags and TI
@@ -176,9 +176,9 @@ Sysmon
 | extend ThreatMatch = iff(isnotempty(ThreatType), true, false)
 ```
 
-## Phase 5: Document — Hunt Report
+## Fase 5: Documentar — Relatório de hunt
 
-### Report Template
+### Template de relatório
 
 ```markdown
 # Hunt Report: HUNT-2024-003
@@ -238,16 +238,16 @@ detection:
 - Correlate with process creation (EventID 1) for full chain
 ```
 
-## Phase 6: Refine — Detection as Code
+## Fase 6: Refinar — Detection as Code
 
-Every hunt should produce **at least one** of:
+Todo hunt deve produzir **pelo menos um** dos seguintes:
 
-1. **New detection rule** (Sigma/YARA)
-2. **Improved existing rule** (reduced FP, added context)
-3. **New data source** requirement
-4. **Playbook/Runbook** update
+1. **Nova regra de detecção** (Sigma/YARA)
+2. **Regra existente melhorada** (FP reduzido, contexto adicionado)
+3. Requisito de **novo data source**
+4. Atualização de **playbook/runbook**
 
-### Automation: Hunt-to-Detection Pipeline
+### Automação: pipeline de hunt para detecção
 
 ```python
 # tools/hunt_to_detection.py
@@ -267,25 +267,25 @@ class HuntToDetection:
         return rule
 ```
 
-## Continuous Hunting Program
+## Programa de threat hunting contínuo
 
-| Cadence | Activity |
-|---------|----------|
-| **Daily** | Automated hunt queries (scheduled analytics) |
-| **Weekly** | Analyst-led hypothesis hunt (2-4 hours) |
-| **Monthly** | Threat-informed hunt (new TTPs from intel) |
-| **Quarterly** | Purple team exercise (red + blue) |
-| **Annually** | Methodology review, tool evaluation |
+| Cadência | Atividade |
+|----------|-----------|
+| **Diária** | Consultas automatizadas de hunt (análises agendadas) |
+| **Semanal** | Hunt de hipóteses liderado por analista (2-4 horas) |
+| **Mensal** | Threat-informed hunt (novos TTPs da inteligência) |
+| **Trimestral** | Exercício de purple team (vermelho + azul) |
+| **Anual** | Revisão da metodologia, avaliação de ferramentas |
 
-## Metrics That Matter
+## Métricas que importam
 
-| Metric | Target |
-|--------|--------|
-| **Hunt coverage** | > 80% of MITRE techniques with ≥ 1 hunt/quarter |
-| **Hypothesis confirmation rate** | 10-30% (too high = not hunting deep enough) |
-| **Time to detection rule** | < 24 hours from confirmed finding |
-| **False positive reduction** | 20% YoY from hunt-informed tuning |
+| Métrica | Meta |
+|---------|------|
+| **Cobertura de hunt** | > 80% das técnicas do MITRE com ≥ 1 hunt/trimestre |
+| **Taxa de confirmação de hipóteses** | 10-30% (alta demais = hunt não está profundo o suficiente) |
+| **Tempo até a regra de detecção** | < 24 horas a partir do achado confirmado |
+| **Redução de falsos positivos** | 20% a.a. com tuning informado por hunt |
 
 ---
 
-*Hunting is not a one-time event. It's a continuous cycle of curiosity, rigor, and automation.*
+*Hunting não é um evento único. É um ciclo contínuo de curiosidade, rigor e automação.*

@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { MDXComponents } from '@/components/mdx-components';
 import { ShareButtons } from '@/components/writeups/share-buttons';
 import { getWriteupBySlug } from '@/lib/writeups';
+import { site } from '../../../../content/site';
 
 interface WriteupPageProps {
   params: { slug: string };
@@ -25,7 +26,9 @@ export async function generateMetadata({
 }: WriteupPageProps): Promise<Metadata> {
   const writeup = getWriteupBySlug(params.slug);
   if (!writeup) {
-    return { title: 'Writeup Not Found' };
+    return {
+      title: `${site.pages.writeups.labels.notFound} | ${site.brand.fullName}`,
+    };
   }
   return {
     title: writeup.frontmatter.title,
@@ -63,7 +66,7 @@ export default function WriteupPage({ params }: WriteupPageProps) {
             className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            Back to Writeups
+            {site.pages.writeups.labels.back}
           </Link>
 
           {frontmatter.series && (
@@ -87,11 +90,11 @@ export default function WriteupPage({ params }: WriteupPageProps) {
             </div>
             <div className="flex items-center gap-1.5">
               <Clock className="h-4 w-4" aria-hidden="true" />
-              <span>{readingMinutes} min read</span>
+              <span>{readingMinutes} {site.pages.writeups.labels.minRead}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Tag className="h-4 w-4" aria-hidden="true" />
-              <span>{frontmatter.tags.length} tags</span>
+              <span>{frontmatter.tags.length} {site.pages.writeups.labels.tags}</span>
             </div>
           </div>
 
@@ -115,27 +118,27 @@ export default function WriteupPage({ params }: WriteupPageProps) {
           <aside className="space-y-8 lg:col-span-1">
             <Card>
               <CardContent className="pt-6">
-                <h3 className="mb-4 text-lg font-semibold">Article Info</h3>
+                <h3 className="mb-4 text-lg font-semibold">{site.pages.writeups.labels.info}</h3>
                 <dl className="space-y-4 text-sm">
                   <div>
-                    <dt className="text-muted-foreground">Published</dt>
+                    <dt className="text-muted-foreground">{site.pages.writeups.labels.published}</dt>
                     <dd className="font-medium text-foreground">
                       {formatDate(frontmatter.date)}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-muted-foreground">Reading Time</dt>
-                    <dd className="font-medium text-foreground">{readingMinutes} min</dd>
+                    <dt className="text-muted-foreground">{site.pages.writeups.labels.readingTime}</dt>
+                    <dd className="font-medium text-foreground">
+                      {readingMinutes} {site.pages.writeups.labels.min}
+                    </dd>
                   </div>
                   <div>
-                    <dt className="text-muted-foreground">Category</dt>
-                    <dd className="font-medium text-foreground">
-                      {frontmatter.tags[0] || 'Security'}
-                    </dd>
+                    <dt className="text-muted-foreground">{site.pages.writeups.labels.category}</dt>
+                    <dd className="font-medium text-foreground">{frontmatter.tags[0]}</dd>
                   </div>
                   {frontmatter.series && (
                     <div>
-                      <dt className="text-muted-foreground">Series</dt>
+                      <dt className="text-muted-foreground">{site.pages.writeups.labels.series}</dt>
                       <dd className="font-medium text-foreground">{frontmatter.series}</dd>
                     </div>
                   )}
@@ -145,7 +148,7 @@ export default function WriteupPage({ params }: WriteupPageProps) {
 
             <Card>
               <CardContent className="pt-6">
-                <h3 className="mb-4 text-lg font-semibold">Tags</h3>
+                <h3 className="mb-4 text-lg font-semibold">{site.pages.writeups.labels.tagsTitle}</h3>
                 <div className="flex flex-wrap gap-2">
                   {frontmatter.tags.map((tag) => (
                     <Badge key={tag} variant="outline" className="text-xs">
@@ -158,21 +161,21 @@ export default function WriteupPage({ params }: WriteupPageProps) {
 
             <Card>
               <CardContent className="pt-6">
-                <h3 className="mb-4 text-lg font-semibold">More Reading</h3>
+                <h3 className="mb-4 text-lg font-semibold">{site.pages.writeups.labels.moreReading}</h3>
                 <ul className="space-y-2 text-sm">
                   <li>
                     <Link href="/writeups" className="text-muted-foreground hover:text-primary">
-                      ← All Writeups
+                      ← {site.pages.writeups.labels.allWriteups}
                     </Link>
                   </li>
                   <li>
                     <Link href="/projects" className="text-muted-foreground hover:text-primary">
-                      Security Projects
+                      {site.pages.writeups.labels.relatedProjects}
                     </Link>
                   </li>
                   <li>
                     <Link href="/lab" className="text-muted-foreground hover:text-primary">
-                      Detection Lab
+                      {site.pages.writeups.labels.relatedLab}
                     </Link>
                   </li>
                 </ul>
@@ -184,7 +187,7 @@ export default function WriteupPage({ params }: WriteupPageProps) {
             <MDXRemote source={content} components={MDXComponents({})} />
 
             <div className="mt-16 border-t border-border/50 pt-8">
-              <h2 className="mb-6 text-xl font-semibold">Share this article</h2>
+              <h2 className="mb-6 text-xl font-semibold">{site.pages.writeups.labels.share}</h2>
               <ShareButtons title={frontmatter.title} variant="full" />
             </div>
           </div>

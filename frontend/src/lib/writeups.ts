@@ -1,10 +1,10 @@
 import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
+import { contentDir } from './content';
 
-const writeupsDirectory = path.join(process.cwd(), 'frontend/content/writeups');
+const writeupsDirectory = contentDir('writeups');
 
 export interface WriteupFrontmatter {
   title: string;
@@ -64,7 +64,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const writeup = getWriteupBySlug(slug);
   if (!writeup) {
-    return { title: 'Writeup Not Found' };
+    return { title: 'Artigo não encontrado | Blue-Sentinel' };
   }
 
   return {

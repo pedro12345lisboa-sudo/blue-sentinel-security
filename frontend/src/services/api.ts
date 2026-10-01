@@ -48,7 +48,7 @@ export async function submitContact(data: ContactFormData): Promise<ContactRespo
   });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Failed to send message'));
+    throw new Error(await readErrorMessage(response, 'Não foi possível enviar a mensagem.'));
   }
 
   return response.json();

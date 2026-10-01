@@ -63,3 +63,9 @@ backend/.venv/
 *.key
 *.crt
 secrets/
+# Relatórios de teste e builds
+playwright-report/
+test-results/
+coverage/
+.next/
+node_modules/

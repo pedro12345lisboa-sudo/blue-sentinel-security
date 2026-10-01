@@ -1,26 +1,26 @@
 ---
-title: 'Sigma Rules 101: From Zero to Detection Engineer'
-description: 'Complete guide to writing, testing, and deploying Sigma rules. Covers syntax, best practices, CI/CD integration, and real-world examples.'
+title: 'Sigma Rules 101: Do zero ao detection engineer'
+description: 'Guia completo para escrever, testar e implantar Sigma rules. Cobre sintaxe, boas práticas, integração CI/CD e exemplos do mundo real.'
 date: '2024-02-10'
 tags: ['Detection Engineering', 'Sigma', 'SIEM', 'MITRE ATT&CK', 'Blue Team', 'Tutorial']
 readingTime: 18
 series: 'Detection Engineering Fundamentals'
 ---
 
-# Sigma Rules 101: From Zero to Detection Engineer
+# Sigma Rules 101: Do zero ao detection engineer
 
-Sigma is the **open standard for detection rules** — think "Snort for logs." Vendor-agnostic, human-readable, and backed by a massive community. If you're in Blue Team, you need to know Sigma.
+Sigma é o **padrão aberto para regras de detecção** — pense no "Snort dos logs". Independente de vendor, legível por humanos e com uma comunidade enorme por trás. Se você está em Blue Team, precisa conhecer Sigma.
 
-## Why Sigma?
+## Por que Sigma?
 
-| Problem | Sigma Solution |
+| Problema | Solução com Sigma |
 |---------|----------------|
-| Vendor lock-in | Write once, deploy to Splunk, Elastic, Sentinel, CrowdStrike, etc. |
-| Unmaintainable queries | YAML structure with inheritance, modifiers, and macros |
-| No version control | Rules are code — Git, PRs, CI/CD |
-| No testing | `sigma test` with synthetic log samples |
+| Vendor lock-in | Escreva uma vez, implante no Splunk, Elastic, Sentinel, CrowdStrike etc. |
+| Consultas impossíveis de manter | Estrutura YAML com herança, modifiers e macros |
+| Sem controle de versão | Regras são código — Git, PRs, CI/CD |
+| Sem testes | `sigma test` com amostras de logs sintéticos |
 
-## Rule Structure
+## Estrutura de uma regra
 
 ```yaml
 title: Suspicious PowerShell EncodedCommand
@@ -51,22 +51,22 @@ falsepositives:
 level: medium
 ```
 
-### Key Sections Explained
+### Principais seções explicadas
 
-| Section | Purpose | Required? |
+| Seção | Função | Obrigatória? |
 |---------|---------|-----------|
-| `title` | Human-readable name | ✅ Yes |
-| `id` | UUID v4 (globally unique) | ✅ Yes |
-| `status` | `test` \| `experimental` \| `stable` \| `deprecated` | ✅ Yes |
-| `logsource` | Where the log comes from (category + product) | ✅ Yes |
-| `detection` | The actual logic (selection + condition) | ✅ Yes |
-| `tags` | MITRE ATT&CK mapping | ✅ Recommended |
-| `falsepositives` | Known FP scenarios | ✅ Recommended |
-| `level` | `critical` \| `high` \| `medium` \| `low` \| `informational` | ✅ Recommended |
+| `title` | Nome legível por humanos | ✅ Sim |
+| `id` | UUID v4 (globalmente único) | ✅ Sim |
+| `status` | `test` \| `experimental` \| `stable` \| `deprecated` | ✅ Sim |
+| `logsource` | De onde vem o log (category + product) | ✅ Sim |
+| `detection` | A lógica em si (selection + condition) | ✅ Sim |
+| `tags` | Mapeamento para MITRE ATT&CK | ✅ Recomendada |
+| `falsepositives` | Cenários conhecidos de FP | ✅ Recomendada |
+| `level` | `critical` \| `high` \| `medium` \| `low` \| `informational` | ✅ Recomendada |
 
-## Detection Logic Deep Dive
+## Aprofundando na lógica de detecção
 
-### Field Modifiers
+### Modifiers de campo
 
 ```yaml
 detection:
@@ -97,7 +97,7 @@ detection:
       - "downloadstring"
 ```
 
-### Condition Logic
+### Lógica da condição
 
 ```yaml
 condition: selection and not filter_false_positives
@@ -108,7 +108,7 @@ condition: selection and 2 of (filter_*)  # At least 2 filter_* must match
 condition: selection and not (exclusion1 or exclusion2)
 ```
 
-### Rule Inheritance
+### Herança de regras
 
 ```yaml
 # Base rule
@@ -130,9 +130,9 @@ detection:
   condition: selection_powershell and selection_encoded
 ```
 
-## Testing Your Rules
+## Testando suas regras
 
-### 1. Sigma CLI Validation
+### 1. Validação com a Sigma CLI
 
 ```bash
 # Install
@@ -147,7 +147,7 @@ sigma convert -t elastic rules/powershell_encodedcommand.yml
 sigma convert -t kibana rules/powershell_encodedcommand.yml
 ```
 
-### 2. Unit Tests with Synthetic Logs
+### 2. Testes unitários com logs sintéticos
 
 ```yaml
 # tests/test_powershell_encodedcommand.yml
@@ -182,12 +182,12 @@ test_cases:
     expected: true  # Still suspicious, different rule
 ```
 
-Run tests:
+Execute os testes:
 ```bash
 python -m pytest tests/ -v --sigma-rules=rules/
 ```
 
-## CI/CD Pipeline
+## Pipeline de CI/CD
 
 ```yaml
 # .github/workflows/sigma.yml
@@ -231,17 +231,17 @@ jobs:
             --data-binary @rules.ndjson
 ```
 
-## Best Practices
+## Boas práticas
 
-### 1. **Be Specific, Not Generic**
+### 1. **Seja específico, não genérico**
 
-❌ Bad:
+❌ Ruim:
 ```yaml
 selection:
   CommandLine|contains: "powershell"
 ```
 
-✅ Good:
+✅ Bom:
 ```yaml
 selection:
   NewProcessName|endswith: '\powershell.exe'
@@ -250,7 +250,7 @@ selection:
     - ' -w hidden '
 ```
 
-### 2. **Always Include False Positives**
+### 2. **Sempre inclua false positives**
 
 ```yaml
 falsepositives:
@@ -260,7 +260,7 @@ falsepositives:
 level: medium
 ```
 
-### 3. **Map to MITRE ATT&CK**
+### 3. **Mapeie para o MITRE ATT&CK**
 
 ```yaml
 tags:
@@ -268,7 +268,7 @@ tags:
   - attack.t1059.001  # Command and Scripting Interpreter: PowerShell
 ```
 
-### 4. **Use Meaningful IDs**
+### 4. **Use IDs com significado**
 
 ```yaml
 id: powershell-encoded-command  # Human-readable
@@ -276,7 +276,7 @@ id: powershell-encoded-command  # Human-readable
 id: a1b2c3d4-e5f6-7890-abcd-ef1234567890  # UUID v4
 ```
 
-### 5. **Version Your Rules**
+### 5. **Versione suas regras**
 
 ```yaml
 date: 2024/01/15
@@ -284,9 +284,9 @@ modified: 2024/03/20
 version: 2
 ```
 
-## Common Patterns
+## Padrões comuns
 
-### Process Creation (Windows 4688)
+### Criação de processo (Windows 4688)
 
 ```yaml
 logsource:
@@ -308,7 +308,7 @@ detection:
   condition: selection
 ```
 
-### Network Connection (Sysmon 3)
+### Conexão de rede (Sysmon 3)
 
 ```yaml
 logsource:
@@ -329,7 +329,7 @@ detection:
   condition: selection
 ```
 
-### File Creation (Sysmon 11)
+### Criação de arquivo (Sysmon 11)
 
 ```yaml
 logsource:
@@ -350,22 +350,22 @@ detection:
   condition: selection
 ```
 
-## Resources
+## Recursos
 
-- **Official Repo**: https://github.com/SigmaHQ/sigma
-- **Rule Collection**: https://github.com/SigmaHQ/sigma/tree/master/rules
+- **Repositório oficial**: https://github.com/SigmaHQ/sigma
+- **Coleção de regras**: https://github.com/SigmaHQ/sigma/tree/master/rules
 - **Sigma CLI**: https://github.com/SigmaHQ/sigma/tree/master/tools
 - **MITRE ATT&CK**: https://attack.mitre.org/
-- **Uncoder.io**: Online Sigma converter (https://uncoder.io)
+- **Uncoder.io**: conversor online de Sigma (https://uncoder.io)
 
-## Next Steps
+## Próximos passos
 
-1. **Clone** the Sigma repository and explore `rules/`
-2. **Write** your first rule for a technique you know well
-3. **Test** it with `sigma test` and synthetic logs
-4. **Deploy** to your SIEM via `sigma convert`
-5. **Automate** with the CI/CD pipeline above
+1. **Clone** o repositório Sigma e explore `rules/`
+2. **Escreva** sua primeira regra para uma técnica que você conhece bem
+3. **Teste** com `sigma test` e logs sintéticos
+4. **Implante** no seu SIEM com `sigma convert`
+5. **Automatize** com a pipeline de CI/CD acima
 
 ---
 
-*Detection engineering is a craft. Sigma gives you the tools — practice makes the master.*
+*Detection engineering é um ofício. Sigma te dá as ferramentas — a prática faz o mestre.*

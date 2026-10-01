@@ -16,24 +16,20 @@ import {
   ToastTitle,
   ToastDescription,
 } from '@/components/ui/toast';
+import { site } from '../../../content/site';
+
+const f = site.pages.contact.form;
+const m = site.microcopy;
 
 const contactSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters').max(100),
-  email: z.string().email('Invalid email address'),
-  subject: z.string().min(5, 'Subject must be at least 5 characters').max(200),
-  message: z.string().min(20, 'Message must be at least 20 characters').max(5000),
+  name: z.string().min(2, m.form.errorName).max(100, m.form.errorMax),
+  email: z.string().email(m.form.errorEmail),
+  subject: z.string().min(5, m.form.errorSubject).max(200, m.form.errorMax),
+  message: z.string().min(20, m.form.errorMessage).max(5000, m.form.errorMax),
   honeypot: z.string().optional(),
 });
 
 type ContactFormData = z.infer<typeof contactSchema>;
-
-const subjects = [
-  { value: 'general', label: 'General Inquiry' },
-  { value: 'collaboration', label: 'Collaboration / Partnership' },
-  { value: 'speaking', label: 'Speaking Engagement' },
-  { value: 'security', label: 'Security Vulnerability Report' },
-  { value: 'other', label: 'Other' },
-];
 
 type ToastState = { open: boolean; type: 'success' | 'error'; message: string };
 
@@ -83,7 +79,7 @@ export function ContactForm() {
       });
 
       if (!response.ok) {
-        let detail = 'Failed to send message';
+        let detail = m.toasts.errorBody;
         try {
           const error = await response.json();
           if (typeof error.detail === 'string') detail = error.detail;
@@ -96,7 +92,7 @@ export function ContactForm() {
       setToast({
         open: true,
         type: 'success',
-        message: "Message sent successfully! I'll get back to you soon.",
+        message: m.toasts.successBody,
       });
       reset();
     } catch (error) {
@@ -106,7 +102,7 @@ export function ContactForm() {
         message:
           error instanceof Error
             ? error.message
-            : 'Something went wrong. Please try again.',
+            : m.toasts.errorBody,
       });
     } finally {
       setIsSubmitting(false);
@@ -118,10 +114,10 @@ export function ContactForm() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
         <div className="grid gap-6 sm:grid-cols-2">
           <div>
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">{f.labels.name}</Label>
             <Input
               id="name"
-              placeholder="Your name"
+              placeholder={f.placeholders.name}
               {...register('name')}
               error={errors.name?.message}
               disabled={isSubmitting}
@@ -129,11 +125,11 @@ export function ContactForm() {
             />
           </div>
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{f.labels.email}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="your@email.com"
+              placeholder={f.placeholders.email}
               {...register('email')}
               error={errors.email?.message}
               disabled={isSubmitting}
@@ -143,7 +139,7 @@ export function ContactForm() {
         </div>
 
         <div>
-          <Label htmlFor="subject">Subject</Label>
+          <Label htmlFor="subject">{f.labels.subject}</Label>
           <select
             id="subject"
             {...register('subject')}
@@ -151,7 +147,7 @@ export function ContactForm() {
             disabled={isSubmitting}
             aria-invalid={errors.subject ? 'true' : 'false'}
           >
-            {subjects.map((s) => (
+            {f.subjects.map((s) => (
               <option key={s.value} value={s.value}>
                 {s.label}
               </option>
@@ -165,10 +161,10 @@ export function ContactForm() {
         </div>
 
         <div>
-          <Label htmlFor="message">Message</Label>
+          <Label htmlFor="message">{f.labels.message}</Label>
           <Textarea
             id="message"
-            placeholder="Tell me about your project, inquiry, or just say hello..."
+            placeholder={f.placeholders.message}
             rows={6}
             {...register('message')}
             error={errors.message?.message}
@@ -181,7 +177,7 @@ export function ContactForm() {
           aria-hidden="true"
           className="absolute left-[-9999px] h-0 w-0 overflow-hidden"
         >
-          <label htmlFor="website">Website</label>
+          <label htmlFor="website">{m.form.honeypotLabel}</label>
           <input
             id="website"
             type="text"
@@ -198,11 +194,11 @@ export function ContactForm() {
           loading={isSubmitting}
         >
           <Send className="mr-2 h-4 w-4" aria-hidden="true" />
-          {isSubmitting ? 'Sending...' : 'Send Message'}
+          {isSubmitting ? f.submitting : f.submit}
         </Button>
 
         <p className="text-center text-sm text-muted-foreground">
-          No spam, ever. Your email is only used to reply to this message.
+          {f.privacy}
         </p>
 
         <Toast
@@ -216,7 +212,9 @@ export function ContactForm() {
             <CheckCircle className="h-5 w-5" aria-hidden="true" />
           )}
           <div className="flex-1">
-            <ToastTitle>{toast.type === 'error' ? 'Error' : 'Success'}</ToastTitle>
+            <ToastTitle>
+              {toast.type === 'error' ? m.toasts.errorTitle : m.toasts.successTitle}
+            </ToastTitle>
             <ToastDescription>{toast.message}</ToastDescription>
           </div>
         </Toast>

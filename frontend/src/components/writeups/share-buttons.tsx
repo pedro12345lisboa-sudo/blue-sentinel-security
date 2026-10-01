@@ -1,5 +1,7 @@
 'use client';
 
+import { site } from '../../../content/site';
+
 import { useEffect, useState } from 'react';
 import { Share2, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -66,14 +68,14 @@ export function ShareButtons({ title, variant = 'compact' }: ShareButtonsProps) 
       <div className="flex flex-wrap items-center gap-3">
         <Button variant="outline" size="sm" onClick={nativeShare}>
           <Share2 className="mr-2 h-4 w-4" aria-hidden="true" />
-          Share
+          {site.microcopy.share.share}
         </Button>
         <a
           href={xHref}
           target="_blank"
           rel="noopener noreferrer"
           className="text-muted-foreground transition-colors hover:text-primary"
-          aria-label="Share on X"
+          aria-label={site.microcopy.share.onX}
         >
           <XIcon className="h-5 w-5" />
         </a>
@@ -82,7 +84,7 @@ export function ShareButtons({ title, variant = 'compact' }: ShareButtonsProps) 
           target="_blank"
           rel="noopener noreferrer"
           className="text-muted-foreground transition-colors hover:text-primary"
-          aria-label="Share on LinkedIn"
+          aria-label={site.microcopy.share.onLinkedIn}
         >
           <LinkedInIcon className="h-5 w-5" />
         </a>
@@ -93,12 +95,12 @@ export function ShareButtons({ title, variant = 'compact' }: ShareButtonsProps) 
   return (
     <div className="flex flex-wrap gap-3">
       <Button variant="outline" asChild>
-        <a href={xHref} target="_blank" rel="noopener noreferrer" aria-label="Share on X">
+        <a href={xHref} target="_blank" rel="noopener noreferrer" aria-label={site.microcopy.share.onX}>
           <XIcon className="mr-2 h-4 w-4" />X
         </a>
       </Button>
       <Button variant="outline" asChild>
-        <a href={linkedinHref} target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn">
+        <a href={linkedinHref} target="_blank" rel="noopener noreferrer" aria-label={site.microcopy.share.onLinkedIn}>
           <LinkedInIcon className="mr-2 h-4 w-4" />
           LinkedIn
         </a>
@@ -109,7 +111,7 @@ export function ShareButtons({ title, variant = 'compact' }: ShareButtonsProps) 
         ) : (
           <Copy className="mr-2 h-4 w-4" aria-hidden="true" />
         )}
-        {copied ? 'Copied!' : 'Copy Link'}
+        {copied ? site.microcopy.share.copied : site.microcopy.share.copyLink}
       </Button>
     </div>
   );

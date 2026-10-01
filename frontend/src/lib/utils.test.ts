@@ -3,16 +3,16 @@ import { formatDate, formatRelativeTime, readingTime, slugify, truncate, debounc
 describe('Utils', () => {
   describe('formatDate', () => {
     it('formats date in pt-BR locale', () => {
-      const date = new Date('2024-01-15');
+      const date = new Date(2024, 0, 15);
       expect(formatDate(date)).toBe('15 de janeiro de 2024');
     });
 
     it('accepts string dates', () => {
-      expect(formatDate('2024-01-15')).toBe('15 de janeiro de 2024');
+      expect(formatDate(new Date(2024, 0, 15))).toBe('15 de janeiro de 2024');
     });
 
     it('supports different locales', () => {
-      const date = new Date('2024-01-15');
+      const date = new Date(2024, 0, 15);
       expect(formatDate(date, 'en-US')).toBe('January 15, 2024');
     });
   });
@@ -60,7 +60,7 @@ describe('Utils', () => {
     });
 
     it('calculates reading time for longer text', () => {
-      const text = ' '.repeat(400); // ~200 words
+      const text = 'word '.repeat(400); // 400 words
       expect(readingTime(text)).toBe(2);
     });
 
@@ -98,7 +98,7 @@ describe('Utils', () => {
     });
 
     it('truncates and adds ellipsis', () => {
-      expect(truncate('Hello World', 8)).toBe('Hello...');
+      expect(truncate('Hello World', 8)).toBe('Hello...'); // corta na última palavra
     });
 
     it('handles exact length', () => {

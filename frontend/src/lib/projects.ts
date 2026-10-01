@@ -1,10 +1,10 @@
 import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
+import { contentDir } from './content';
 
-const projectsDirectory = path.join(process.cwd(), 'frontend/content/projects');
+const projectsDirectory = contentDir('projects');
 
 export interface ProjectFrontmatter {
   title: string;
@@ -69,7 +69,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const project = getProjectBySlug(slug);
   if (!project) {
-    return { title: 'Project Not Found' };
+    return { title: 'Projeto não encontrado | Blue-Sentinel' };
   }
 
   return {

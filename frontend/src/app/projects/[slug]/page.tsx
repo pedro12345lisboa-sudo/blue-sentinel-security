@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { MDXComponents } from '@/components/mdx-components';
 import { getProjectBySlug } from '@/lib/projects';
+import { site } from '../../../../content/site';
 
 interface ProjectPageProps {
   params: { slug: string };
@@ -44,7 +45,10 @@ export async function generateMetadata({
 }: ProjectPageProps): Promise<Metadata> {
   const project = getProjectBySlug(params.slug);
   if (!project) {
-    return { title: 'Project Not Found' };
+    return {
+      title: site.seo.notFound.title,
+      description: site.pages.projects.detail.notFound,
+    };
   }
   return {
     title: project.frontmatter.title,
@@ -80,12 +84,12 @@ export default function ProjectPage({ params }: ProjectPageProps) {
             className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            Back to Projects
+            {site.pages.projects.detail.back}
           </Link>
 
           {frontmatter.highlight && (
             <Badge variant="success" className="mb-4 w-fit">
-              Featured Project
+              {site.pages.projects.detail.highlight}
             </Badge>
           )}
 
@@ -116,7 +120,11 @@ export default function ProjectPage({ params }: ProjectPageProps) {
             </div>
             <div className="flex items-center gap-1.5">
               <Clock className="h-4 w-4" aria-hidden="true" />
-              <span>{readingMinutes} min read</span>
+              <span>{readingMinutes} {site.pages.projects.detail.minRead}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Tag className="h-4 w-4" aria-hidden="true" />
+              <span>{frontmatter.tags.length} {site.microcopy.misc.tags}</span>
             </div>
           </div>
 
@@ -138,7 +146,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                   rel="noopener noreferrer"
                 >
                   <Github className="mr-2 h-4 w-4" aria-hidden="true" />
-                  View Source
+                  {site.pages.projects.detail.viewSource}
                 </a>
               </Button>
             )}
@@ -146,7 +154,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
               <Button asChild>
                 <a href={frontmatter.links.demo}>
                   <ExternalLink className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Live Demo
+                  {site.pages.projects.detail.liveDemo}
                 </a>
               </Button>
             )}
@@ -158,7 +166,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                   rel="noopener noreferrer"
                 >
                   <ExternalLink className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Documentation
+                  {site.pages.projects.detail.docs}
                 </a>
               </Button>
             )}
@@ -171,34 +179,34 @@ export default function ProjectPage({ params }: ProjectPageProps) {
           <aside className="space-y-8 lg:col-span-1">
             <Card>
               <CardContent className="pt-6">
-                <h3 className="mb-4 text-lg font-semibold">Project Details</h3>
+                <h3 className="mb-4 text-lg font-semibold">{site.pages.projects.detail.title}</h3>
                 <dl className="space-y-4 text-sm">
                   <div>
-                    <dt className="text-muted-foreground">Type</dt>
-                    <dd className="font-medium text-foreground">Security Tooling</dd>
+                    <dt className="text-muted-foreground">{site.pages.projects.detail.type}</dt>
+                    <dd className="font-medium text-foreground">{site.pages.projects.detail.typeValue}</dd>
                   </div>
                   <div>
-                    <dt className="text-muted-foreground">Status</dt>
+                    <dt className="text-muted-foreground">{site.pages.projects.detail.status}</dt>
                     <dd className="flex items-center gap-1.5 font-medium text-success">
                       <span
                         className="h-2 w-2 rounded-full bg-success"
                         aria-hidden="true"
                       />
-                      Active
+                      {site.pages.projects.detail.statusValue}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-muted-foreground">License</dt>
-                    <dd className="font-medium text-foreground">MIT</dd>
+                    <dt className="text-muted-foreground">{site.pages.projects.detail.license}</dt>
+                    <dd className="font-medium text-foreground">{site.pages.projects.detail.licenseValue}</dd>
                   </div>
                   <div>
-                    <dt className="text-muted-foreground">Language</dt>
+                    <dt className="text-muted-foreground">{site.pages.projects.detail.language}</dt>
                     <dd className="font-medium text-foreground">
                       {frontmatter.tags
                         .filter((t) =>
                           ['C++', 'Python', 'Go', 'Rust', 'TypeScript', 'JavaScript'].includes(t),
                         )
-                        .join(', ') || 'Multiple'}
+                        .join(', ') || site.pages.projects.detail.languageFallback}
                     </dd>
                   </div>
                 </dl>
@@ -207,7 +215,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
 
             <Card>
               <CardContent className="pt-6">
-                <h3 className="mb-4 text-lg font-semibold">Key Technologies</h3>
+                <h3 className="mb-4 text-lg font-semibold">{site.pages.projects.detail.technologies}</h3>
                 <div className="flex flex-wrap gap-2">
                   {frontmatter.tags.map((tag) => (
                     <Badge key={tag} variant="outline" className="text-xs">
@@ -220,21 +228,21 @@ export default function ProjectPage({ params }: ProjectPageProps) {
 
             <Card>
               <CardContent className="pt-6">
-                <h3 className="mb-4 text-lg font-semibold">Related</h3>
+                <h3 className="mb-4 text-lg font-semibold">{site.pages.projects.detail.related}</h3>
                 <ul className="space-y-2 text-sm">
                   <li>
                     <Link href="/projects" className="text-muted-foreground hover:text-primary">
-                      ← All Projects
+                      ← {site.pages.projects.detail.allProjects}
                     </Link>
                   </li>
                   <li>
                     <Link href="/writeups" className="text-muted-foreground hover:text-primary">
-                      Technical Writeups
+                      {site.pages.projects.detail.allWriteups}
                     </Link>
                   </li>
                   <li>
                     <Link href="/lab" className="text-muted-foreground hover:text-primary">
-                      Detection Lab
+                      {site.pages.projects.detail.lab}
                     </Link>
                   </li>
                 </ul>

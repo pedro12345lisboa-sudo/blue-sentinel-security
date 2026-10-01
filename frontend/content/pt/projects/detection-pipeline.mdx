@@ -1,6 +1,6 @@
 ---
-title: 'Detection Pipeline (CI/CD for Sigma Rules)'
-description: 'Automated Sigma rule validation, testing, and deployment pipeline with GitHub Actions integration.'
+title: 'Detection Pipeline (CI/CD para Sigma Rules)'
+description: 'Pipeline automatizado de validação, testes e deploy de Sigma rules com integração no GitHub Actions.'
 date: '2023-11-10'
 tags: ['Python', 'GitHub Actions', 'Sigma', 'MITRE ATT&CK', 'Docker', 'pytest', 'YAML', 'Jinja2']
 highlight: false
@@ -12,19 +12,19 @@ links:
 
 # Detection Pipeline
 
-**Continuous Integration / Continuous Deployment for detection rules.** Treats Sigma rules as code: lint, test, validate, and deploy with the same rigor as application software.
+**Integração Contínua / Implantação Contínua para regras de detecção.** Trata Sigma rules como código: lint, teste, validação e deploy com o mesmo rigor do software de aplicação.
 
-## The Problem
+## O Problema
 
-Detection engineering has traditionally been manual:
-- Rules written in text editors, copied to SIEM via UI
-- No version control, no peer review, no testing
-- False positives discovered in production
-- No MITRE ATT&CK coverage tracking
+Detection engineering sempre foi manual:
+- Regras escritas em editores de texto, copiadas para o SIEM pela interface
+- Sem controle de versão, sem revisão de pares, sem testes
+- Falsos positivos descobertos em produção
+- Sem rastreamento de cobertura do MITRE ATT&CK
 
-## The Solution
+## A Solução
 
-A **GitOps pipeline** where every rule change goes through:
+Um **pipeline GitOps** em que cada alteração de regra passa por:
 
 ```mermaid
 flowchart LR
@@ -36,9 +36,9 @@ flowchart LR
     Deploy -->|Metrics| Coverage[ATT&CK Coverage]
 ```
 
-## Pipeline Stages
+## Estágios do Pipeline
 
-### 1. Lint & Validate (`sigma-lint`)
+### 1. Lint e validação (`sigma-lint`)
 
 ```yaml
 # .github/workflows/detection.yml
@@ -48,16 +48,16 @@ flowchart LR
     # Checks: required fields, valid MITRE IDs, syntax, duplicates
 ```
 
-**Validation rules:**
-- ✅ Required fields: `title`, `id`, `status`, `author`, `date`, `logsource`, `detection`
-- ✅ Valid MITRE ATT&CK technique IDs (Txxxx.xxx)
-- ✅ No duplicate rule IDs
-- ✅ YAML syntax valid
+**Regras de validação:**
+- ✅ Campos obrigatórios: `title`, `id`, `status`, `author`, `date`, `logsource`, `detection`
+- ✅ IDs de técnicas do MITRE ATT&CK válidos (Txxxx.xxx)
+- ✅ Sem IDs de regra duplicados
+- ✅ Sintaxe YAML válida
 - ✅ `status`: `test` | `experimental` | `stable` | `deprecated`
 
-### 2. Unit Testing (`sigma-test`)
+### 2. Testes unitários (`sigma-test`)
 
-Each rule has **test cases** in `tests/` directory:
+Cada regra tem **casos de teste** no diretório `tests/`:
 
 ```yaml
 # tests/rule_powershell_encodedcommand.yml
@@ -88,9 +88,9 @@ python -m pytest tests/ -v --sigma-rules=rules/
 # ✅ 247 tests passed, 0 failed
 ```
 
-### 3. False Positive Analysis
+### 3. Análise de falsos positivos
 
-Automated **baseline evaluation** against historical benign logs:
+**Avaliação automatizada de baseline** contra logs benignos históricos:
 
 ```python
 # tools/fp_analysis.py
@@ -101,12 +101,12 @@ class FPAnalyzer:
         return FPReport(rule_id=rule.id, fp_rate=fp_rate, samples=matches[:10])
 ```
 
-**Thresholds:**
-- `fp_rate < 0.1%` → ✅ Pass
-- `0.1% ≤ fp_rate < 1%` → ⚠️ Warning (review required)
-- `fp_rate ≥ 1%` → ❌ Fail (block merge)
+**Limites:**
+- `fp_rate < 0.1%` → ✅ Passa
+- `0.1% ≤ fp_rate < 1%` → ⚠️ Aviso (revisão necessária)
+- `fp_rate ≥ 1%` → ❌ Falha (bloqueia o merge)
 
-### 4. MITRE ATT&CK Coverage Mapping
+### 4. Mapeamento de cobertura do MITRE ATT&CK
 
 ```python
 # tools/coverage.py
@@ -123,14 +123,14 @@ class CoverageMapper:
         )
 ```
 
-**Output:** Interactive HTML heatmap + markdown summary for README.
+**Saída:** mapa de calor HTML interativo + resumo em markdown para o README.
 
-### 5. Deployment
+### 5. Deploy
 
-| Target | Method |
+| Destino | Método |
 |--------|--------|
 | **Splunk** | `salvage` → `.conf` → Deployer |
-| **Elastic** | Kibana API → Rule import |
+| **Elastic** | Kibana API → importação da regra |
 | **Sentinel** | Microsoft Sentinel API |
 | **Sigma CLI** | `sigma convert -t splunk/elasticsearch/...` |
 
@@ -145,7 +145,7 @@ class CoverageMapper:
       --data-binary @rules.ndjson
 ```
 
-## Repository Structure
+## Estrutura do repositório
 
 ```
 detection-pipeline/
@@ -177,7 +177,7 @@ detection-pipeline/
 └── requirements.txt
 ```
 
-## Rule Template (Jinja2)
+## Template de regra (Jinja2)
 
 ```jinja2
 # tools/rule_template.j2
@@ -205,17 +205,17 @@ falsepositives:
 level: {{ level }}
 ```
 
-## Metrics & Reporting
+## Métricas e relatórios
 
-Every pipeline run publishes:
+Cada execução do pipeline publica:
 
-- **Rule count** by status (test/experimental/stable)
-- **Test pass rate** (target: 100%)
-- **FP rate** by rule (target: < 0.1%)
-- **MITRE coverage** % (target: > 80%)
-- **Deployment status** per SIEM
+- **Contagem de regras** por status (test/experimental/stable)
+- **Taxa de aprovação dos testes** (meta: 100%)
+- **Taxa de FP** por regra (meta: < 0.1%)
+- **% de cobertura MITRE** (meta: > 80%)
+- **Status de deploy** por SIEM
 
-## Local Development
+## Desenvolvimento local
 
 ```bash
 # Install
@@ -232,16 +232,16 @@ python tools/run_pipeline.py --rules rules/ --logs data/benign_logs.jsonl
 python tools/coverage.py --output docs/coverage.html
 ```
 
-## Results
+## Resultados
 
-| Metric | Before | After |
+| Métrica | Antes | Depois |
 |--------|--------|-------|
-| **Rule deployment time** | 2-4 hours | 15 minutes |
-| **False positive rate** | ~5% | < 0.1% |
-| **MITRE coverage** | Unknown | 87% |
-| **Peer review** | None | Required |
-| **Rollback capability** | Manual | Git revert |
+| **Tempo de deploy da regra** | 2-4 horas | 15 minutos |
+| **Taxa de falsos positivos** | ~5% | < 0.1% |
+| **Cobertura MITRE** | Desconhecida | 87% |
+| **Revisão de pares** | Nenhuma | Obrigatória |
+| **Capacidade de rollback** | Manual | Git revert |
 
 ---
 
-*Detection as Code: version control, testing, and automation for the SOC.*
+*Detection as Code: controle de versão, testes e automação para o SOC.*

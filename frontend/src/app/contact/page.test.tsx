@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ContactForm } from '@/app/contact/page';
+import { ContactForm } from '@/components/contact/contact-form';
+import { type Mock } from 'vitest';
 import { ToastProvider, ToastViewport } from '@/components/ui/toast';
 
 // Mock fetch
@@ -22,42 +23,52 @@ describe('ContactForm', () => {
   it('renders all form fields', () => {
     renderWithProviders(<ContactForm />);
     
-    expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/subject/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/message/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /send message/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/nome/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/e-mail/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/assunto/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/mensagem/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /enviar mensagem/i })).toBeInTheDocument();
   });
 
-  it('shows validation errors for empty fields', async () => {
+  it('shows validation errors for invalid fields', async () => {
     renderWithProviders(<ContactForm />);
-    
-    fireEvent.click(screen.getByRole('button', { name: /send message/i }));
-    
+
+    fireEvent.change(screen.getByLabelText(/nome/i), { target: { value: 'A' } });
+    fireEvent.change(screen.getByLabelText(/e-mail/i), { target: { value: 'invalido' } });
+    fireEvent.change(screen.getByLabelText(/assunto/i), { target: { value: 'ab' } });
+    fireEvent.change(screen.getByLabelText(/mensagem/i), { target: { value: 'curta' } });
+
     await waitFor(() => {
-      expect(screen.getByText(/name must be at least 2 characters/i)).toBeInTheDocument();
-      expect(screen.getByText(/invalid email address/i)).toBeInTheDocument();
-      expect(screen.getByText(/subject must be at least 5 characters/i)).toBeInTheDocument();
-      expect(screen.getByText(/message must be at least 20 characters/i)).toBeInTheDocument();
+      expect(screen.getByText(/nome precisa de pelo menos 2 caracteres/i)).toBeInTheDocument();
+      expect(screen.getByText(/e-mail inválido/i)).toBeInTheDocument();
+      expect(screen.getByText(/assunto precisa de pelo menos 5 caracteres/i)).toBeInTheDocument();
+      expect(screen.getByText(/mensagem precisa de pelo menos 20 caracteres/i)).toBeInTheDocument();
     });
   });
 
+
+  const fillValidForm = async () => {
+    fireEvent.change(screen.getByLabelText(/nome/i), { target: { value: 'John Doe' } });
+    fireEvent.change(screen.getByLabelText(/e-mail/i), { target: { value: 'john@example.com' } });
+    fireEvent.change(screen.getByLabelText(/assunto/i), { target: { value: 'general' } });
+    fireEvent.change(screen.getByLabelText(/mensagem/i), {
+      target: { value: 'This is a test message that is long enough to pass validation.' },
+    });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /enviar mensagem/i })).toBeEnabled();
+    });
+  };
+
   it('submits form successfully', async () => {
-    (global.fetch as vi.Mock).mockResolvedValueOnce({
+    (global.fetch as Mock).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ success: true }),
     });
 
     renderWithProviders(<ContactForm />);
 
-    fireEvent.change(screen.getByLabelText(/name/i), { target: { value: 'John Doe' } });
-    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'john@example.com' } });
-    fireEvent.change(screen.getByLabelText(/subject/i), { target: { value: 'general' } });
-    fireEvent.change(screen.getByLabelText(/message/i), { 
-      target: { value: 'This is a test message that is long enough to pass validation.' } 
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: /send message/i }));
+    await fillValidForm();
+    fireEvent.click(screen.getByRole('button', { name: /enviar mensagem/i }));
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith('/api/backend/api/v1/contact', {
@@ -73,26 +84,20 @@ describe('ContactForm', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/message sent successfully/i)).toBeInTheDocument();
+      expect(screen.getByText(/mensagem enviada com sucesso/i)).toBeInTheDocument();
     });
   });
 
   it('shows error toast on failed submission', async () => {
-    (global.fetch as vi.Mock).mockResolvedValueOnce({
+    (global.fetch as Mock).mockResolvedValueOnce({
       ok: false,
       json: () => Promise.resolve({ detail: 'Rate limited' }),
     });
 
     renderWithProviders(<ContactForm />);
 
-    fireEvent.change(screen.getByLabelText(/name/i), { target: { value: 'John Doe' } });
-    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'john@example.com' } });
-    fireEvent.change(screen.getByLabelText(/subject/i), { target: { value: 'general' } });
-    fireEvent.change(screen.getByLabelText(/message/i), { 
-      target: { value: 'This is a test message that is long enough to pass validation.' } 
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: /send message/i }));
+    await fillValidForm();
+    fireEvent.click(screen.getByRole('button', { name: /enviar mensagem/i }));
 
     await waitFor(() => {
       expect(screen.getByText(/rate limited/i)).toBeInTheDocument();
@@ -104,20 +109,16 @@ describe('ContactForm', () => {
     const fetchPromise = new Promise((resolve) => {
       resolveFetch = resolve;
     });
-    (global.fetch as vi.Mock).mockReturnValueOnce(fetchPromise);
+    (global.fetch as Mock).mockReturnValueOnce(fetchPromise);
 
     renderWithProviders(<ContactForm />);
 
-    fireEvent.change(screen.getByLabelText(/name/i), { target: { value: 'John Doe' } });
-    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'john@example.com' } });
-    fireEvent.change(screen.getByLabelText(/subject/i), { target: { value: 'general' } });
-    fireEvent.change(screen.getByLabelText(/message/i), { 
-      target: { value: 'This is a test message that is long enough to pass validation.' } 
+    await fillValidForm();
+    fireEvent.click(screen.getByRole('button', { name: /enviar mensagem/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /enviando/i })).toBeDisabled();
     });
-
-    fireEvent.click(screen.getByRole('button', { name: /send message/i }));
-
-    expect(screen.getByRole('button', { name: /sending.../i })).toBeDisabled();
 
     resolveFetch!({ ok: true, json: () => Promise.resolve({ success: true }) });
     await fetchPromise;

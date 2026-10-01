@@ -14,7 +14,7 @@ export function formatDate(date: string | Date, locale: string = 'pt-BR'): strin
   });
 }
 
-export function formatRelativeTime(date: string | Date, locale: string = 'pt-BR'): string {
+export function formatRelativeTime(date: string | Date): string {
   const d = new Date(date);
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
@@ -24,7 +24,10 @@ export function formatRelativeTime(date: string | Date, locale: string = 'pt-BR'
   if (diffDays === 1) return 'Ontem';
   if (diffDays < 7) return `${diffDays} dias atrás`;
   if (diffDays < 30) return `${Math.floor(diffDays / 7)} semana${Math.floor(diffDays / 7) > 1 ? 's' : ''} atrás`;
-  if (diffDays < 365) return `${Math.floor(diffDays / 30)} mês${Math.floor(diffDays / 30) > 1 ? 'es' : ''} atrás`;
+  if (diffDays < 365) {
+    const months = Math.floor(diffDays / 30);
+    return `${months} ${months > 1 ? 'meses' : 'mês'} atrás`;
+  }
   return `${Math.floor(diffDays / 365)} ano${Math.floor(diffDays / 365) > 1 ? 's' : ''} atrás`;
 }
 
@@ -45,7 +48,10 @@ export function slugify(text: string): string {
 
 export function truncate(str: string, length: number): string {
   if (str.length <= length) return str;
-  return str.slice(0, length).trim() + '...';
+  const sliced = str.slice(0, length);
+  const lastSpace = sliced.lastIndexOf(' ');
+  const base = lastSpace > 0 ? sliced.slice(0, lastSpace) : sliced;
+  return base.trim() + '...';
 }
 
 export function debounce<T extends (...args: unknown[]) => unknown>(

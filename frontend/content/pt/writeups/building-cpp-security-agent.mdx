@@ -1,27 +1,27 @@
 ---
-title: 'Building a C++20 Security Agent: Architecture & Lessons Learned'
-description: 'Deep dive into the Sentinel Agent architecture: cross-platform telemetry collection, eBPF/ETW, HMAC authentication, and Sigma rule evaluation.'
+title: 'Construindo um Agente de Segurança em C++20: Arquitetura e Lições Aprendidas'
+description: 'Análise aprofundada da arquitetura do Sentinel Agent: coleta de telemetria multiplataforma, eBPF/ETW, autenticação HMAC e avaliação de Sigma rules.'
 date: '2024-01-20'
 tags: ['C++20', 'Systems Programming', 'eBPF', 'ETW', 'Security Agent', 'Blue Team', 'Architecture']
 readingTime: 25
 series: 'Systems Programming for Security'
 ---
 
-# Building a C++20 Security Agent: Architecture & Lessons Learned
+# Construindo um Agente de Segurança em C++20: Arquitetura e Lições Aprendidas
 
-Writing a security agent in C++ is a rite of passage for Blue Team engineers who want to understand what happens under the hood. Here's the architecture, decisions, and hard-won lessons from building the **Sentinel Agent**.
+Escrever um agente de segurança em C++ é um rito de passagem para engenheiros de Blue Team que querem entender o que acontece por baixo dos panos. Aqui estão a arquitetura, as decisões e as lições aprendidas da construção do **Sentinel Agent**.
 
-## Why C++ for a Security Agent?
+## Por que C++ para um agente de segurança?
 
-| Requirement | C++ Advantage |
+| Requisito | Vantagem do C++ |
 |-------------|---------------|
-| **Performance** | Zero-cost abstractions, lock-free structures, memory control |
-| **Platform APIs** | Direct access to eBPF, ETW, Windows Kernel, macOS EndpointSecurity |
-| **Deployment** | Single static binary, no runtime, works on air-gapped systems |
-| **Ecosystem** | `libbpf`, `libyara`, `spdlog`, `nlohmann/json`, `cppzmq` |
-| **Talent pool** | Systems programmers understand memory, concurrency, OS internals |
+| **Desempenho** | Abstrações de custo zero, estruturas lock-free, controle de memória |
+| **APIs de plataforma** | Acesso direto a eBPF, ETW, Windows Kernel, macOS EndpointSecurity |
+| **Implantação** | Binário estático único, sem runtime, funciona em sistemas air-gapped |
+| **Ecossistema** | `libbpf`, `libyara`, `spdlog`, `nlohmann/json`, `cppzmq` |
+| **Base de talentos** | Programadores de sistemas entendem memória, concorrência e internas do SO |
 
-## High-Level Architecture
+## Arquitetura de alto nível
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -45,9 +45,9 @@ Writing a security agent in C++ is a rite of passage for Blue Team engineers who
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-## Platform Abstraction Layer
+## Camada de abstração de plataforma
 
-The core challenge: **same interface, completely different OS APIs**.
+O desafio central: **a mesma interface, APIs de SO completamente diferentes**.
 
 ```cpp
 // include/collector/collector.hpp
@@ -114,7 +114,7 @@ class EbpfCollector : public IEventCollector {
 };
 ```
 
-**BPF Program (collector.bpf.c):**
+**Programa BPF (collector.bpf.c):**
 
 ```c
 // Minimal process exec tracepoint
@@ -182,9 +182,9 @@ class EtwCollector : public IEventCollector {
 };
 ```
 
-## Normalization: ECS-Compatible JSON
+## Normalização: JSON compatível com ECS
 
-All events normalized to **Elastic Common Schema (ECS)** subset:
+Todos os eventos são normalizados para um subconjunto do **Elastic Common Schema (ECS)**:
 
 ```cpp
 // src/core/normalizer.cpp
@@ -233,7 +233,7 @@ nlohmann::json NormalizedEvent::to_json() const {
 }
 ```
 
-**Output Example:**
+**Exemplo de saída:**
 
 ```json
 {
@@ -262,9 +262,9 @@ nlohmann::json NormalizedEvent::to_json() const {
 }
 ```
 
-## Detection Engine: Sigma + YARA
+## Motor de detecção: Sigma + YARA
 
-### Sigma Rule Parser (Subset)
+### Analisador de Sigma rules (subconjunto)
 
 ```cpp
 // src/detection/sigma_engine.cpp
@@ -307,7 +307,7 @@ class SigmaEngine {
 };
 ```
 
-**Condition AST (Abstract Syntax Tree):**
+**AST de condição (Abstract Syntax Tree):**
 
 ```cpp
 // Field comparison with modifiers
@@ -336,7 +336,7 @@ class OrCondition : public Condition { /* ... */ };
 class NotCondition : public Condition { /* ... */ };
 ```
 
-### YARA Integration
+### Integração com YARA
 
 ```cpp
 // src/detection/yara_scanner.cpp
@@ -378,7 +378,7 @@ class YaraScanner {
 };
 ```
 
-## Transport: HMAC-Authenticated HTTPS
+## Transporte: HTTPS autenticado por HMAC
 
 ```cpp
 // src/transport/https_transport.cpp
@@ -432,9 +432,9 @@ class HttpsTransport : public ITransport {
 };
 ```
 
-## Configuration & Deployment
+## Configuração e implantação
 
-### CMake Build
+### Build com CMake
 
 ```cmake
 # CMakeLists.txt
@@ -499,7 +499,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 endif()
 ```
 
-### Systemd Service (Linux)
+### Serviço systemd (Linux)
 
 ```ini
 # /etc/systemd/system/sentinel-agent.service
@@ -536,9 +536,9 @@ CPUQuota=50%
 WantedBy=multi-user.target
 ```
 
-## Testing Strategy
+## Estratégia de testes
 
-### Unit Tests (Catch2)
+### Testes unitários (Catch2)
 
 ```cpp
 // tests/unit/test_normalizer.cpp
@@ -565,7 +565,7 @@ TEST_CASE("NormalizedEvent serializes to valid ECS JSON") {
 }
 ```
 
-### Integration Tests
+### Testes de integração
 
 ```bash
 # tests/integration/test_e2e.sh
@@ -612,23 +612,23 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 }
 ```
 
-## Lessons Learned
+## Lições aprendidas
 
-### 1. **Platform Abstraction Is Hard But Worth It**
+### 1. **Abstração de plataforma é difícil, mas vale a pena**
 
-| Approach | Verdict |
+| Abordagem | Veredito |
 |----------|---------|
-| `#ifdef` everywhere | ❌ Unmaintainable |
-| Abstract base + factory | ✅ Clean, testable |
-| Separate binaries per OS | ❌ Deployment nightmare |
+| `#ifdef` em todo lugar | ❌ Insustentável |
+| Classe abstrata + factory | ✅ Limpa, testável |
+| Binários separados por SO | ❌ Pesadelo de implantação |
 
-### 2. **eBPF Is Powerful But Fragile**
+### 2. **eBPF é poderoso, mas frágil**
 
-- **CO-RE (Compile Once, Run Everywhere)** is essential for kernel version independence
-- Always test on target kernel versions
-- `bpftool` is your best friend for debugging
+- **CO-RE (Compile Once, Run Everywhere)** é essencial para independência de versão do kernel
+- Sempre teste nas versões de kernel alvo
+- `bpftool` é seu melhor amigo para depuração
 
-### 3. **ETW Is Verbose — Filter Early**
+### 3. **ETW é verboso — filtre cedo**
 
 ```cpp
 // Enable only what you need
@@ -637,7 +637,7 @@ props.EnableFlags = EVENT_TRACE_FLAG_PROCESS |
                     EVENT_TRACE_FLAG_NETWORK_TCPIP;
 ```
 
-### 4. **Structured Logging from Day One**
+### 4. **Log estruturado desde o primeiro dia**
 
 ```cpp
 // Use spdlog with JSON formatter
@@ -648,7 +648,7 @@ logger->info("Event collected",
     {"duration_ms", elapsed.count()});
 ```
 
-### 5. **Configuration as Code**
+### 5. **Configuração como código**
 
 ```yaml
 # agent.yaml - all tunable parameters
@@ -674,26 +674,26 @@ detection:
   eval_timeout_ms: 100
 ```
 
-## Performance Results
+## Resultados de desempenho
 
-| Metric | Target | Achieved |
+| Métrica | Alvo | Alcançado |
 |--------|--------|----------|
-| **Event throughput** | > 10k eps | 52k eps |
-| **Memory (RSS)** | < 100 MB | 47 MB |
-| **CPU (idle)** | < 1% | 0.3% |
+| **Vazão de eventos** | > 10k eps | 52k eps |
+| **Memória (RSS)** | < 100 MB | 47 MB |
+| **CPU (ociosa)** | < 1% | 0.3% |
 | **CPU (10k eps)** | < 10% | 6.2% |
-| **Detection latency (p99)** | < 5 ms | 0.8 ms |
-| **Binary size** | < 15 MB | 8.2 MB |
+| **Latência de detecção (p99)** | < 5 ms | 0.8 ms |
+| **Tamanho do binário** | < 15 MB | 8.2 MB |
 
-## Future Work
+## Trabalhos futuros
 
-- [ ] **eBPF CO-RE** for true kernel version independence
-- [ ] **Windows Kernel Driver** for syscall-level visibility
-- [ ] **macOS EndpointSecurity** full implementation
-- [ ] **WASM rule engine** for dynamic policy updates
-- [ ] **OpenTelemetry** native metrics export
-- [ ] **Rule compiler** for faster Sigma evaluation
+- [ ] **eBPF CO-RE** para independência real de versão do kernel
+- [ ] **Windows Kernel Driver** para visibilidade no nível de syscalls
+- [ ] **macOS EndpointSecurity** com implementação completa
+- [ ] **Motor de regras WASM** para atualizações dinâmicas de política
+- [ ] **OpenTelemetry** com exportação nativa de métricas
+- [ ] **Compilador de regras** para avaliação mais rápida de Sigma rules
 
 ---
 
-*Systems programming for security: where performance meets paranoia, and every cycle counts.*
+*Programação de sistemas para segurança: onde o desempenho encontra a paranoia, e cada ciclo conta.*

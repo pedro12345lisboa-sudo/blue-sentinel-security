@@ -7,12 +7,12 @@ test.describe('Home -> Project -> Contact Flow', () => {
     
     // Verify home page loads
     await expect(page.locator('h1')).toContainText('blue-sentinel');
-    await expect(page.locator('text=Cybersecurity Portfolio')).toBeVisible();
+    await expect(page.locator('h1')).toContainText('Portfólio');
     
     // Navigate to projects
     await page.click('a[href="/projects"]');
     await expect(page).toHaveURL('/projects');
-    await expect(page.locator('h1')).toContainText('Projects');
+    await expect(page.locator('h1')).toContainText('Projetos');
     
     // Click on first project (if exists)
     const projectLink = page.locator('a[href^="/projects/"]').first();
@@ -22,7 +22,7 @@ test.describe('Home -> Project -> Contact Flow', () => {
       
       // Verify project detail page
       await expect(page.locator('h1')).toBeVisible();
-      await expect(page.locator('text=View Source')).toBeVisible();
+      await expect(page.locator('text=Ver código-fonte')).toBeVisible();
       
       // Navigate to contact from project page
       await page.click('a[href="/contact"]');
@@ -33,7 +33,7 @@ test.describe('Home -> Project -> Contact Flow', () => {
     
     // Verify contact page
     await expect(page).toHaveURL('/contact');
-    await expect(page.locator('h1')).toContainText('Get In Touch');
+    await expect(page.locator('h1')).toContainText('Fale comigo');
     
     // Fill contact form
     await page.fill('input[name="name"]', 'Test User');
@@ -42,10 +42,10 @@ test.describe('Home -> Project -> Contact Flow', () => {
     await page.fill('textarea[name="message"]', 'This is a test message from Playwright e2e test.');
     
     // Submit form
-    await page.click('button:has-text("Send Message")');
+    await page.click('button:has-text("Enviar mensagem")');
     
     // Should show success toast (or handle gracefully if backend not running)
-    await expect(page.locator('text=/message sent|error|rate limited/i')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=/mensagem enviada|erro|limite/i')).toBeVisible({ timeout: 10000 });
   });
 });
 
