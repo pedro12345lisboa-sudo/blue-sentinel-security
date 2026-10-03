@@ -1,0 +1,65 @@
+title: Remote Desktop Logon from a Never-Seen Source
+id: d45f7d78-1aa7-4542-96bf-97560db7034f
+lab_id: bs-auth-rdp-external-logon
+status: test
+description: >
+  A successful interactive logon (Event 4624, logon type 10 / Remote
+  Interactive) from an IP that was never used for this account - a strong
+  signal of stolen credentials used over RDP.
+  Synthetic lab rule - matches only fabricated BLUE-SENTINEL lab events.
+author: Pedro Lisboa
+date: 2026/10/02
+references:
+  - https://attack.mitre.org/techniques/T1021/001/
+  - https://attack.mitre.org/techniques/T1078/
+logsource:
+  product: windows
+  service: security
+  category: authentication_success
+detection:
+  selection:
+    category: auth
+    product: windows
+    event_id: '4624'
+    logon_type: '10'
+  new_source:
+    new_source: true
+  condition: selection and new_source
+level: high
+falsepositives:
+  - A legitimate admin who works from an unmanaged network or new VPN exit
+  - Remote support sessions delivered by a third-party provider
+response:
+  - Confirm the session with the account owner and end it if it was not theirs
+  - Review everything the account did after the logon and force a password reset
+  - Require MFA / NLA for RDP and restrict it to a jump host
+tags:
+  - attack.t1021_001
+  - attack.t1078
+lab_samples:
+  match:
+    - timestamp: '2024-01-10T03:14:10Z'
+      category: auth
+      action: logon
+      event_id: '4624'
+      logon_type: '10'
+      host: SRV-DEMO-02
+      user: admin.demo
+      ip: 203.0.113.90
+      product: windows
+      new_source: true
+      country: SG
+      message: An account was successfully logged on.
+  no_match:
+    - timestamp: '2024-01-10T09:12:00Z'
+      category: auth
+      action: logon
+      event_id: '4624'
+      logon_type: '3'
+      host: SRV-DEMO-02
+      user: admin.demo
+      ip: 198.51.100.20
+      product: windows
+      new_source: false
+      country: PT
+      message: An account was successfully logged on.

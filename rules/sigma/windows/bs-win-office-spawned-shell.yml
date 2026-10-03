@@ -1,0 +1,72 @@
+title: Office Application Spawned a Scripting Shell
+id: d3c3e91d-70b9-405d-97f2-bfe05882dca6
+lab_id: bs-win-office-spawned-shell
+status: test
+description: >
+  Microsoft Office started a command interpreter or script host as its
+  child process - the classic macro delivery chain (document -> shell).
+  Synthetic lab rule - matches only fabricated BLUE-SENTINEL lab events.
+author: Pedro Lisboa
+date: 2026/10/02
+references:
+  - https://attack.mitre.org/techniques/T1059/
+  - https://attack.mitre.org/techniques/T1204/002/
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection:
+    category: process
+    action: process_start
+    process|contains|i:
+      - cmd.exe
+      - powershell.exe
+      - wscript.exe
+      - cscript.exe
+      - mshta.exe
+      - rundll32.exe
+  office_parent:
+    parent_process|contains|i:
+      - winword.exe
+      - excel.exe
+      - powerpnt.exe
+      - outlook.exe
+  condition: selection and office_parent
+level: high
+falsepositives:
+  - Helpdesk scripts launched from an Outlook add-in
+  - Documented "open command prompt here" integrations inside Office
+response:
+  - Isolate the endpoint and capture the parent document for analysis
+  - Disable Office macros for untrusted documents and check the attachment source
+  - Look for follow-up network beacons from the same host
+tags:
+  - attack.t1059
+  - attack.t1204_002
+lab_samples:
+  match:
+    - timestamp: '2024-11-05T09:41:12Z'
+      category: process
+      action: process_start
+      event_id: '4688'
+      host: WS-LAB-09
+      user: c.ferreira
+      ip: 198.51.100.61
+      product: windows
+      process: powershell.exe
+      parent_process: WINWORD.EXE
+      command_line: powershell.exe -NoProfile -WindowStyle Hidden -File C:\Users\c.ferreira\AppData\Local\Low\doc.ps1
+      path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+  no_match:
+    - timestamp: '2024-11-05T09:40:00Z'
+      category: process
+      action: process_start
+      event_id: '4688'
+      host: WS-LAB-09
+      user: c.ferreira
+      ip: 198.51.100.61
+      product: windows
+      process: powershell.exe
+      parent_process: powershell_ise.exe
+      command_line: powershell.exe -File C:\scripts\report.ps1
+      path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe

@@ -1,0 +1,19 @@
+{
+  "description": "negative fixture for bs-auth-rdp-external-logon",
+  "event": {
+    "action": "logon",
+    "category": "auth",
+    "country": "PT",
+    "event_id": "4624",
+    "host": "WS-LAB-02",
+    "ip": "198.51.100.10",
+    "logon_type": "3",
+    "message": "An account was successfully logged on.",
+    "new_source": true,
+    "product": "windows",
+    "timestamp": "2025-02-04T09:00:00Z",
+    "user": "r.martins"
+  },
+  "kind": "sigma",
+  "rule": "bs-auth-rdp-external-logon"
+}

@@ -1,0 +1,20 @@
+{
+  "description": "positive fixture for bs-linux-sudo-unusual-account",
+  "event": {
+    "action": "sudo",
+    "category": "auth",
+    "event_id": "sudo",
+    "host": "srv-lab-edge-01",
+    "ip": "198.51.100.30",
+    "message": "www-data : TTY=pts/1 ; PWD=/var/www ; COMMAND=/usr/bin/id",
+    "product": "linux",
+    "service": "sudo",
+    "timestamp": "2025-03-02T09:15:12Z",
+    "user": "www-data"
+  },
+  "expect": [
+    "bs-linux-sudo-unusual-account"
+  ],
+  "kind": "sigma",
+  "rule": "bs-linux-sudo-unusual-account"
+}

@@ -1,7 +1,7 @@
 id: corr-sqli-burst
 title: Burst of SQL Injection probes against one host
 description: >
-  Three or more SQL Injection matches (Sigma or YARA) against the same web
+  Three or more SQL Injection matches against the same web
   host inside a 120 second window - typically automated scanning or an
   exploitation attempt.
 severity: critical
@@ -11,7 +11,7 @@ stages:
   - id: probes
     min_events: 3
     source:
-      rule_ids: [bs-web-sql-injection, Web_SQLi_Access_Log]
+      rule_ids: [bs-web-sql-injection]
 mitre: [T1190]
 false_positives:
   - Authorised vulnerability scanners or a WAF test campaign

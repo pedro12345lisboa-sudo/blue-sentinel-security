@@ -1,0 +1,20 @@
+{
+  "description": "negative fixture for bs-web-scanner-user-agent",
+  "event": {
+    "action": "http_request",
+    "category": "web",
+    "host": "WEB-LAB-01",
+    "ip": "198.51.100.50",
+    "method": "GET",
+    "path": "/admin",
+    "process": "nginx",
+    "product": "generic",
+    "status": 404,
+    "timestamp": "2025-04-11T21:02:00Z",
+    "url": "/admin",
+    "user": "-",
+    "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126.0 Safari/537.36"
+  },
+  "kind": "sigma",
+  "rule": "bs-web-scanner-user-agent"
+}

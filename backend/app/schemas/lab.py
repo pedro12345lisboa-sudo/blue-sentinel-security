@@ -61,6 +61,7 @@ class LabRuleDetail(LabRuleSummary):
     """Full rule document backing the educational explanation panel."""
 
     source: str
+    source_url: str | None = None
     condition: str | None = None
     logsource: dict[str, Any] | None = None
     strings: list[dict[str, Any]] | None = None

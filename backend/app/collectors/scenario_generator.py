@@ -203,6 +203,7 @@ def after_hours_scenario() -> Scenario:
                 host="SRV-DEMO-02",
                 user="admin.demo",
                 ip="198.51.100.20",
+                logon_type="3",
                 new_source=False,
                 country="PT",
                 message="An account was successfully logged on.",
@@ -228,6 +229,7 @@ def after_hours_scenario() -> Scenario:
                 host="SRV-DEMO-02",
                 user="admin.demo",
                 ip="203.0.113.90",
+                logon_type="10",
                 new_source=True,
                 country="SG",
                 message="An account was successfully logged on.",
@@ -267,9 +269,9 @@ def after_hours_scenario() -> Scenario:
             "account, followed by discovery commands (T1078)."
         ),
         steps=tuple(steps),
-        expected_rules=("bs-auth-logon-out-of-hours",),
+        expected_rules=("bs-auth-rdp-external-logon",),
         expected_severity="high",
-        mitre=("T1078", "T1003"),
+        mitre=("T1021.001", "T1078"),
     )
 
 
@@ -334,7 +336,7 @@ def temp_process_scenario() -> Scenario:
             "bs-proc-temp-folder-execution",
             "bs-proc-powershell-encoded-command",
             "bs-net-suspicious-outbound",
-            "Suspicious_PowerShell_Commandline",
+            "Suspicious_Encoded_Chain",
         ),
         expected_severity="critical",
         mitre=("T1059.001", "T1071.001", "T1105"),
@@ -347,16 +349,18 @@ def log_clearing_scenario() -> Scenario:
     steps = [
         ScenarioStep(
             delay_seconds=1.5,
-            record=_auth(
-                _ts(day, "22:40:12"),
-                "audit_clear",
-                "1102",
-                host="SRV-DEMO-02",
-                user="admin.demo",
-                ip="198.51.100.20",
-                process="System",
-                message="The audit log was cleared.",
-            ),
+            record={
+                "timestamp": _ts(day, "22:40:12"),
+                "category": "audit",
+                "action": "audit_clear",
+                "event_id": "1102",
+                "host": "SRV-DEMO-02",
+                "user": "admin.demo",
+                "ip": "198.51.100.20",
+                "product": "windows",
+                "process": "System",
+                "message": "The audit log was cleared.",
+            },
         ),
         ScenarioStep(
             delay_seconds=2.0,
@@ -405,7 +409,7 @@ def log_clearing_scenario() -> Scenario:
             "(T1070.001)."
         ),
         steps=tuple(steps),
-        expected_rules=("bs-audit-log-cleared", "bs-file-evtx-deletion"),
+        expected_rules=("bs-audit-log-cleared",),
         expected_severity="critical",
         mitre=("T1070.001", "T1070.004"),
     )
@@ -468,7 +472,7 @@ def sqli_scenario() -> Scenario:
             "(T1190)."
         ),
         steps=tuple(steps),
-        expected_rules=("bs-web-sql-injection", "Web_SQLi_Access_Log", "corr-sqli-burst"),
+        expected_rules=("bs-web-sql-injection", "corr-sqli-burst"),
         expected_severity="critical",
         mitre=("T1190",),
     )

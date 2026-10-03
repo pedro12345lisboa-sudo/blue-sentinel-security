@@ -1,0 +1,23 @@
+{
+  "description": "positive fixture for bs-web-scanner-user-agent",
+  "event": {
+    "action": "http_request",
+    "category": "web",
+    "host": "WEB-LAB-01",
+    "ip": "203.0.113.99",
+    "method": "GET",
+    "path": "/backup",
+    "process": "nginx",
+    "product": "generic",
+    "status": 404,
+    "timestamp": "2025-04-11T21:08:12Z",
+    "url": "/backup",
+    "user": "-",
+    "user_agent": "Nikto/2.5.0"
+  },
+  "expect": [
+    "bs-web-scanner-user-agent"
+  ],
+  "kind": "sigma",
+  "rule": "bs-web-scanner-user-agent"
+}

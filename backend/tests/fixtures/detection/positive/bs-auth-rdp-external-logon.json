@@ -1,0 +1,22 @@
+{
+  "description": "positive fixture for bs-auth-rdp-external-logon",
+  "event": {
+    "action": "logon",
+    "category": "auth",
+    "country": "RO",
+    "event_id": "4624",
+    "host": "SRV-LAB-07",
+    "ip": "203.0.113.150",
+    "logon_type": "10",
+    "message": "An account was successfully logged on.",
+    "new_source": true,
+    "product": "windows",
+    "timestamp": "2025-02-04T23:41:00Z",
+    "user": "admin.demo"
+  },
+  "expect": [
+    "bs-auth-rdp-external-logon"
+  ],
+  "kind": "sigma",
+  "rule": "bs-auth-rdp-external-logon"
+}

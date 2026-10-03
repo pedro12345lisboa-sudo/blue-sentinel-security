@@ -20,13 +20,25 @@ from tests.helpers import make_event
 
 RULE_IDS = (
     "bs-auth-failed-logons",
-    "bs-auth-logon-out-of-hours",
-    "bs-proc-temp-folder-execution",
-    "bs-proc-powershell-encoded-command",
+    "bs-auth-rdp-external-logon",
+    "bs-win-member-added-local-admin",
+    "bs-win-service-installed",
+    "bs-win-scheduled-task-created",
+    "bs-win-office-spawned-shell",
+    "bs-win-run-key-modified",
     "bs-audit-log-cleared",
-    "bs-file-evtx-deletion",
-    "bs-web-sql-injection",
+    "bs-proc-powershell-encoded-command",
+    "bs-proc-temp-folder-execution",
     "bs-net-suspicious-outbound",
+    "bs-linux-ssh-failed-logons",
+    "bs-linux-user-created-uid-zero",
+    "bs-linux-crontab-modified",
+    "bs-linux-sudo-unusual-account",
+    "bs-web-sql-injection",
+    "bs-web-path-traversal",
+    "bs-web-scanner-user-agent",
+    "bs-cloud-login-new-country",
+    "bs-cloud-access-key-created",
 )
 
 
@@ -35,10 +47,18 @@ def rule_set(rules_root: Path) -> SigmaRuleSet:
     return SigmaRuleSet(rules_root / "sigma")
 
 
-def test_eight_published_rules(rule_set: SigmaRuleSet) -> None:
-    assert len(rule_set.rules) >= 8
+def test_twenty_published_rules(rule_set: SigmaRuleSet) -> None:
+    assert len(rule_set.rules) == 20
     for rule_id in RULE_IDS:
         assert rule_id in rule_set.rules, rule_id
+
+
+def test_every_rule_carries_a_uuid(rule_set: SigmaRuleSet) -> None:
+    import uuid as uuid_module
+
+    for rule in rule_set.rules.values():
+        uuid_module.UUID(rule.uuid)  # raises if the document id is not a UUID
+        assert rule.uuid != rule.id or rule.id.count("-") == 4
 
 
 def test_every_rule_has_match_and_no_match_samples(rule_set: SigmaRuleSet) -> None:

@@ -1,12 +1,13 @@
 title: SQL Injection Pattern in Web Access Log
-id: bs-web-sql-injection
-status: experimental
+id: 42d1b1a1-7053-4503-9453-2f07f50c699d
+lab_id: bs-web-sql-injection
+status: test
 description: >
   A request URI containing a classic SQL Injection probe. The lab only
   inspects the log line - nothing is sent or executed. Synthetic lab rule -
   matches only fabricated BLUE-SENTINEL lab events.
-author: Blue Sentinel
-date: 2024/06/01
+author: Pedro Lisboa
+date: 2026/10/02
 references:
   - https://attack.mitre.org/techniques/T1190/
 logsource:

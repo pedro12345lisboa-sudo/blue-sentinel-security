@@ -1,0 +1,19 @@
+{
+  "description": "positive fixture for bs-auth-failed-logons",
+  "event": {
+    "action": "failed_logon",
+    "category": "auth",
+    "event_id": "4625",
+    "host": "WS-LAB-02",
+    "ip": "198.51.100.10",
+    "message": "An account failed to log on.",
+    "product": "windows",
+    "timestamp": "2025-02-04T10:12:03Z",
+    "user": "r.martins"
+  },
+  "expect": [
+    "bs-auth-failed-logons"
+  ],
+  "kind": "sigma",
+  "rule": "bs-auth-failed-logons"
+}

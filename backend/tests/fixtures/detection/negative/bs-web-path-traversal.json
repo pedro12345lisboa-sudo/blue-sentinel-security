@@ -1,0 +1,19 @@
+{
+  "description": "negative fixture for bs-web-path-traversal",
+  "event": {
+    "action": "http_request",
+    "category": "web",
+    "host": "WEB-LAB-01",
+    "ip": "198.51.100.50",
+    "method": "GET",
+    "path": "/assets/img/logo.png",
+    "process": "nginx",
+    "product": "generic",
+    "status": 200,
+    "timestamp": "2025-04-11T21:01:00Z",
+    "url": "/assets/img/logo.png",
+    "user": "-"
+  },
+  "kind": "sigma",
+  "rule": "bs-web-path-traversal"
+}

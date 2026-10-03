@@ -36,10 +36,26 @@ DEDUP_TTL_SECONDS = 120.0
 # A new incident is opened by correlation alerts or anything at/above "high".
 INCIDENT_THRESHOLD = "high"
 
+# Published repository of the rule files (the lab links each alert to its
+# rule source on GitHub so the analyst can read it in context).
+GITHUB_REPO = "pedro12345lisboa-sudo/blue-sentinel-security"
+GITHUB_BRANCH = "main"
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
 
 def default_rules_dir() -> Path:
     """``<repo>/rules`` relative to ``backend/app/detection/engine.py``."""
-    return Path(__file__).resolve().parents[3] / "rules"
+    return REPO_ROOT / "rules"
+
+
+def github_blob_url(path: str | Path) -> str | None:
+    """URL of ``path`` inside the published repository (None when outside it)."""
+    try:
+        relative = Path(path).resolve().relative_to(REPO_ROOT)
+    except ValueError:
+        # Rule copy outside the repo (tests building a temporary tree).
+        return None
+    return f"https://github.com/{GITHUB_REPO}/blob/{GITHUB_BRANCH}/{relative.as_posix()}"
 
 
 @dataclass
@@ -219,28 +235,26 @@ class DetectionEngine:
         """Full rule document for the educational explanation panel."""
         for entry in self.rule_catalog():
             if entry["id"] == rule_id:
+                entry = dict(entry)
                 if entry["kind"] == "sigma":
                     rule = self.sigma.rules[rule_id]
-                    entry = dict(entry)
                     entry["logsource"] = {
                         "product": rule.product,
                         "category": rule.category,
                         "service": rule.service,
                     }
                     entry["condition"] = rule.condition_text
-                    entry["source"] = Path(rule.source).name
+                    source_path = rule.source
                 elif entry["kind"] == "yara":
                     rule = self.yara.rules[rule_id]
-                    entry = dict(entry)
                     entry["condition"] = rule.condition_text
                     entry["strings"] = [
                         {"id": identifier, "literal": s.literal}
                         for identifier, s in rule.strings.items()
                     ]
-                    entry["source"] = Path(rule.source).name
+                    source_path = rule.source
                 else:
                     pattern = self.correlation.patterns[rule_id]
-                    entry = dict(entry)
                     entry["window_seconds"] = pattern.window_seconds
                     entry["group_by"] = list(pattern.group_by)
                     entry["stages"] = [
@@ -251,7 +265,9 @@ class DetectionEngine:
                         }
                         for stage in pattern.stages
                     ]
-                    entry["source"] = Path(pattern.source).name
+                    source_path = pattern.source
+                entry["source"] = Path(source_path).name
+                entry["source_url"] = github_blob_url(source_path)
                 return entry
         return None
 

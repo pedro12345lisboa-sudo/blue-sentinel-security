@@ -1,0 +1,22 @@
+{
+  "description": "positive fixture for bs-win-office-spawned-shell",
+  "event": {
+    "action": "process_start",
+    "category": "process",
+    "command_line": "cmd.exe /c start https://intranet.local/report",
+    "event_id": "4688",
+    "host": "WS-LAB-02",
+    "ip": "198.51.100.10",
+    "parent_process": "EXCEL.EXE",
+    "path": "C:\\Windows\\System32\\cmd.exe",
+    "process": "cmd.exe",
+    "product": "windows",
+    "timestamp": "2025-02-06T14:02:19Z",
+    "user": "r.martins"
+  },
+  "expect": [
+    "bs-win-office-spawned-shell"
+  ],
+  "kind": "sigma",
+  "rule": "bs-win-office-spawned-shell"
+}

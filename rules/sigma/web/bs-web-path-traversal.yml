@@ -1,0 +1,59 @@
+title: Path Traversal Probe in Web Access Log
+id: 97a3f42d-28d7-4a80-ad0c-b79bc0e2bbd4
+lab_id: bs-web-path-traversal
+status: test
+description: >
+  A request URI containing a directory traversal sequence (../ and its
+  encoded variants) - an attempt to read files outside the web root. The
+  lab only inspects the log line - nothing is requested or read.
+  Synthetic lab rule - matches only fabricated BLUE-SENTINEL lab events.
+author: Pedro Lisboa
+date: 2026/10/02
+references:
+  - https://attack.mitre.org/techniques/T1190/
+logsource:
+  category: web_access
+detection:
+  request:
+    category: web
+    action: http_request
+  payload:
+    url|re|i: '(\.\./|\.\.\\|%2e%2e|%252e%252e|\.\.%2f)'
+  condition: request and payload
+level: high
+falsepositives:
+  - Content management systems that document nested paths
+  - Legitimate clients that percent-encode a directory separator twice
+response:
+  - Block the source IP at the reverse proxy / WAF
+  - Review which files the same source asked for in the time window
+  - Confirm the application normalises and validates the requested path
+tags:
+  - attack.t1190
+lab_samples:
+  match:
+    - timestamp: '2024-07-11T20:04:10Z'
+      category: web
+      action: http_request
+      host: WEB-DEMO-03
+      user: '-'
+      ip: 203.0.113.61
+      product: generic
+      process: nginx
+      method: GET
+      path: /static/../../../../etc/passwd
+      url: /static/../../../../etc/passwd
+      status: 400
+  no_match:
+    - timestamp: '2024-07-11T20:04:00Z'
+      category: web
+      action: http_request
+      host: WEB-DEMO-03
+      user: '-'
+      ip: 198.51.100.44
+      product: generic
+      process: nginx
+      method: GET
+      path: /static/css/app.css
+      url: /static/css/app.css
+      status: 200

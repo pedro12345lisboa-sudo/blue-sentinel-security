@@ -298,7 +298,21 @@ export function ExplanationPanel({
 
         {detail?.source && (
           <p className="text-xs text-muted-foreground">
-            {lab.source}: <span className="font-mono">{detail.source}</span>
+            {lab.source}:{' '}
+            {detail.source_url ? (
+              <a
+                href={detail.source_url}
+                target="_blank"
+                rel="noreferrer"
+                title={lab.openOnGitHub}
+                aria-label={`${lab.openOnGitHub}: ${detail.source}`}
+                className="font-mono underline underline-offset-2 hover:text-foreground"
+              >
+                {detail.source}
+              </a>
+            ) : (
+              <span className="font-mono">{detail.source}</span>
+            )}
           </p>
         )}
       </CardContent>

@@ -1,12 +1,13 @@
 title: Process Executed from a Temporary Folder
-id: bs-proc-temp-folder-execution
-status: experimental
+id: 83f7f27d-e376-424c-9ce9-bca1b007faf5
+lab_id: bs-proc-temp-folder-execution
+status: test
 description: >
   A process started from a path containing a temp directory. Stagers and
   droppers commonly run from %TEMP%. Synthetic lab rule - matches only
   fabricated BLUE-SENTINEL lab events.
-author: Blue Sentinel
-date: 2024/06/01
+author: Pedro Lisboa
+date: 2026/10/02
 references:
   - https://attack.mitre.org/techniques/T1105/
 logsource:

@@ -1,12 +1,13 @@
 title: Repeated Failed Logons for One Account
-id: bs-auth-failed-logons
-status: experimental
+id: 433a319a-26f5-4cf3-90af-4dca74295a6f
+lab_id: bs-auth-failed-logons
+status: test
 description: >
   Failed interactive logon attempts for the same account. Several events in
   a short period are the first stage of password guessing / brute force.
   Synthetic lab rule - matches only fabricated BLUE-SENTINEL lab events.
-author: Blue Sentinel
-date: 2024/06/01
+author: Pedro Lisboa
+date: 2026/10/02
 references:
   - https://attack.mitre.org/techniques/T1110/001/
 logsource:

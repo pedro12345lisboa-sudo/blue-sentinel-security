@@ -1,0 +1,19 @@
+{
+  "description": "negative fixture for bs-web-sql-injection",
+  "event": {
+    "action": "http_request",
+    "category": "web",
+    "host": "WEB-LAB-01",
+    "ip": "198.51.100.50",
+    "method": "GET",
+    "path": "/products",
+    "process": "nginx",
+    "product": "generic",
+    "status": 200,
+    "timestamp": "2025-04-11T21:00:00Z",
+    "url": "/products?id=42",
+    "user": "-"
+  },
+  "kind": "sigma",
+  "rule": "bs-web-sql-injection"
+}

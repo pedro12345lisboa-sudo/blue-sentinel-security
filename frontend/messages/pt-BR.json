@@ -702,6 +702,7 @@
         "window": "Janela de tempo",
         "groupBy": "Agrupado por",
         "source": "Arquivo da regra",
+        "openOnGitHub": "Abrir no GitHub",
         "empty": "Selecione um alerta na lista para ver a regra que disparou, o log que casou e o passo a passo da resposta.",
         "loadFailed": "Não foi possível carregar os detalhes da regra.",
         "close": "Fechar"

@@ -33,8 +33,12 @@ def engine(rules_root: Path) -> CorrelationEngine:
     return CorrelationEngine.from_directory(rules_root / "patterns")
 
 
-def test_two_patterns_loaded(engine: CorrelationEngine) -> None:
-    assert set(engine.patterns) == {"corr-brute-force-sequence", "corr-sqli-burst"}
+def test_three_patterns_loaded(engine: CorrelationEngine) -> None:
+    assert set(engine.patterns) == {
+        "corr-brute-force-sequence",
+        "corr-sqli-burst",
+        "corr-web-scan-404",
+    }
 
 
 def test_brute_force_pattern_loads(engine: CorrelationEngine) -> None:
@@ -121,7 +125,7 @@ def test_sqli_burst_counts_rule_matches(engine: CorrelationEngine) -> None:
             product="generic",
             url="/products?id=1'%20OR%20'1'='1",
         )
-        return event, {"bs-web-sql-injection", "Web_SQLi_Access_Log"}
+        return event, {"bs-web-sql-injection"}
 
     event, matched = probe("2024-07-03T09:15:20")
     assert engine.feed(event, matched) == []
@@ -132,7 +136,7 @@ def test_sqli_burst_counts_rule_matches(engine: CorrelationEngine) -> None:
     assert len(fired) == 1
     assert fired[0]["rule_id"] == "corr-sqli-burst"
     assert fired[0]["window_seconds"] == 120
-    # One match per event: three events from two different rule ids = 3.
+    # One entry per matching event: three probes inside the window.
     assert fired[0]["matched_fields"][0]["actual"] >= 3
 
 

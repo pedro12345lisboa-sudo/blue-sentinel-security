@@ -1,0 +1,57 @@
+title: Scheduled Task Created
+id: bef0fcbc-93f6-4420-ae6c-74742e19c35e
+lab_id: bs-win-scheduled-task-created
+status: test
+description: >
+  A new scheduled task was registered (Event 4698). Attackers use tasks
+  for execution and for re-running after reboot. By itself it is a common
+  administration action - tune it against your change window.
+  Synthetic lab rule - matches only fabricated BLUE-SENTINEL lab events.
+author: Pedro Lisboa
+date: 2026/10/02
+references:
+  - https://attack.mitre.org/techniques/T1053/005/
+logsource:
+  product: windows
+  service: security
+detection:
+  selection:
+    category: audit
+    product: windows
+    event_id: '4698'
+    action: task_created
+  condition: selection
+level: medium
+falsepositives:
+  - Software installation and maintenance windows that create tasks routinely
+  - Backup, patching and cleanup tasks created by administrators
+response:
+  - Read the task action and confirm it matches the approved change
+  - Compare the creator account with the task schedule and the repository owner
+  - Remove unapproved tasks and watch for them being recreated
+tags:
+  - attack.t1053_005
+lab_samples:
+  match:
+    - timestamp: '2024-10-11T21:30:00Z'
+      category: audit
+      action: task_created
+      event_id: '4698'
+      host: WS-LAB-03
+      user: m.santos
+      ip: 198.51.100.52
+      product: windows
+      task_name: \System Maintenance\Cache Refresh
+      task_action: powershell.exe -File C:\ProgramData\cache\refresh.ps1
+      message: A scheduled task was created.
+  no_match:
+    - timestamp: '2024-10-11T21:35:00Z'
+      category: audit
+      action: task_deleted
+      event_id: '4699'
+      host: WS-LAB-03
+      user: m.santos
+      ip: 198.51.100.52
+      product: windows
+      task_name: \System Maintenance\Cache Refresh
+      message: A scheduled task was deleted.

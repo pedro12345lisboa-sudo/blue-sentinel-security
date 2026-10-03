@@ -1,0 +1,22 @@
+{
+  "description": "positive fixture for bs-linux-user-created-uid-zero",
+  "event": {
+    "account": "ops_root",
+    "action": "user_created",
+    "category": "audit",
+    "event_id": "useradd",
+    "host": "srv-lab-edge-01",
+    "ip": "198.51.100.30",
+    "message": "new user added: name=ops_root, uid=0",
+    "product": "linux",
+    "shell": "/bin/bash",
+    "timestamp": "2025-03-01T04:09:30Z",
+    "uid": 0,
+    "user": "root"
+  },
+  "expect": [
+    "bs-linux-user-created-uid-zero"
+  ],
+  "kind": "sigma",
+  "rule": "bs-linux-user-created-uid-zero"
+}

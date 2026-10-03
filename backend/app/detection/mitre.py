@@ -12,20 +12,34 @@ from typing import Iterable
 TECHNIQUE_RE = re.compile(r"^T\d{4}(\.\d{3})?$")
 _TAG_RE = re.compile(r"^attack\.t(\d{4})(?:_(\d{3}))?$", re.IGNORECASE)
 
-# Titles of every technique referenced by lab rules and scenarios.
+# Titles of every technique referenced by lab rules, correlation patterns and
+# scenarios (see docs/security/attack-coverage.md for the tactic matrix and
+# the declared gaps). A rule may only tag techniques present here.
 TECHNIQUES: dict[str, str] = {
-    "T1003": "OS Credential Dumping",
+    "T1021.001": "Remote Services: Remote Desktop Protocol",
+    "T1027": "Obfuscated Files or Information",
+    "T1053.003": "Scheduled Task/Job: Cron",
+    "T1053.005": "Scheduled Task/Job: Scheduled Task",
     "T1059": "Command and Scripting Interpreter",
     "T1059.001": "Command and Scripting Interpreter: PowerShell",
+    "T1059.005": "Command and Scripting Interpreter: Visual Basic",
     "T1070.001": "Indicator Removal: Clear Windows Event Logs",
-    "T1070.002": "Indicator Removal: Clear Linux/Mac System Logs",
     "T1070.004": "Indicator Removal: File Deletion",
     "T1071.001": "Application Layer Protocol: Web Protocols",
     "T1078": "Valid Accounts",
+    "T1098": "Account Manipulation",
+    "T1098.001": "Account Manipulation: Additional Cloud Credentials",
     "T1105": "Ingress Tool Transfer",
-    "T1110": "Brute Force",
     "T1110.001": "Brute Force: Password Guessing",
+    "T1136.001": "Create Account: Local Account",
     "T1190": "Exploit Public-Facing Application",
+    "T1204.002": "User Execution: Malicious File",
+    "T1505.003": "Server Software Component: Web Shell",
+    "T1543.003": "Create or Modify System Process: Windows Service",
+    "T1547.001": "Boot or Logon Autostart Execution: Registry Run Keys / Startup Folder",
+    "T1548.003": "Abuse Elevation Control Mechanism: Sudo and Sudo Caching",
+    "T1566.002": "Phishing: Spearphishing Link",
+    "T1595.002": "Active Scanning: Vulnerability Scanning",
 }
 
 

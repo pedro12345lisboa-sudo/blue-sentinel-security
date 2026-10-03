@@ -1,0 +1,20 @@
+{
+  "description": "positive fixture for bs-linux-ssh-failed-logons",
+  "event": {
+    "action": "failed_logon",
+    "category": "auth",
+    "event_id": "sshd",
+    "host": "srv-lab-edge-01",
+    "ip": "203.0.113.58",
+    "message": "Failed password for deploy from 203.0.113.58 port 44102 ssh2",
+    "product": "linux",
+    "service": "sshd",
+    "timestamp": "2025-03-01T04:05:00Z",
+    "user": "deploy"
+  },
+  "expect": [
+    "bs-linux-ssh-failed-logons"
+  ],
+  "kind": "sigma",
+  "rule": "bs-linux-ssh-failed-logons"
+}

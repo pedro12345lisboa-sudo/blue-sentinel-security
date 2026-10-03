@@ -1,12 +1,13 @@
 title: Outbound Connection to a Non-Standard Port or Lab Range
-id: bs-net-suspicious-outbound
-status: experimental
+id: ebb349d6-57a1-49f1-b510-254f7684c5c0
+lab_id: bs-net-suspicious-outbound
+status: test
 description: >
   An outbound connection on a port that is not web/DNS, or to the
   documented lab test range. Synthetic lab rule - matches only fabricated
   BLUE-SENTINEL lab events (RFC 5737 documentation addresses).
-author: Blue Sentinel
-date: 2024/06/01
+author: Pedro Lisboa
+date: 2026/10/02
 references:
   - https://attack.mitre.org/techniques/T1071/001/
 logsource:

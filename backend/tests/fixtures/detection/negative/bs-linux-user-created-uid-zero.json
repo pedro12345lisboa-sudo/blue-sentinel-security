@@ -1,0 +1,19 @@
+{
+  "description": "negative fixture for bs-linux-user-created-uid-zero",
+  "event": {
+    "account": "reporting",
+    "action": "user_created",
+    "category": "audit",
+    "event_id": "useradd",
+    "host": "srv-lab-edge-01",
+    "ip": "198.51.100.30",
+    "message": "new user added: name=reporting, uid=1407",
+    "product": "linux",
+    "shell": "/bin/sh",
+    "timestamp": "2025-03-01T04:10:00Z",
+    "uid": 1407,
+    "user": "root"
+  },
+  "kind": "sigma",
+  "rule": "bs-linux-user-created-uid-zero"
+}

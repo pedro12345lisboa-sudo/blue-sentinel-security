@@ -1,13 +1,14 @@
 title: PowerShell Started With an Encoded Command
-id: bs-proc-powershell-encoded-command
-status: experimental
+id: ffac7866-0264-49d6-bcb1-7f2cb9f6fc09
+lab_id: bs-proc-powershell-encoded-command
+status: test
 description: >
   PowerShell launched with an encoded command line argument (-enc /
   -EncodedCommand). Encoded payloads hide the real command from casual
   inspection. Synthetic lab rule - matches only fabricated BLUE-SENTINEL
   lab events.
-author: Blue Sentinel
-date: 2024/06/01
+author: Pedro Lisboa
+date: 2026/10/02
 references:
   - https://attack.mitre.org/techniques/T1059/001/
 logsource:

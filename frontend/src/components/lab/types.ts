@@ -134,6 +134,7 @@ export interface LabRuleSummary {
 
 export interface LabRuleDetail extends LabRuleSummary {
   source: string;
+  source_url?: string | null;
   condition?: string | null;
   logsource?: Record<string, unknown> | null;
   strings?: { id: string; literal: string }[] | null;

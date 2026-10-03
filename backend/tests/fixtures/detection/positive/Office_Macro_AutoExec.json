@@ -1,0 +1,21 @@
+{
+  "description": "positive fixture for Office_Macro_AutoExec",
+  "event": {
+    "action": "file_create",
+    "category": "file",
+    "detail": "Sub Auto_Open()  Call RefreshLinks  End Sub",
+    "event_id": "11",
+    "host": "WS-LAB-02",
+    "ip": "198.51.100.10",
+    "path": "C:\\Users\\r.martins\\Documents\\budget.xlsm",
+    "process": "excel.exe",
+    "product": "windows",
+    "timestamp": "2025-06-01T12:05:00Z",
+    "user": "r.martins"
+  },
+  "expect": [
+    "Office_Macro_AutoExec"
+  ],
+  "kind": "yara",
+  "rule": "Office_Macro_AutoExec"
+}

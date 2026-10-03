@@ -18,6 +18,11 @@ Supported field modifiers: ``contains``, ``startswith``, ``endswith``,
 Unsupported constructs (backends/pipes, nested maps, aggregations) raise
 ``SigmaError`` at load time instead of being silently ignored.
 
+Rule identity: the document ``id`` is the Sigma UUID, while the lab keys
+alerts, scenarios and correlation patterns on ``lab_id`` (stable kebab-case
+handle, e.g. ``bs-auth-failed-logons``). Rules without ``lab_id`` fall back
+to ``id``; uniqueness is enforced on the key used by the lab.
+
 Regex safety: every ``re`` pattern is length-capped and scanned for nested
 quantifiers at load time (``redos_risk``), and each evaluation is measured;
 the engine records per-rule timings so slow rules surface in tests/stats.
@@ -535,7 +540,8 @@ def _normalize_samples(raw: Any, where: str, kind: str) -> tuple[dict[str, Any],
 class SigmaRule:
     """A loaded, compiled Sigma rule."""
 
-    id: str
+    id: str  # lab handle (lab_id, falls back to the document id)
+    uuid: str  # Sigma document id (validated as a UUID by validate_rules.py)
     title: str
     description: str
     level: str
@@ -612,6 +618,12 @@ def load_sigma_rule(path: Path) -> SigmaRule:
     rule_id = str(document["id"]).strip()
     if not rule_id:
         raise SigmaParseError(f"{where}: id must not be empty")
+    # ``id`` is the Sigma UUID; ``lab_id`` is the stable kebab-case handle used
+    # by scenarios, correlation patterns and the UI. Rules without ``lab_id``
+    # (snippets written inside tests) fall back to ``id``.
+    lab_id = str(document.get("lab_id") or "").strip() or rule_id
+    if not lab_id:
+        raise SigmaParseError(f"{where}: lab_id must not be empty")
 
     try:
         level = normalize_severity(document["level"])
@@ -657,7 +669,8 @@ def load_sigma_rule(path: Path) -> SigmaRule:
     samples_no_match = _normalize_samples(samples.get("no_match"), where, "no_match")
 
     return SigmaRule(
-        id=rule_id,
+        id=lab_id,
+        uuid=rule_id,
         title=str(document["title"]).strip(),
         description=" ".join(str(document["description"]).split()),
         level=level,
@@ -678,7 +691,8 @@ def load_sigma_rule(path: Path) -> SigmaRule:
 
 
 def _rule_paths(directory: Path) -> list[Path]:
-    return sorted(directory.glob("*.yml")) + sorted(directory.glob("*.yaml"))
+    """Every rule file below ``directory`` (platform sub-folders included)."""
+    return sorted(directory.rglob("*.yml")) + sorted(directory.rglob("*.yaml"))
 
 
 class SigmaRuleSet:

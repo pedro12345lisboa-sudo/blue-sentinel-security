@@ -702,6 +702,7 @@
         "window": "Time window",
         "groupBy": "Grouped by",
         "source": "Rule file",
+        "openOnGitHub": "Open on GitHub",
         "empty": "Select an alert from the list to see the rule that fired, the matching log and the response steps.",
         "loadFailed": "Could not load the rule details.",
         "close": "Close"

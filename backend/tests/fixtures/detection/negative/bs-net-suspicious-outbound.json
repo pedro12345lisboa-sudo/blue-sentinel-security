@@ -1,0 +1,17 @@
+{
+  "description": "negative fixture for bs-net-suspicious-outbound",
+  "event": {
+    "action": "outbound_connection",
+    "category": "network",
+    "destination_ip": "203.0.113.10",
+    "host": "WS-LAB-02",
+    "ip": "198.51.100.10",
+    "port": 443,
+    "process": "chrome.exe",
+    "product": "windows",
+    "timestamp": "2025-02-08T11:22:00Z",
+    "user": "r.martins"
+  },
+  "kind": "sigma",
+  "rule": "bs-net-suspicious-outbound"
+}

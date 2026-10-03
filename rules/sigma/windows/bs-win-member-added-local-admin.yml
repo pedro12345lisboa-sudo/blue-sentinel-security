@@ -1,0 +1,61 @@
+title: Member Added to a Local Administrators Group
+id: 32d1e4c6-0888-4e02-b853-3d2adc0f87d5
+lab_id: bs-win-member-added-local-admin
+status: test
+description: >
+  An account was added to a local group that grants administrative rights
+  (Event 4732) - a direct privilege escalation and persistence step.
+  Synthetic lab rule - matches only fabricated BLUE-SENTINEL lab events.
+author: Pedro Lisboa
+date: 2026/10/02
+references:
+  - https://attack.mitre.org/techniques/T1098/
+logsource:
+  product: windows
+  service: security
+detection:
+  selection:
+    category: audit
+    product: windows
+    event_id: '4732'
+  target_group:
+    target_group|contains|i:
+      - administrators
+      - domain admins
+      - enterprise admins
+  condition: selection and target_group
+level: high
+falsepositives:
+  - Documented workstation build or join-domain procedures
+  - Helpdesk workflows that grant temporary elevation
+response:
+  - Validate the change ticket and remove the account if it was not approved
+  - Review the account's activity since the group change
+  - Enforce just-in-time administration and alert on every group change
+tags:
+  - attack.t1098
+lab_samples:
+  match:
+    - timestamp: '2024-08-14T10:05:00Z'
+      category: audit
+      action: group_member_added
+      event_id: '4732'
+      host: WS-LAB-07
+      user: svc.backup
+      ip: 198.51.100.31
+      product: windows
+      target_group: Administrators
+      member: svc.backup
+      message: A member was added to a local group.
+  no_match:
+    - timestamp: '2024-08-14T10:06:00Z'
+      category: audit
+      action: group_member_added
+      event_id: '4732'
+      host: WS-LAB-07
+      user: svc.backup
+      ip: 198.51.100.31
+      product: windows
+      target_group: Remote Desktop Users
+      member: j.rocha
+      message: A member was added to a local group.

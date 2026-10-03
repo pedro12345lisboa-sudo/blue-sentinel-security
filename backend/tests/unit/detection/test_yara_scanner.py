@@ -19,9 +19,9 @@ PS_ENCODED = (
     "C:\\Users\\jsilva\\AppData\\Local\\Temp\\update.ps1 powershell.exe jsilva"
 )
 PS_BENIGN = "powershell.exe -File C:\\scripts\\report.ps1 powershell.exe jsilva"
-SQLI_1 = "/products /products?id=1'%20OR%20'1'='1 nginx"
-SQLI_2 = "/search /search?q=UNION%20SELECT%20username%20FROM%20users nginx"
-SQLI_3 = "/items /items?id=1;WAITFOR%20DELAY%20'0:0:5' nginx"
+WEBSHELL_1 = "<?php eval($_REQUEST['cmd']); ?>"
+WEBSHELL_2 = "<?PHP system($_GET['x']); ?>"
+WEBSHELL_3 = "<?php $c = base64_decode($_POST['d']); ?>"
 BENIGN_WEB = "/index.html /index.html nginx"
 
 
@@ -30,45 +30,69 @@ def scanner(rules_root: Path) -> YaraScanner:
     return YaraScanner(rules_root / "yara")
 
 
-def test_two_published_rules(scanner: YaraScanner) -> None:
+def test_five_published_rules(scanner: YaraScanner) -> None:
     assert set(scanner.rules) == {
-        "Suspicious_PowerShell_Commandline",
-        "Web_SQLi_Access_Log",
+        "EICAR_Test_File",
+        "Office_Macro_AutoExec",
+        "Suspicious_Encoded_Chain",
+        "PHP_Webshell_Generic",
+        "Phishing_Shortened_URL_Social",
     }
 
 
 @pytest.mark.parametrize("text", [PS_ENCODED])
-def test_powershell_rule_matches(scanner: YaraScanner, text: str) -> None:
+def test_encoded_chain_rule_matches(scanner: YaraScanner, text: str) -> None:
     hits = [name for name, _ in scanner.scan(text)]
-    assert hits == ["Suspicious_PowerShell_Commandline"]
+    assert hits == ["Suspicious_Encoded_Chain"]
 
 
-@pytest.mark.parametrize("text", [PS_BENIGN, SQLI_1, BENIGN_WEB, "cmd.exe /c whoami /all"])
-def test_powershell_rule_ignores_benign_text(scanner: YaraScanner, text: str) -> None:
-    assert "Suspicious_PowerShell_Commandline" not in [name for name, _ in scanner.scan(text)]
+@pytest.mark.parametrize("text", [PS_BENIGN, BENIGN_WEB, "cmd.exe /c whoami /all"])
+def test_encoded_chain_rule_ignores_benign_text(scanner: YaraScanner, text: str) -> None:
+    assert "Suspicious_Encoded_Chain" not in [name for name, _ in scanner.scan(text)]
 
 
-@pytest.mark.parametrize("text", [SQLI_1, SQLI_2, SQLI_3])
-def test_sqli_rule_matches(scanner: YaraScanner, text: str) -> None:
-    assert [name for name, _ in scanner.scan(text)] == ["Web_SQLi_Access_Log"]
+@pytest.mark.parametrize("text", [WEBSHELL_1, WEBSHELL_2, WEBSHELL_3])
+def test_webshell_rule_matches(scanner: YaraScanner, text: str) -> None:
+    assert [name for name, _ in scanner.scan(text)] == ["PHP_Webshell_Generic"]
 
 
-@pytest.mark.parametrize("text", [BENIGN_WEB, "/about /about nginx", "An account failed to log on."])
-def test_sqli_rule_ignores_benign_text(scanner: YaraScanner, text: str) -> None:
-    assert "Web_SQLi_Access_Log" not in [name for name, _ in scanner.scan(text)]
+@pytest.mark.parametrize(
+    "text",
+    [BENIGN_WEB, "<?php echo htmlspecialchars($name); ?>", "An account failed to log on."],
+)
+def test_webshell_rule_ignores_benign_text(scanner: YaraScanner, text: str) -> None:
+    assert "PHP_Webshell_Generic" not in [name for name, _ in scanner.scan(text)]
+
+
+def test_eicar_rule_needs_both_halves(scanner: YaraScanner) -> None:
+    first = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$"
+    second = "EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+    assert scanner.scan(first + " " + second)[0][0] == "EICAR_Test_File"
+    assert scanner.scan(first)[0:1] == []
+    assert scanner.scan(second)[0:1] == []
+
+
+def test_macro_and_phishing_rules(scanner: YaraScanner) -> None:
+    macro = "Sub Auto_Open()\n  Shell \"powershell -e ...\"\nEnd Sub"
+    assert [name for name, _ in scanner.scan(macro)] == ["Office_Macro_AutoExec"]
+    lure = "Verify your account: bit.ly/9f2kQ and facebook.com/session-check"
+    assert [name for name, _ in scanner.scan(lure)] == ["Phishing_Shortened_URL_Social"]
+    # A shortener without a social link is not enough for the lure rule.
+    assert "Phishing_Shortened_URL_Social" not in [name for name, _ in scanner.scan("bit.ly/9f2kQ")]
 
 
 def test_scan_returns_explanation_bindings(scanner: YaraScanner) -> None:
-    hits = scanner.scan(SQLI_1)
+    hits = scanner.scan(WEBSHELL_1)
     assert hits and hits[0][1]
     assert any(binding["field"] == "string" for binding in hits[0][1])
 
 
 def test_rule_metadata(scanner: YaraScanner) -> None:
-    rule = scanner.rules["Suspicious_PowerShell_Commandline"]
+    rule = scanner.rules["Suspicious_Encoded_Chain"]
     assert rule.level == "high"
-    assert rule.mitre == ("T1059.001",)
-    assert rule.lab_id == "bs-yara-ps-encoded"
+    assert rule.mitre == ("T1027",)
+    assert rule.lab_id == "bs-yara-encoded-chain"
+    assert rule.meta["uuid"] == "8bb3ea83-9375-4de6-87df-b08bdbfa1d35"
     assert rule.false_positives and rule.response
 
 

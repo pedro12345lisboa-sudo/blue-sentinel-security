@@ -1,0 +1,59 @@
+title: Root-Level Account Created on Linux
+id: 45c85149-03cc-4b42-84ab-cc43c6779e2b
+lab_id: bs-linux-user-created-uid-zero
+status: test
+description: >
+  A local account was created with UID 0, giving it the same privileges as
+  root - a backdoor account created after an initial compromise.
+  Synthetic lab rule - matches only fabricated BLUE-SENTINEL lab events.
+author: Pedro Lisboa
+date: 2026/10/02
+references:
+  - https://attack.mitre.org/techniques/T1136/001/
+logsource:
+  product: linux
+detection:
+  selection:
+    category: audit
+    product: linux
+    action: user_created
+  root_uid:
+    uid: 0
+  condition: selection and root_uid
+level: high
+falsepositives:
+  - Golden images that bake a rescue root-equivalent account (should not exist)
+  - Account provisioning automation with an incorrect default UID
+response:
+  - Disable the account and capture the shell history of whoever created it
+  - Review SSH keys and sudoers entries tied to the account
+  - Compare /etc/passwd and /etc/shadow with your configuration baseline
+tags:
+  - attack.t1136_001
+lab_samples:
+  match:
+    - timestamp: '2024-07-22T23:48:00Z'
+      category: audit
+      action: user_created
+      event_id: 'useradd'
+      host: srv-lab-db-01
+      user: root
+      ip: 198.51.100.80
+      product: linux
+      account: svc_metrics
+      uid: 0
+      shell: /bin/bash
+      message: 'new user added: name=svc_metrics, uid=0'
+  no_match:
+    - timestamp: '2024-07-22T23:49:00Z'
+      category: audit
+      action: user_created
+      event_id: 'useradd'
+      host: srv-lab-db-01
+      user: root
+      ip: 198.51.100.80
+      product: linux
+      account: report_ro
+      uid: 1407
+      shell: /bin/sh
+      message: 'new user added: name=report_ro, uid=1407'

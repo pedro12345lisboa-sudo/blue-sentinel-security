@@ -1,0 +1,22 @@
+{
+  "description": "positive fixture for bs-cloud-login-new-country",
+  "event": {
+    "action": "login",
+    "category": "auth",
+    "country": "SG",
+    "event_id": "signin",
+    "host": "cloud-lab-tenant",
+    "ip": "203.0.113.210",
+    "message": "Successful interactive sign-in.",
+    "new_country": true,
+    "product": "cloud",
+    "provider": "azure",
+    "timestamp": "2025-05-02T07:12:00Z",
+    "user": "tiago.nunes"
+  },
+  "expect": [
+    "bs-cloud-login-new-country"
+  ],
+  "kind": "sigma",
+  "rule": "bs-cloud-login-new-country"
+}

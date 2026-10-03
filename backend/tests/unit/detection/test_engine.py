@@ -149,9 +149,9 @@ class TestCatalogAndEducation:
         catalog = engine.rule_catalog()
         kinds = {entry["kind"] for entry in catalog}
         assert kinds == {"sigma", "yara", "correlation"}
-        assert sum(1 for e in catalog if e["kind"] == "sigma") >= 8
-        assert sum(1 for e in catalog if e["kind"] == "yara") >= 2
-        assert sum(1 for e in catalog if e["kind"] == "correlation") >= 2
+        assert sum(1 for e in catalog if e["kind"] == "sigma") == 20
+        assert sum(1 for e in catalog if e["kind"] == "yara") == 5
+        assert sum(1 for e in catalog if e["kind"] == "correlation") == 3
         for entry in catalog:
             assert entry["id"] and entry["title"]
             assert entry["level"] in ("informational", "low", "medium", "high", "critical")
@@ -167,14 +167,18 @@ class TestCatalogAndEducation:
         assert document["condition"] == "selection"
         assert document["logsource"]["product"] == "windows"
         assert document["source"].endswith(".yml")
+        assert document["source_url"].endswith(
+            "/rules/sigma/windows/bs-proc-temp-folder-execution.yml"
+        )
 
     def test_get_rule_explains_a_yara_rule(self, rules_root: Path) -> None:
         engine = DetectionEngine(rules_root)
-        document = engine.get_rule("Web_SQLi_Access_Log")
+        document = engine.get_rule("PHP_Webshell_Generic")
         assert document is not None
         assert document["kind"] == "yara"
         assert document["strings"], document
         assert document["condition"]
+        assert document["source_url"].endswith("/rules/yara/php_webshell_patterns.yar")
 
     def test_get_rule_explains_a_correlation_pattern(self, rules_root: Path) -> None:
         engine = DetectionEngine(rules_root)
@@ -199,7 +203,7 @@ class TestHotReloadResilience:
         engine = DetectionEngine(rules_dir)
 
         good = engine.sigma.rules["bs-auth-failed-logons"]
-        broken = rules_dir / "sigma" / "bs-auth-failed-logons.yml"
+        broken = rules_dir / "sigma" / "windows" / "bs-auth-failed-logons.yml"
         document = yaml.safe_load(broken.read_text(encoding="utf-8"))
         document["detection"]["selection"]["host|bogus_modifier"] = "WS-1"
         broken.write_text(yaml.safe_dump(document), encoding="utf-8")

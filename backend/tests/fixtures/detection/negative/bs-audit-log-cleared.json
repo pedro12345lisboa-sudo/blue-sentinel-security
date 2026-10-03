@@ -1,0 +1,16 @@
+{
+  "description": "negative fixture for bs-audit-log-cleared",
+  "event": {
+    "action": "audit_policy_change",
+    "category": "audit",
+    "event_id": "4719",
+    "host": "SRV-LAB-07",
+    "ip": "198.51.100.12",
+    "message": "System audit policy was changed.",
+    "product": "windows",
+    "timestamp": "2025-02-07T22:00:00Z",
+    "user": "admin.demo"
+  },
+  "kind": "sigma",
+  "rule": "bs-audit-log-cleared"
+}
