@@ -1,0 +1,21 @@
+{
+  "description": "positive fixture for bs-cloud-access-key-created",
+  "event": {
+    "action": "access_key_created",
+    "category": "audit",
+    "event_id": "CreateAccessKey",
+    "host": "cloud-lab-tenant",
+    "ip": "198.51.100.40",
+    "message": "Access key created for batch-job.",
+    "product": "cloud",
+    "provider": "aws",
+    "target_user": "batch-job",
+    "timestamp": "2025-05-02T07:15:44Z",
+    "user": "ci-bot"
+  },
+  "expect": [
+    "bs-cloud-access-key-created"
+  ],
+  "kind": "sigma",
+  "rule": "bs-cloud-access-key-created"
+}

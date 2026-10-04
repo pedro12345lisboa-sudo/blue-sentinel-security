@@ -1,0 +1,21 @@
+{
+  "description": "positive fixture for bs-proc-temp-folder-execution",
+  "event": {
+    "action": "process_start",
+    "category": "process",
+    "command_line": "rundll32.exe C:\\Users\\r.martins\\AppData\\Local\\Temp\\cache.dll,Start",
+    "event_id": "4688",
+    "host": "WS-LAB-02",
+    "ip": "198.51.100.10",
+    "path": "C:\\Users\\r.martins\\AppData\\Local\\Temp\\cache.dll",
+    "process": "rundll32.exe",
+    "product": "windows",
+    "timestamp": "2025-02-08T11:31:02Z",
+    "user": "r.martins"
+  },
+  "expect": [
+    "bs-proc-temp-folder-execution"
+  ],
+  "kind": "sigma",
+  "rule": "bs-proc-temp-folder-execution"
+}

@@ -1,0 +1,14 @@
+{
+  "name": "sentinel-agent",
+  "version": "0.1.0",
+  "description": "Read-only defensive telemetry agent (Windows/Linux)",
+  "homepage": "https://github.com/pedro12345lisboa-sudo/blue-sentinel-security",
+  "license": "MIT",
+  "dependencies": [
+    "curl",
+    "nlohmann-json",
+    "openssl",
+    "zlib",
+    "gtest"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "description": "negative fixture for bs-proc-powershell-encoded-command",
+  "event": {
+    "action": "process_start",
+    "category": "process",
+    "command_line": "powershell.exe -File C:\\scripts\\inventory.ps1",
+    "event_id": "4688",
+    "host": "WS-LAB-02",
+    "ip": "198.51.100.10",
+    "path": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+    "process": "powershell.exe",
+    "product": "windows",
+    "timestamp": "2025-02-08T11:20:00Z",
+    "user": "r.martins"
+  },
+  "kind": "sigma",
+  "rule": "bs-proc-powershell-encoded-command"
+}

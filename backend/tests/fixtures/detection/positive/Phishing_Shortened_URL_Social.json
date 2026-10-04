@@ -1,0 +1,21 @@
+{
+  "description": "positive fixture for Phishing_Shortened_URL_Social",
+  "event": {
+    "action": "file_create",
+    "category": "file",
+    "detail": "Parcel waiting for you: bit.ly/9f2kQ posted by facebook.com/parcel-support",
+    "event_id": "11",
+    "host": "WS-LAB-02",
+    "ip": "198.51.100.10",
+    "path": "C:\\Users\\r.martins\\Documents\\inbox-note.txt",
+    "process": "notepad.exe",
+    "product": "windows",
+    "timestamp": "2025-06-01T12:20:00Z",
+    "user": "r.martins"
+  },
+  "expect": [
+    "Phishing_Shortened_URL_Social"
+  ],
+  "kind": "yara",
+  "rule": "Phishing_Shortened_URL_Social"
+}

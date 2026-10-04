@@ -3,15 +3,17 @@
 import { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSite } from '@/i18n';
 
 interface CodeBlockProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
   language?: string;
   filename?: string;
 }
 
 export function CodeBlock({ children, className, language, filename }: CodeBlockProps) {
+  const site = useSite();
   const [copied, setCopied] = useState(false);
   const code = typeof children === 'string' ? children : '';
 
@@ -36,17 +38,17 @@ export function CodeBlock({ children, className, language, filename }: CodeBlock
           <button
             onClick={handleCopy}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted"
-            aria-label="Copy code"
+            aria-label={site.microcopy.codeBlock.ariaCopy}
           >
             {copied ? (
               <>
                 <Check className="h-4 w-4 text-success" aria-hidden="true" />
-                <span>Copied</span>
+                <span>{site.microcopy.codeBlock.copied}</span>
               </>
             ) : (
               <>
                 <Copy className="h-4 w-4" aria-hidden="true" />
-                <span>Copy</span>
+                <span>{site.microcopy.codeBlock.copy}</span>
               </>
             )}
           </button>

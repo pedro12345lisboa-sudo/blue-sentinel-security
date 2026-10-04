@@ -1,0 +1,21 @@
+{
+  "description": "positive fixture for bs-win-run-key-modified",
+  "event": {
+    "action": "registry_value_set",
+    "category": "audit",
+    "details": "C:\\Users\\r.martins\\AppData\\Roaming\\upd.exe",
+    "event_id": "13",
+    "host": "WS-LAB-02",
+    "ip": "198.51.100.10",
+    "message": "Registry value set.",
+    "product": "windows",
+    "target_object": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\Updater",
+    "timestamp": "2025-02-07T04:44:07Z",
+    "user": "r.martins"
+  },
+  "expect": [
+    "bs-win-run-key-modified"
+  ],
+  "kind": "sigma",
+  "rule": "bs-win-run-key-modified"
+}

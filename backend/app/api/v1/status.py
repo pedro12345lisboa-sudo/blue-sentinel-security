@@ -4,7 +4,7 @@ import time
 import psutil
 from fastapi import APIRouter, Depends, Request
 
-from app.core.config import settings
+from app.cache.redis import get_redis
 from app.core.deps import get_db_session
 from app.schemas.status import StatusResponse
 
@@ -31,7 +31,7 @@ async def system_status(request: Request, db=Depends(get_db_session)):
     api_latency = (time.perf_counter() - started) * 1000
 
     try:
-        await settings.redis.ping()
+        await get_redis().ping()
         cache_ok = True
     except Exception:
         cache_ok = False

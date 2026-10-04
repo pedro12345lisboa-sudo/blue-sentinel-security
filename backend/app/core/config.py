@@ -15,7 +15,10 @@ class Settings(BaseSettings):
     # Redis
     redis_host: str = Field(default="redis", env="REDIS_HOST")
     redis_port: int = Field(default=6379, env="REDIS_PORT")
-    redis_password: str = Field(default="changeme_default_must_overwrite", env="REDIS_PASSWORD")
+    redis_password: str = Field(default="", env="REDIS_PASSWORD")
+    # fail-open (False): se o Redis cair, o rate limit deixa passar.
+    # fail-closed (True): se o Redis cair, as requições limitadas são bloqueadas.
+    rate_limit_fail_closed: bool = Field(default=False, env="RATE_LIMIT_FAIL_CLOSED")
 
     # Agent authentication
     agent_api_key: str = Field(default="dev-agent-key-must-change-in-production", env="AGENT_API_KEY")

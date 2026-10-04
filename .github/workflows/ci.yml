@@ -1,0 +1,117 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend (lint, unit, coverage, e2e)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type check
+        run: pnpm type-check
+
+      - name: i18n keys check
+        run: pnpm check:i18n
+
+      - name: Unit tests + coverage gate (>= 70%)
+        shell: bash
+        run: set -o pipefail && pnpm test:coverage 2>&1 | tee coverage.log
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          {
+            echo "## Frontend"
+            echo '```'
+            grep -E "^(All files|File) +\|" coverage.log | sed -E 's/\x1b\[[0-9;]*m//g' || true
+            echo '```'
+            echo "Gates: linhas/instruções, branches, funções >= 70% (vitest.config.ts)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: End-to-end + acessibilidade (axe)
+        run: pnpm test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+          retention-days: 7
+
+  backend:
+    name: Backend (pytest, gate >= 85%)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install
+        run: python -m pip install -r requirements.txt
+
+      - name: Unit, integração, contrato e segurança
+        shell: bash
+        run: set -o pipefail && pytest 2>&1 | tee pytest.log
+
+      - name: Rule library validation + fixture hit-rate
+        shell: bash
+        run: set -o pipefail && python ../scripts/development/validate_rules.py 2>&1 | tee rules.log
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          {
+            echo "## Backend"
+            echo '```'
+            grep -E "^(TOTAL|[0-9]+ (passed|failed))|Required test coverage" pytest.log || true
+            echo '```'
+            echo '```'
+            grep -E "hit-rate|rules loaded|patterns loaded" rules.log || true
+            echo '```'
+            echo "Gates: 85% de cobertura (pytest.ini \`--cov-fail-under=85\`) e hit-rate 100% das fixtures."
+          } >> "$GITHUB_STEP_SUMMARY"

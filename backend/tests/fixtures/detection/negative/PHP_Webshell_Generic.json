@@ -1,0 +1,18 @@
+{
+  "description": "negative fixture for PHP_Webshell_Generic",
+  "event": {
+    "action": "file_create",
+    "category": "file",
+    "detail": "<?php echo htmlspecialchars($_GET['name']); ?>",
+    "event_id": "file_create",
+    "host": "WEB-LAB-01",
+    "ip": "198.51.100.50",
+    "path": "/var/www/html/templates/greeting.php",
+    "process": "nginx",
+    "product": "linux",
+    "timestamp": "2025-06-01T12:16:00Z",
+    "user": "www-data"
+  },
+  "kind": "yara",
+  "rule": "PHP_Webshell_Generic"
+}

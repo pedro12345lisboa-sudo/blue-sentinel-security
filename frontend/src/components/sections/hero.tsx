@@ -1,19 +1,24 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { ArrowRight, Terminal, Shield, Code, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { useReducedMotion, useGSAP } from '@/hooks';
+import { useSite, LocalizedLink } from '@/i18n';
+
+const highlightIcons = { Shield, Code, Zap };
 
 export function Hero() {
+  const site = useSite();
   const reducedMotion = useReducedMotion();
   const { gsap } = useGSAP();
   const heroRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
   const threeSlotRef = useRef<HTMLDivElement>(null);
+
+  const variant =
+    site.hero.variants[site.hero.activeVariant] ?? site.hero.variants[0];
 
   useEffect(() => {
     if (reducedMotion || !gsap) return;
@@ -62,54 +67,55 @@ export function Hero() {
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           <div ref={textRef} className="text-center lg:text-left">
             <div className="mb-6 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
-              <span className="px-3 py-1 text-xs font-mono bg-primary/10 text-primary rounded-full border border-primary/20">
-                Defensive Security
-              </span>
-              <span className="px-3 py-1 text-xs font-mono bg-success/10 text-success rounded-full border border-success/20">
-                Detection Engineering
-              </span>
-              <span className="px-3 py-1 text-xs font-mono bg-warning/10 text-warning rounded-full border border-warning/20">
-                Automation
-              </span>
+              {site.hero.badges.map((badge) => (
+                <span
+                  key={badge}
+                  className="px-3 py-1 text-xs font-mono bg-primary/10 text-primary rounded-full border border-primary/20"
+                >
+                  {badge}
+                </span>
+              ))}
             </div>
 
             <h1
               id="hero-title"
               className="mb-6 text-display-xl font-display font-bold tracking-tight text-balance"
             >
-              <span className="font-mono text-primary">blue-sentinel</span>{' '}
-              <span className="text-foreground">Cybersecurity Portfolio</span>
+              <span className="font-mono text-primary">{site.brand.name}</span>{' '}
+              <span className="text-foreground">{variant.title}</span>
             </h1>
 
             <p className="mb-8 max-w-xl text-lg text-muted-foreground lg:text-xl mx-auto lg:mx-0 text-balance">
-              Blue Team engineer building detection logic, automation pipelines, and security tooling.
-              This portfolio showcases projects, writing, and an interactive detection lab.
+              {variant.subtitle}
             </p>
 
             <div ref={ctaRef} className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link href="/projects" className="btn-primary w-full max-w-xs">
-                View Projects
+              <LocalizedLink
+                href={site.hero.ctas.primary.href}
+                className="btn-primary w-full max-w-xs"
+              >
+                {site.hero.ctas.primary.label}
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-              <Link href="/lab" className="btn-outline w-full max-w-xs">
+              </LocalizedLink>
+              <LocalizedLink
+                href={site.hero.ctas.secondary.href}
+                className="btn-outline w-full max-w-xs"
+              >
                 <Terminal className="h-4 w-4 mr-2" aria-hidden="true" />
-                Open Detection Lab
-              </Link>
+                {site.hero.ctas.secondary.label}
+              </LocalizedLink>
             </div>
 
             <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-primary" aria-hidden="true" />
-                <span>Defensive Only</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Code className="h-4 w-4 text-primary" aria-hidden="true" />
-                <span>Open Source</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Zap className="h-4 w-4 text-primary" aria-hidden="true" />
-                <span>Real-time Lab</span>
-              </div>
+              {site.hero.highlights.map((item) => {
+                const Icon = highlightIcons[item.icon as keyof typeof highlightIcons] ?? Shield;
+                return (
+                  <div key={item.label} className="flex items-center gap-2">
+                    <Icon className="h-4 w-4 text-primary" aria-hidden="true" />
+                    <span>{item.label}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -117,15 +123,17 @@ export function Hero() {
             <div
               className="aspect-square max-w-xl mx-auto rounded-2xl bg-gradient-to-br from-primary/10 via-transparent to-success/10 border border-primary/20 flex items-center justify-center overflow-hidden"
               role="img"
-              aria-label="3D visualization placeholder - Three.js slot"
+              aria-label={site.hero.visual.label}
             >
               <div className="text-center p-8">
-                <div className="mb-4 text-6xl animate-pulse">🛡️</div>
+                <div className="mb-4 text-6xl animate-pulse" aria-hidden="true">
+                  {site.hero.visual.fallback}
+                </div>
                 <p className="text-muted-foreground font-mono text-sm">
-                  Three.js Slot
+                  {site.hero.visual.title}
                 </p>
                 <p className="text-xs text-muted-foreground/50 mt-1">
-                  Interactive SOC visualization coming soon
+                  {site.hero.visual.hint}
                 </p>
               </div>
             </div>

@@ -1,0 +1,22 @@
+{
+  "description": "positive fixture for bs-web-path-traversal",
+  "event": {
+    "action": "http_request",
+    "category": "web",
+    "host": "WEB-LAB-01",
+    "ip": "203.0.113.77",
+    "method": "GET",
+    "path": "/download?file=../../etc/shadow",
+    "process": "nginx",
+    "product": "generic",
+    "status": 400,
+    "timestamp": "2025-04-11T21:06:30Z",
+    "url": "/download?file=../../etc/shadow",
+    "user": "-"
+  },
+  "expect": [
+    "bs-web-path-traversal"
+  ],
+  "kind": "sigma",
+  "rule": "bs-web-path-traversal"
+}

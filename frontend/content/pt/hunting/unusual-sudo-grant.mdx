@@ -1,0 +1,42 @@
+---
+title: "Concessão de sudo fora do padrão da conta"
+description: "Conta sem histórico de privilégio recebe sudo: a caça que encontra elevação silenciosa antes que ela vire movimento lateral."
+severity: high
+order: 3
+updated: "2026-10-03"
+hypothesis: "Uma conta que nunca precisou de privilégio passou a executar com sudo, o que sugere elevação preparada após comprometimento de credencial."
+technique: "T1548.003"
+techniqueName: "Abuse Elevation Control Mechanism: Sudo and Sudo Caching"
+dataSource: "auth.log e syslog de servidores Linux (eventos sudo e usermod), com histórico de execução por conta"
+query: |
+  SELECT
+    usuario,
+    comando,
+    host,
+    COUNT(*)      AS execucoes,
+    MIN(ts)       AS primeira_vez
+  FROM sudo_events
+  WHERE ts >= agora() - INTERVALO '7 dias'
+  GROUP BY usuario, comando, host
+  HAVING usuario NOT IN (
+      SELECT usuario
+      FROM sudo_events
+      WHERE ts < agora() - INTERVALO '30 dias'
+  )
+  ORDER BY primeira_vez DESC;
+normal: "Administradores com sudo recorrente, contas de backup e serviços de automação são rotina e aparecem desde o primeiro dia. O aceitável é histórico longo e comandos repetidos; o anômalo é primeira ocorrência recente, comando inédito para a conta ou execução fora de janela de manutenção."
+escalation: "Escalar para incidente quando a primeira execução de sudo coincidir com logon recente de localidade nova, quando o comando alterar sudoers, cron ou chave SSH, ou quando mais de uma conta ganhar privilégio na mesma janela. Primeira ocorrência sem esses sinais vira verificação de processo com o dono do servidor."
+sigma: "Converta em regra Sigma de `primeira ocorrência`: use `fieldssame` sobre `user` com janela de 30 dias ou mantenha a lógica no plano de correlação, já que Sigma puro não guarda histórico. Alternativa prática: regra de mudança (`bs-linux-sudo-unusual-account`) com lista curta de contas de serviço permitidas em `notin`, documentando cada entrada em `falsepositives` e cobrindo-a com fixture negativa."
+labScenario: after-hours-login
+references:
+  - "MITRE ATT&CK T1548.003 — Abuse Elevation Control Mechanism: Sudo and Sudo Caching"
+  - "NIST SP 800-61 Rev. 2 — Computer Security Incident Handling Guide"
+---
+
+A diferença entre rotina e ameaça aqui é histórico, não o comando em si: o mesmo `sudo` é banal para o administrador e revelador para a conta que nunca o usou.
+
+<Callout type="info" title="Só leitura de logs">A consulta agrega eventos já gravados. Nenhuma etapa envolve executar sudo ou modificar qualquer servidor.</Callout>
+
+## Como usar
+
+Execute semanalmente por servidor, compare com o calendário de manutenção e devolva as primeiras ocorrências sem pedido correspondente ao playbook de conta privilegiada.

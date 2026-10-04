@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from app.core.config import settings
+from app.cache.redis import get_redis
 from app.core.deps import get_db_session
 from app.schemas.status import HealthResponse, ReadinessResponse
 
@@ -26,7 +26,7 @@ async def readiness(db=Depends(get_db_session)):
         checks["database"] = "fail"
 
     try:
-        await settings.redis.ping()
+        await get_redis().ping()
         checks["cache"] = "ok"
     except Exception:
         checks["cache"] = "fail"

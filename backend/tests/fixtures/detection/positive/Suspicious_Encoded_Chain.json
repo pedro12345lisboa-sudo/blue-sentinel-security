@@ -1,0 +1,22 @@
+{
+  "description": "positive fixture for Suspicious_Encoded_Chain",
+  "event": {
+    "action": "process_start",
+    "category": "process",
+    "command_line": "powershell.exe -nop -w hidden -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA",
+    "event_id": "4688",
+    "host": "WS-LAB-02",
+    "ip": "198.51.100.10",
+    "path": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+    "process": "powershell.exe",
+    "product": "windows",
+    "timestamp": "2025-06-01T12:10:00Z",
+    "user": "r.martins"
+  },
+  "expect": [
+    "bs-proc-powershell-encoded-command",
+    "Suspicious_Encoded_Chain"
+  ],
+  "kind": "yara",
+  "rule": "Suspicious_Encoded_Chain"
+}

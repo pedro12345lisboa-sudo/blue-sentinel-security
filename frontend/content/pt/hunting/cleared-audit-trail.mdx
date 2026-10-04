@@ -1,0 +1,43 @@
+---
+title: "Auditoria limpa fora de janela de manutenção"
+description: "Registro de auditoria apagado sem mudança aprovada: a caça que trata anti-forense como achado principal, não como ruído de operação."
+severity: critical
+order: 4
+updated: "2026-10-03"
+hypothesis: "Alguém apagou a trilha de auditoria para esconder o que veio antes, e o evento de limpeza é o próprio indício a investigar."
+technique: "T1070.001"
+techniqueName: "Indicator Removal on Host: Clear Windows Event Logs"
+dataSource: "Eventos de segurança do Windows (1102) e syslog/Linux (log rotation), com catálogo de janelas de manutenção"
+query: |
+  SELECT
+    host,
+    usuario,
+    canal,
+    ts
+  FROM security_events
+  WHERE evento_id = 1102
+    AND ts >= agora() - INTERVALO '48 horas'
+    AND NOT EXISTS (
+      SELECT 1
+      FROM change_windows cw
+      WHERE cw.host = security_events.host
+        AND cw.tipo = 'manutencao_logs'
+        AND security_events.ts BETWEEN cw.inicio AND cw.fim
+    )
+  ORDER BY ts DESC;
+normal: "Rotação de logs, scripts de limpeza de monitoring agent e janelas de manutenção de backup produzem eventos parecidos. O aceitável é limpeza dentro de janela aprovada, por conta de serviço conhecida e em host único; o anômalo é limpeza fora de janela, por conta interativa ou afetando vários hosts."
+escalation: "Escalar para incidente imediatamente quando a limpeza vier seguida de logon suspeito, criação de conta, elevação de privilégio ou tráfego de saída anômalo — e sempre que houver mais de um host afetado. Limpeza única, em janela aprovada e por conta de serviço, vira correção de processo e registro da exceção."
+sigma: "A regra `bs-audit-log-cleared` já cobre o evento; o ganho da caça está na junção com o catálogo de janelas. Para virar regra permanente, adicione à seleção um filtro `notin` com as contas de manutenção aprovadas e publique a parte de janela como padrão de correlação em `rules/patterns/`, mantendo a fixture negativa com a rotação normal do agente."
+labScenario: log-clearing
+references:
+  - "MITRE ATT&CK T1070.001 — Indicator Removal on Host: Clear Windows Event Logs"
+  - "NIST SP 800-61 Rev. 2 — Computer Security Incident Handling Guide"
+---
+
+Anti-forense raramente é o crime; quase sempre é a tentativa de esconder outro. A caça começa tratando a limpeza como evidência e termina perguntando o que desapareceu.
+
+<Callout type="warning" title="Preserve antes de investigar">Exporte os canais restantes e o próprio evento de limpeza antes de qualquer política de retenção encurtar a janela. Sem isso, a linha do tempo não se refaz.</Callout>
+
+## Como usar
+
+Rode a consulta em base diária, valide contra o calendário de manutenção e trate qualquer retorno fora de janela como gatilho do playbook de ransomware ou de malware, conforme o escopo encontrado.

@@ -1,0 +1,58 @@
+title: SQL Injection Pattern in Web Access Log
+id: 42d1b1a1-7053-4503-9453-2f07f50c699d
+lab_id: bs-web-sql-injection
+status: test
+description: >
+  A request URI containing a classic SQL Injection probe. The lab only
+  inspects the log line - nothing is sent or executed. Synthetic lab rule -
+  matches only fabricated BLUE-SENTINEL lab events.
+author: Pedro Lisboa
+date: 2026/10/02
+references:
+  - https://attack.mitre.org/techniques/T1190/
+logsource:
+  category: web_access
+detection:
+  request:
+    category: web
+    action: http_request
+  payload:
+    url|re|i: '''1''=''1|union(%20| )select|waitfor(%20| )delay|information_schema|sleep\('
+  condition: request and payload
+level: high
+falsepositives:
+  - Authorised vulnerability scanners or WAF test campaigns
+  - Monitoring probes that deliberately send canary queries
+response:
+  - Block the source IP at the reverse proxy / WAF
+  - Review application logs for the same parameter in the time window
+  - Confirm whether any request returned database content
+tags:
+  - attack.t1190
+lab_samples:
+  match:
+    - timestamp: '2024-07-03T09:15:20Z'
+      category: web
+      action: http_request
+      host: WEB-DEMO-03
+      user: '-'
+      ip: 198.51.100.44
+      product: generic
+      process: nginx
+      method: GET
+      path: /products
+      url: "/products?id=1'%20OR%20'1'='1"
+      status: 500
+  no_match:
+    - timestamp: '2024-07-03T09:15:00Z'
+      category: web
+      action: http_request
+      host: WEB-DEMO-03
+      user: '-'
+      ip: 198.51.100.44
+      product: generic
+      process: nginx
+      method: GET
+      path: /index.html
+      url: /index.html
+      status: 200

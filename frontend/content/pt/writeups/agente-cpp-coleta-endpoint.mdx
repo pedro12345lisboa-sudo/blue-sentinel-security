@@ -1,0 +1,159 @@
+---
+title: 'Agente C++ na borda: ICollector, HMAC-SHA256, fila offline e hardening'
+description: 'ICollector com fábrica por plataforma, HMAC-SHA256 com anti-replay, fila offline limitada e a suíte de 68 testes do sentinel-agent.'
+date: '2026-10-03'
+updated: '2026-10-03'
+tags: ['C++', 'Endpoint Security', 'HMAC', 'Systems Programming', 'CI/CD']
+readingTime: 7
+cover: '/images/writeups/agente-cpp-coleta-endpoint.png'
+series: 'Blue-Sentinel na prática · Parte 4 de 4'
+---
+
+
+Última parte da série **Blue-Sentinel na prática**. As partes [1](/writeups/sql-injection-fastapi), [2](/writeups/da-hipotese-a-regra-sigma) e [3](/writeups/rate-limiting-redis-janela-deslizante) ficaram do lado do servidor; este texto é do lado da máquina monitorada — a fonte de telemetria que alimenta as regras Sigma do laboratório. O resultado está publicado como estudo de caso do [sentinel-agent](/projects/sentinel-agent).
+
+## O problema
+
+Preciso de telemetria de endpoint (processos, conexões, logins, inventário) com quatro restrições que se contradizem:
+
+1. **Rodar sem admin/root** na maioria dos casos — um agente que exige instalação privilegiada nunca é implantado em massa.
+2. **Nunca escrever no host monitorado** — coletor defensivo não pode ser o vetor de escrita.
+3. **Sobreviver à rede caída** — notebook dormindo por dois dias não pode perder eventos nem encher o disco em esforço de reenvio.
+4. **Ser autenticável e não reutilizável** — cada lote precisa provar origem e resistir a replay.
+
+E o requisito silencioso: **a lógica de detecção não mora aqui**. O agente coleta fatos; o laboratório decide. Manter regras no endpoint significaria privilegio, atualização host a host e duas implementações da mesma detecção.
+
+## Decisão: C++20, contrato único por coletor, plataforma escolhida na compilação
+
+**Decisão: binário único em C++20 com a interface `ICollector`, uma fábrica por plataforma (`create_platform_collectors`), assinatura HMAC-SHA256 por lote e fila local limitada.**
+
+Alternativas descartadas:
+
+1. **Agente em Python.** Confortável para protótipo, mas exige runtime no host (versões, pacotes, permissões de instalação) e degrada a propriedade 1 — justamente a que mais pesa em implantação real.
+2. **eBPF/auditd/ETW desde o dia zero.** É a resposta "certa" para coleta contínua rica, mas exige privilégio/kernel hooks e escala rapidamente em complexidade. A v0.1 adota deliberadamente só interfaces que funcionam **sem** elevar — a limitação está escrita no [README](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/agent/README.md), não escondida.
+3. **Scripts por host.** Sem contrato de saída, sem testes, sem versionamento de schema. O JSON documentado com `schema_version` é justamente o que scripts não dão de graça.
+
+<Mermaid
+  chart={`flowchart LR
+    subgraph Host
+      C1[process] --> B[Batcher]
+      C2[network] --> B
+      C3[auth_log] --> B
+      C4[system] --> B
+      C5[eventlog] --> B
+      B --> Q[Fila limitada em disco]
+      Q --> H[HttpClient HTTPS]
+    end
+    H --> S[Assinatura HMAC por lote]
+    S --> API[POST /ingest do laboratorio]
+  `}
+  caption="Coletores escrevem no batcher; a fila protege a borda quando o endpoint não responde."
+/>
+
+## Implementação
+
+### 1. O contrato dos coletores
+
+Tudo deriva de [`include/sentinel/collector.hpp`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/agent/include/sentinel/collector.hpp):
+
+```cpp
+class ICollector {
+ public:
+  virtual ~ICollector() = default;
+  virtual std::string name() const = 0;          // estável no JSON e no enable/disable
+  virtual std::vector<Event> collect() = 0;      // nunca lança
+};
+
+using CollectorPtr = std::unique_ptr<ICollector>;
+```
+
+As implementações vivem em `src/platform/windows/` e `src/platform/linux/`; o CMake escolhe o diretório em tempo de compilação e **nenhum `#ifdef` aparece na lógica do agente**. A única porta de entrada é `create_platform_collectors(config)`, que já aplica `disabled_collectors`. Cinco coletores por plataforma: `process`, `network`, `system`, mais `eventlog` (Windows, `wevtapi`) e `auth_log` (Linux, `/var/log/auth.log` com offset e detecção de rotação). Onde importa, a coleta é incremental: `process` reporta só PIDs ainda não vistos.
+
+### 2. Autenticação e anti-replay
+
+Cada lote é assinado em [`signer.hpp`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/agent/include/sentinel/signer.hpp):
+
+```cpp
+/// Assinatura de lote: HMAC-SHA256(secret, "<timestamp>.<corpo>").
+Auth sign(std::string_view body) const;
+
+static bool verify(std::string_view secret, std::string_view body,
+                   std::string_view timestamp, std::string_view signature,
+                   std::chrono::seconds window,
+                   std::chrono::system_clock::time_point now);
+
+inline constexpr std::chrono::seconds kAntiReplayWindow{300};
+```
+
+Três propriedades valem mais que a linha de código: o corpo vai no HMAC (adaptação automática do tamanho), a janela de **±300 s** derruba replay de lote capturado, e a comparação é **em tempo constante** (sem timing side-channel na verificação). O laboratório recebe `X-Sentinel-Timestamp` + `X-Sentinel-Signature`; a chave vem de `SENTINEL_SECRET` ou arquivo de config do operador e **nunca** aparece no binário, no log nem no JSON de saída.
+
+### 3. Rede falha, disco não enche
+
+O [`DeliveryQueue`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/agent/include/sentinel/delivery_queue.hpp) é limitado por `queue_max_events`/`queue_max_bytes`: ao estourar, **descarta o lote mais antigo** primeiro — um host com endpoint inacessível por uma semana perde telemetria velha, nunca o disco. Reenvio usa backoff exponencial **com jitter** e teto de tentativas (`max_retries`); a transmissão é `gzip` com decompresor limitado no receptor (zip bomb é teste, não esperança). O `HttpClient` recusa qualquer URL que não seja `https://` e não tem flag para desligar verificação de certificado — a propriedade é estrutural, não configuração.
+
+### 4. Contrato de saída: JSON versionado
+
+O que sai do agente é um documento único, com envelope próprio — não um monte de linhas soltas de log:
+
+```json
+{
+  "schema_version": "1.0",
+  "agent": { "name": "sentinel-agent", "version": "0.1.0" },
+  "host": { "hostname": "web-01", "os": "Ubuntu 24.04.2 LTS", "arch": "x86_64" },
+  "event_count": 411,
+  "events_by_type": { "process": 400, "network_connection": 8, "system": 1 },
+  "events": [
+    { "type": "process", "ts": "2026-10-03T16:21:49Z", "data": { "pid": 1, "name": "systemd" } }
+  ]
+}
+```
+
+`schema_version` evolui **independentemente** da versão do agente: o laboratório continua aceitando lotes antigos enquanto campos novos aparecem (`events_by_type` foi adicionado sem quebrar consumidores — agregações passaram a ser resumidas no envelope em vez de recalculadas por quem recebe). Timestamps são ISO-8601 UTC, e `event.ts` é por evento justamente porque a fila offline pode reordenar a chegada em relação à coleta: quem correlaciona precisa do tempo de origem, não do tempo de entrega.
+
+### 5. Hardening e CI
+
+Build com `-Werror` e `-Wall -Wextra -Wpedantic -Wshadow -Wformat=2 -Wcast-qual -Wdouble-promotion` (MSVC: `/W4 /permissive- /WX`), stack protector, `_FORTIFY_SOURCE=2`, RELRO/NOW e PIE onde suportado. O workflow [`agent.yml`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/.github/workflows/agent.yml) roda três jobs: **linux** (GCC + presets), **linux-asan** (ASan + UBSan) e **windows** (MSVC + vcpkg com cache binário) — badge no [README do agente](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/agent/README.md).
+
+## Testes
+
+Dois suítes no CTest (`ctest --preset mingw64-debug` no Windows, presets equivalentes para Linux):
+
+- **unit — 67 casos GoogleTest**: vetores HMAC RFC 4231, SHA-256, janela anti-replay (expirada/futura/adulterada), gzip round-trip **e limite de zip bomb**, limites do queue/batcher, crescimento e teto do backoff, precedência de config (defaults < arquivo < env < CLI), validação que rejeita `http://`, envelope do relatório, e smoke tests de plataforma (coletores únicos, `collect()` sem exceção, eventos bem formados, incremental do `process`).
+- **integração — `agent_once_output`**: `sentinel-agent --once` precisa imprimir documento com `"schema_version"`.
+
+Dois testes usam rede pública (`self-signed.badssl.com` deve ser **rejeitado**) e **pulam** em vez de falhar quando não há egress — CI determinística sem abrir mão do teste real.
+
+Os smoke tests de plataforma merecem um comentário: em cada execução, o teste chama a fábrica `create_platform_collectors` (o conjunto nativo da plataforma em que roda), verifica que as instâncias têm nome único, que `collect()` não lança exceção e que cada evento sai bem formado — `type` não vazio, `data` em JSON e timestamp ISO-8601 válido —, que o coletor `system` sempre reporta hostname, SO e arquitetura, e que a segunda varredura de processos só reporta mudanças novas (crescimento incremental ≤ a primeira). Como a interface é a mesma em todas as plataformas, o mesmo contrato de teste será reutilizado quando um novo coletor entrar: basta implementar `ICollector` e registrar a plataforma na fábrica. O teste de integração (`agent_once_output`) é a ponte com o resto do repositório: o CTest executa o binário real `sentinel-agent --once` com timeout de 120 s e usa `PASS_REGULAR_EXPRESSION` para exigir que a saída contenha `"schema_version"` — o critério de aceitação de ponta a ponta de que coleta, assinatura e emissão do relatório funcionaram juntos no artefato compilado, não só nos testes unitários.
+
+## Resultado
+
+Medido nesta máquina, com os presets do próprio projeto:
+
+- **68/68 testes verdes** no CTest (67 unit + 1 integração) e build `-Werror` limpo.
+- `sentinel-agent --once` coletou **411 eventos** numa execução (400 processos, 8 conexões de rede, 1 amostra de sistema — a contagem do próprio relatório).
+- **5 coletores × 2 plataformas** sob um contrato único; **52 arquivos `.cpp/.hpp`** de implementação (4.512 linhas) + **10 arquivos de teste** (856 linhas).
+- CI com **3 jobs** (Linux, Linux+ASan/UBSan, Windows) publicando o status no README.
+- Propriedades verificadas por teste, não por promessa: HTTPS obrigatório, anti-replay ±300 s, fila limitada, backoff limitado, segredo fora do JSON.
+
+## Limitações (v0.1)
+
+- Sem coleta por kernel (eBPF/auditd/ETW): a escolha "sem privilégio" custa visibilidade profunda (nada de syscalls por processo).
+- Estado incremental vive **em memória**: após restart, a tabela completa de processos é reportada uma vez.
+- Só TCP (IPv4/IPv6) é enumerado — sem UDP/Unix sockets.
+- Sem avaliação local de regras (Sigma/YARA): se o endpoint ficar off-line do laboratório, os fatos esperam na fila, mas ninguém "detecta" localmente.
+- A assinatura protege **integridade e origem do canal**; confidencialidade depende do TLS (o payload vai em claro dentro do túnel).
+
+## Próximos passos
+
+- Checkpoint do estado incremental em disco (reaproveitar `DeliveryQueue`) para eliminar o re-report pós-restart.
+- Assinatura incremental com sequência de lote (não só timestamp) para rejeitar replay além da janela de 300 s.
+- `ETW`/`auditd` como coletores opcionais com `disabled_collectors` — a interface já comporta, é questão de permissão e escopo.
+- Alimentar o pipeline do [artigo 2](/writeups/da-hipotese-a-regra-sigma): schema do lote → normalizador → regras, com os `lab_samples` ganhando formatos capturados por este agente.
+
+## Referências
+
+- [RFC 4231 — Test vectors para HMAC-SHA-256/384/512](https://www.rfc-editor.org/rfc/rfc4231)
+- [Microsoft Learn — Windows Event Log (`EvtOpenLog`, canais Security)](https://learn.microsoft.com/en-us/windows/win32/wes/windows-event-log)
+- [Microsoft Learn — `GetExtendedTcpTable` (tabela TCP com PID)](https://learn.microsoft.com/en-us/windows/win32/api/iphlpapi/nf-iphlpapi-getextendedtcptable)
+- [OpenSSL — `HMAC(3)` man page](https://docs.openssl.org/master/man3/HMAC/)
+- [CMake — Presets workflow](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html)

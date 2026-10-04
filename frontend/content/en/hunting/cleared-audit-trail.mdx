@@ -1,0 +1,43 @@
+---
+title: "Audit cleared outside a maintenance window"
+description: "Audit trail wiped without an approved change: the hunt that treats anti-forensics as the primary finding, not as operational noise."
+severity: critical
+order: 4
+updated: "2026-10-03"
+hypothesis: "Someone wiped the audit trail to hide what came before, and the clearing event is itself the evidence to investigate."
+technique: "T1070.001"
+techniqueName: "Indicator Removal on Host: Clear Windows Event Logs"
+dataSource: "Windows security events (1102) and syslog/Linux (log rotation), with a catalog of maintenance windows"
+query: |
+  SELECT
+    host,
+    user,
+    channel,
+    ts
+  FROM security_events
+  WHERE event_id = 1102
+    AND ts >= now() - INTERVAL '48 hours'
+    AND NOT EXISTS (
+      SELECT 1
+      FROM change_windows cw
+      WHERE cw.host = security_events.host
+        AND cw.type = 'log_maintenance'
+        AND security_events.ts BETWEEN cw.start AND cw.end
+    )
+  ORDER BY ts DESC;
+normal: "Log rotation, monitoring agent cleanup scripts and backup maintenance windows produce similar events. Clearing inside an approved window, by a known service account and on a single host is acceptable; clearing outside a window, by an interactive account or affecting several hosts is anomalous."
+escalation: "Escalate to an incident immediately when the clearing is followed by a suspicious logon, account creation, privilege escalation or anomalous outbound traffic — and whenever more than one host is affected. A single clearing inside an approved window by a service account becomes a process fix and the recording of the exception."
+sigma: "The rule `bs-audit-log-cleared` already covers the event; the gain of the hunt is the join with the window catalog. To turn it into a permanent rule, add a `notin` filter with the approved maintenance accounts to the selection and publish the window part as a correlation pattern in `rules/patterns/`, keeping the negative fixture with the agent's normal rotation."
+labScenario: log-clearing
+references:
+  - "MITRE ATT&CK T1070.001 — Indicator Removal on Host: Clear Windows Event Logs"
+  - "NIST SP 800-61 Rev. 2 — Computer Security Incident Handling Guide"
+---
+
+Anti-forensics is rarely the crime itself; it is almost always the attempt to hide another one. The hunt starts by treating the clearing as evidence and ends by asking what disappeared.
+
+<Callout type="warning" title="Preserve before investigating">Export the remaining channels and the clearing event itself before any retention policy shortens the window. Without that, the timeline cannot be rebuilt.</Callout>
+
+## How to use
+
+Run the query on a daily basis, validate it against the maintenance calendar and treat any out-of-window return as a trigger for the ransomware or malware playbook, according to the scope found.

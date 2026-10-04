@@ -211,3 +211,71 @@
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   }
 }
+
+/* -------------------------------------------------------------------------
+   Impressão / PDF: remove a chrome do site, força paleta clara e evita cortes
+   de diagramas, tabelas e checklists. Usado pelo botao "Imprimir" das paginas
+   de playbooks (`.no-print` marca o que nao deve ir para o papel).
+   ------------------------------------------------------------------------- */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  body,
+  body * {
+    color: #111 !important;
+    background-color: transparent !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: none !important;
+  }
+
+  a {
+    color: #1d4ed8 !important;
+    text-decoration: none;
+  }
+
+  .container-site,
+  .container-wide,
+  .container-narrow {
+    max-width: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .section,
+  .section-sm {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    break-after: avoid;
+  }
+
+  figure,
+  table,
+  ul,
+  ol,
+  li,
+  blockquote {
+    break-inside: avoid;
+  }
+
+  svg {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  [role='progressbar'] {
+    border: 1px solid #cbd5e1 !important;
+  }
+}

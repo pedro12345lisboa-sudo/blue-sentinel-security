@@ -31,6 +31,24 @@ vi.mock('socket.io-client', () => ({
   }),
 }));
 
+// Mock matchMedia (jsdom não implementa; usado por useReducedMotion e pelo
+// Observer do GSAP). Função comum, não `vi.fn()`: `vi.clearAllMocks()` zera as
+// implementações e o GSAP passaria a receber `undefined` em `.matches`.
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  configurable: true,
+  value: (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  }),
+});
+
 // Mock ResizeObserver
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),

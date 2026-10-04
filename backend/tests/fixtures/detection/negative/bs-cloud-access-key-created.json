@@ -1,0 +1,18 @@
+{
+  "description": "negative fixture for bs-cloud-access-key-created",
+  "event": {
+    "action": "access_key_deleted",
+    "category": "audit",
+    "event_id": "DeleteAccessKey",
+    "host": "cloud-lab-tenant",
+    "ip": "198.51.100.40",
+    "message": "Access key deleted for batch-job.",
+    "product": "cloud",
+    "provider": "aws",
+    "target_user": "batch-job",
+    "timestamp": "2025-05-02T07:16:00Z",
+    "user": "ci-bot"
+  },
+  "kind": "sigma",
+  "rule": "bs-cloud-access-key-created"
+}

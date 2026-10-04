@@ -1,0 +1,42 @@
+---
+title: "Horizontal spraying from a single source"
+description: "A single source tests one or two common passwords across dozens of accounts: the hunt that turns noisy individual failures into one signal per source and window."
+severity: high
+order: 1
+updated: "2026-10-03"
+hypothesis: "A single source is testing a few common passwords against many accounts within a few minutes, so each account on its own looks harmless while the aggregate reveals spraying."
+technique: "T1110.003"
+techniqueName: "Brute Force: Password Spraying"
+dataSource: "Authentication events (Windows 4625, sshd/auth.log, identity provider login signals)"
+query: |
+  SELECT
+    src_ip,
+    COUNT(*)                       AS attempts,
+    COUNT(DISTINCT user)           AS target_accounts,
+    MIN(ts)                        AS first_seen,
+    MAX(ts)                        AS last_seen
+  FROM auth_events
+  WHERE outcome = 'failed'
+    AND ts >= now() - INTERVAL '10 minutes'
+  GROUP BY src_ip
+  HAVING COUNT(DISTINCT user) >= 10
+     AND COUNT(*) >= 10
+     AND COUNT(DISTINCT user) < COUNT(*) * 0.5
+  ORDER BY target_accounts DESC;
+normal: "Authorized security scans, load balancers performing health-check authentication and users switching devices all generate failures, but they tend to cluster on a few accounts and inside approved change windows. High failure volume with few accounts is acceptable; many accounts with one or two attempts each is anomalous."
+escalation: "Escalate to an incident when any successful logon follows the sequence, when the targeted accounts include administrative or service accounts, or when the same source shows up in two distinct units within the same shift. With no successful logon and a single source, the case stays a contained attempt and becomes a blocking ticket."
+sigma: "The query becomes a Sigma counting rule per `src_ip` inside a 600-second window with `count(user) >= 10`, using the `correlation` capability of the patterns package (`rules/patterns/corr-brute-force-sequence.yaml`) when the source is correlation; for the standalone Sigma rule the group is `src_ip` and the condition combines `selection_fail` with `threshold`. The final step is to register the rule in `rules/sigma/windows/` or `rules/sigma/linux/`, pin the threshold from a measured baseline and add the positive and negative fixtures in `backend/tests/fixtures/detection/`."
+labScenario: brute-force
+references:
+  - "MITRE ATT&CK T1110.003 — Brute Force: Password Spraying"
+  - "NIST SP 800-61 Rev. 2 — Computer Security Incident Handling Guide"
+  - "SigmaHQ — Query and Threshold Rules"
+---
+
+Spraying is the classic low-telemetry, high-value hunt: no single account triggers anything by itself, and the signal only appears once you aggregate by source and window.
+
+<Callout type="info" title="Read-only log access">The query runs against the event table that has already been collected. No step involves testing passwords or interacting with the source.</Callout>
+
+## How to use
+
+Run the query in 10-minute windows during the shift, manually validate whether the targeted accounts are real and not test accounts, and compare against the authorized scan calendar before escalating.

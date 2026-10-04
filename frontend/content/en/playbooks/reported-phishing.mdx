@@ -1,0 +1,104 @@
+---
+title: "Phishing reported by a user"
+description: "How to handle a phishing report: validate the message, tell whether the link was clicked or a credential was entered, contain the scope, and prove chain of custody for the file."
+severity: medium
+type: phishing
+order: 2
+updated: "2026-09-30"
+trigger:
+  description: "A user report through the reporting channel, or detection of a shortened URL, a macro-bearing attachment, or an Office process spawning a shell."
+  rules:
+    - id: Phishing_Shortened_URL_Social
+      path: rules/yara/phishing-shorturl-social.yar
+    - id: Office_Macro_AutoExec
+      path: rules/yara/office-macro-autoexec.yar
+    - id: bs-win-office-spawned-shell
+      path: rules/sigma/windows/bs-win-office-spawned-shell.yml
+dataSources:
+  - "Email gateway and SPF, DKIM, and DMARC reports"
+  - "Full message headers exported by the user or by the email admin"
+  - "Endpoint telemetry: Office child processes and writes to temporary folders"
+  - "Authentication logs from the identity provider"
+  - "Web proxy and browsing filter"
+triage:
+  - "Was the message opened, was the link clicked, or was the password entered?"
+  - "Did the sender pass the SPF, DKIM, and DMARC checks?"
+  - "How many recipients inside the organization received the same message?"
+  - "Does the attachment contain a macro, or was it saved and executed on a user workstation?"
+  - "Was there a suspicious login on the recipients' accounts in the last 30 minutes?"
+  - "Is the link destination a new domain, a known shortener, or a lookalike of the official domain?"
+decisionTree: |
+  flowchart TD
+    A["Reported phishing"] --> B{"Link clicked or password entered?"}
+    B -- No --> C["Block the sender and the URL, purge the recipients' mailboxes"]
+    B -- Yes --> D{"Was the credential entered?"}
+    D -- Yes --> E["Forced reset, session invalidation and MFA review"]
+    D -- No --> F["Monitor the session and isolate the workstation if there was execution"]
+    C --> G["Eradication: block the domain and URL in DNS and proxy"]
+    E --> G
+    F --> G
+    G --> H["Recovery: confirm the full purge and brief the users"]
+phases:
+  - key: containment
+    summary: "Remove the message from the mailboxes, block sender, domain, and URL, and handle an exposed credential or a workstation with execution before any long investigation."
+  - key: eradication
+    summary: "Eliminate the vector: purge across the organization, block the domain in DNS and proxy, remove endpoint artifacts, and revoke sessions."
+  - key: recovery
+    summary: "Confirm that no copy or derived access remains, brief the recipients, and keep watch on the blocked domains for 7 days."
+checklist:
+  - title: "Containment"
+    items:
+      - "Block the sender and the URL at the email gateway"
+      - "Purge the message from the mailbox of every internal recipient"
+      - "If the password was entered: change the credential and invalidate sessions"
+      - "If there was execution: isolate the workstation through the endpoint management tool"
+  - title: "Eradication"
+    items:
+      - "Block the destination domain in DNS and at the corporate proxy"
+      - "Remove the artifacts left on the endpoint and check for persistence"
+      - "Confirm whether the same campaign hit other recipients and repeat the purge"
+      - "Review forwarding rules created in the affected mailbox"
+  - title: "Recovery"
+    items:
+      - "Confirm with the gateway that no copy of the message remains"
+      - "Brief the recipients with a short notice of what to watch for"
+      - "Keep the domain blocked and review the records after 7 days"
+      - "Record the campaign in the security team's indicator base"
+evidence:
+  - "Original message in .eml format with full headers, preserved as evidence"
+  - "Screenshot of the link and destination domain, with the date and time of the report"
+  - "Confirmation of the click or of the password entry, with the exact time reported by the user"
+  - "Record of the blocks and purges executed, identifying who ran them"
+  - "State of sessions and MFA factors before and after the credential change"
+comms:
+  - when: "Right after accepting the user's report"
+    who: "Reporting user, to confirm what was done"
+  - when: "On confirmation of a click or an execution"
+    who: "Incident response owner, account owner, and area manager"
+  - when: "On closure with more than five recipients affected"
+    who: "Broad internal communications and, when personal data is involved, the data protection officer"
+metrics:
+  mttd: "10 minutes from the report to initial triage"
+  mttr: "4 hours to purge, block, and change the credential when applicable"
+lessons:
+  - "The time between click and containment is what defines the damage: measure the report by the clock, not by the ticket"
+  - "Blocking the domain only in email leaves browsing open, so DNS and the proxy are blocked as well"
+  - "The .eml format is the only way to preserve authentication results and headers as proof"
+labScenario: after-hours-login
+references:
+  - "NIST SP 800-61 Rev. 2 — Computer Security Incident Handling Guide"
+  - "MITRE ATT&CK T1566 — Phishing"
+  - "MITRE ATT&CK T1204 — User Execution"
+---
+
+When a user reports phishing, speed matters more than perfect analysis. This playbook starts by validating the report and ends with the vector blocked, the evidence preserved, and the user informed of what to watch for.
+
+<Callout type="info" title="Defensive data only">Triage uses headers, endpoint telemetry, and authentication records. No step involves visiting the malicious address or interacting with the attachment outside a controlled environment.</Callout>
+
+## Context
+
+A human report is the most common and the fastest trigger. The `Phishing_Shortened_URL_Social` rule covers the case where the URL has already circulated in logs, `Office_Macro_AutoExec` flags an attachment with an automated macro, and `bs-win-office-spawned-shell` indicates the workstation has already executed code from Office.
+
+## Playbook boundary
+
+If the campaign indicates mailbox compromise with a forwarding rule, the case also goes through compromised account review, keeping this playbook as the main timeline.

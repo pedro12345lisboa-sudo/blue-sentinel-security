@@ -1,0 +1,42 @@
+---
+title: "Office process spawning a shell"
+description: "An open document that launches PowerShell or cmd: the hunt that separates a legitimate macro from an attachment already executing code on the workstation."
+severity: high
+order: 2
+updated: "2026-10-03"
+hypothesis: "A document opened in Office spawned a command interpreter, which means the attachment executed code instead of merely displaying content."
+technique: "T1059.001"
+techniqueName: "Command and Scripting Interpreter: PowerShell"
+dataSource: "Endpoint process telemetry (Sysmon 1, 4688 events) with the process tree"
+query: |
+  SELECT
+    parent_process,
+    child_process,
+    user,
+    host,
+    ts
+  FROM process_events
+  WHERE parent_process IN ('WINWORD.EXE', 'EXCEL.EXE', 'POWERPNT.EXE', 'OUTLOOK.EXE')
+    AND child_process IN (
+      'powershell.exe', 'pwsh.exe', 'cmd.exe', 'wscript.exe',
+      'cscript.exe', 'mshta.exe', 'rundll32.exe'
+    )
+    AND ts >= now() - INTERVAL '24 hours'
+  ORDER BY ts DESC;
+normal: "Legitimate corporate integrations exist: printing through cmd, approved macros that call internal utilities and signed add-ins. A fixed command line, a known path and a valid signature are acceptable; an encoded parameter, a path inside a temporary folder or an origin in received messages is anomalous."
+escalation: "Escalate to an incident when the child loads encoded or obfuscated code, when a write to a temporary folder follows immediately, when an outbound connection appears in the same minute or when the same pattern repeats on more than one workstation. An isolated macro without those signals only results in blocking the attachment and reviewing the mail rule."
+sigma: "Promote the query to the existing Sigma rule `bs-win-office-spawned-shell`: the condition is `selection_parent` (Office processes) and `selection_child` (interpreters), with `filter` for the approved paths documented in `falsepositives`. Precision improves by also requiring `CommandLine|contains` of an obfuscated parameter or a write to `%TEMP%`, and the negative fixture must contain the organization's legitimate add-in."
+labScenario: temp-process
+references:
+  - "MITRE ATT&CK T1059.001 — Command and Scripting Interpreter: PowerShell"
+  - "MITRE ATT&CK T1204.002 — User Execution: Malicious File"
+  - "SigmaHQ — Process Creation Rules"
+---
+
+The value of the hunt is in seeing parent and child together: without the process tree, the same `powershell.exe` is routine administration, but inside Office it is compromise.
+
+<Callout type="info" title="Defensive read">The query reads existing process records. No document is opened or executed during the hunt.</Callout>
+
+## How to use
+
+Run the query day by day, separate the occurrences with a signed, known path from those coming from a temporary folder, and hand the latter to the workstation malware playbook with the parent and child process timeline.

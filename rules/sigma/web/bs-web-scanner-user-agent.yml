@@ -1,0 +1,72 @@
+title: Vulnerability Scanner User-Agent in Web Access Log
+id: 66190dc5-d3f0-4821-b1bd-14b7813db399
+lab_id: bs-web-scanner-user-agent
+status: test
+description: >
+  The User-Agent of a well-known vulnerability scanner or crawler was
+  recorded - reconnaissance ahead of an exploit attempt. Combined with
+  request volume it is a scan, not a user. Synthetic lab rule - matches
+  only fabricated BLUE-SENTINEL lab events.
+author: Pedro Lisboa
+date: 2026/10/02
+references:
+  - https://attack.mitre.org/techniques/T1595/002/
+logsource:
+  category: web_access
+detection:
+  request:
+    category: web
+    action: http_request
+  scanner:
+    user_agent|contains|i:
+      - sqlmap
+      - nikto
+      - nmap
+      - masscan
+      - dirbuster
+      - gobuster
+      - wpscan
+      - acunetix
+      - nessus
+      - zgrab
+      - w3af
+  condition: request and scanner
+level: medium
+falsepositives:
+  - Your own authorised scanning window or a signed penetration test
+  - Security research crawlers that identify themselves honestly
+response:
+  - Rate-limit or block the source at the edge
+  - Check whether the scan found an error page worth patching
+  - Correlate with the WAF and application logs for the same source
+tags:
+  - attack.t1595_002
+lab_samples:
+  match:
+    - timestamp: '2024-07-12T01:22:09Z'
+      category: web
+      action: http_request
+      host: WEB-DEMO-03
+      user: '-'
+      ip: 203.0.113.98
+      product: generic
+      process: nginx
+      method: GET
+      path: /admin
+      url: /admin
+      user_agent: sqlmap/1.7.2#stable (https://sqlmap.org)
+      status: 404
+  no_match:
+    - timestamp: '2024-07-12T01:22:00Z'
+      category: web
+      action: http_request
+      host: WEB-DEMO-03
+      user: '-'
+      ip: 198.51.100.44
+      product: generic
+      process: nginx
+      method: GET
+      path: /admin
+      url: /admin
+      user_agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126.0 Safari/537.36
+      status: 404

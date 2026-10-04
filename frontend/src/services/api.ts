@@ -2,17 +2,79 @@ import useSWR from 'swr';
 import type { ProjectFrontmatter } from '@/lib/projects';
 import type { WriteupFrontmatter } from '@/lib/writeups';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-// O FastAPI devolve `detail` como texto (erros normais) ou lista (erros 422 de validação).
-async function readErrorMessage(response: Response, fallback: string): Promise<string> {
-  try {
-    const body = await response.json();
-    if (typeof body?.detail === 'string') return body.detail;
-  } catch {
-    // resposta sem JSON: usa a mensagem padrão
+/**
+ * Erros da API chegam como CÓDIGO (`error.code` / `code` / `error`), nunca
+ * como texto pronto em português — a tradução acontece no frontend via
+ * `site.errors[code]` (`translateApiError`).
+ */
+export class ApiError extends Error {
+  readonly code: string;
+  readonly status: number;
+
+  constructor(code: string, status: number) {
+    super(code);
+    this.name = 'ApiError';
+    this.code = code;
+    this.status = status;
   }
-  return fallback;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+/** Extrai o código de erro de problem+json / envelope do backend. */
+export function extractErrorCode(body: unknown): string {
+  if (!isRecord(body)) return '';
+  const { error, code } = body;
+  if (isRecord(error) && typeof error.code === 'string') return error.code;
+  if (typeof error === 'string' && error) return error;
+  if (typeof code === 'string' && code) return code;
+  return '';
+}
+
+/** Mapeia status HTTP para código quando a resposta não traz `code`. */
+const STATUS_CODES: Record<number, string> = {
+  400: 'VALIDATION_ERROR',
+  401: 'UNAUTHORIZED',
+  403: 'FORBIDDEN',
+  404: 'NOT_FOUND',
+  405: 'METHOD_NOT_ALLOWED',
+  408: 'TIMEOUT',
+  409: 'CONFLICT',
+  422: 'VALIDATION_ERROR',
+  429: 'RATE_LIMIT',
+  500: 'INTERNAL_ERROR',
+  503: 'SERVICE_UNAVAILABLE',
+};
+
+/** Código padrão para um status HTTP (sem `code` no corpo). */
+export function statusCodeToErrorCode(status: number): string {
+  return STATUS_CODES[status] || 'UNKNOWN';
+}
+
+async function toApiError(response: Response): Promise<ApiError> {
+  let code = '';
+  try {
+    code = extractErrorCode(await response.json());
+  } catch {
+    // resposta sem JSON: cai para o mapeamento de status
+  }
+  const resolved = code || statusCodeToErrorCode(response.status);
+  return new ApiError(resolved, response.status);
+}
+
+/** Mensagem localizada para um erro da API (chave `errors.<CODE>`). */
+export function translateApiError(error: unknown, site: { errors: Record<string, string> }): string {
+  if (error instanceof ApiError) {
+    return site.errors[error.code] ?? site.errors.UNKNOWN;
+  }
+  if (error instanceof TypeError) {
+    return site.errors.NETWORK ?? site.errors.UNKNOWN;
+  }
+  return site.errors.UNKNOWN;
 }
 
 async function fetcher<T>(url: string): Promise<T> {
@@ -21,7 +83,7 @@ async function fetcher<T>(url: string): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, `HTTP ${response.status}`));
+    throw await toApiError(response);
   }
 
   return response.json();
@@ -48,7 +110,7 @@ export async function submitContact(data: ContactFormData): Promise<ContactRespo
   });
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Failed to send message'));
+    throw await toApiError(response);
   }
 
   return response.json();
@@ -139,38 +201,6 @@ export function useSystemStatus() {
     refreshInterval: 10000,
     dedupingInterval: 5000,
   });
-}
-
-// Lab
-export interface LabEvent {
-  id: number;
-  type: 'process' | 'network' | 'file' | 'registry' | 'dns';
-  name: string;
-  detail: string;
-  severity: 'critical' | 'high' | 'medium' | 'low';
-  mitre: string;
-  timestamp: number;
-  alert: boolean;
-}
-
-export interface DetectionRule {
-  id: number;
-  name: string;
-  mitre: string;
-  status: 'active' | 'inactive';
-  matches: number;
-}
-
-export interface LabStats {
-  total: number;
-  alerts: number;
-  critical: number;
-  high: number;
-}
-
-export function useLabEvents() {
-  // A conexão WebSocket é feita dentro do componente do laboratório.
-  return null;
 }
 
 // Projects

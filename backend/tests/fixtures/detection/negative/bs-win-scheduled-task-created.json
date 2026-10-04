@@ -1,0 +1,17 @@
+{
+  "description": "negative fixture for bs-win-scheduled-task-created",
+  "event": {
+    "action": "task_deleted",
+    "category": "audit",
+    "event_id": "4699",
+    "host": "WS-LAB-02",
+    "ip": "198.51.100.10",
+    "message": "A scheduled task was deleted.",
+    "product": "windows",
+    "task_name": "\\Microsoft\\Windows\\Update Check",
+    "timestamp": "2025-02-06T01:25:00Z",
+    "user": "r.martins"
+  },
+  "kind": "sigma",
+  "rule": "bs-win-scheduled-task-created"
+}

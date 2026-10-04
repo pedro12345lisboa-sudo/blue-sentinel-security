@@ -1,10 +1,11 @@
 import { Metadata } from 'next';
-import { Download, ExternalLink, Mail, MapPin, Phone, Calendar, Award, Briefcase, GraduationCap, Code, Shield, Terminal, Zap } from 'lucide-react';
+import { ExternalLink, Mail, MapPin, Phone, Calendar, Award, Briefcase, GraduationCap, Code, Shield, Terminal, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { SavePdfButton } from './print-button';
 
 export const metadata: Metadata = {
   title: 'Resume',
@@ -95,10 +96,6 @@ const resumeData = {
 };
 
 export default function ResumePage() {
-  const downloadPDF = () => {
-    window.print();
-  };
-
   return (
     <div className="min-h-screen">
       <header className="section-sm relative overflow-hidden border-b border-border/50">
@@ -114,10 +111,7 @@ export default function ResumePage() {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="outline" onClick={downloadPDF}>
-                <Download className="h-4 w-4 mr-2" aria-hidden="true" />
-                Save as PDF
-              </Button>
+              <SavePdfButton label="Save as PDF" />
               <Button variant="ghost" asChild>
                 <a href="https://github.com/blue-sentinel" target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-4 w-4 mr-2" aria-hidden="true" />

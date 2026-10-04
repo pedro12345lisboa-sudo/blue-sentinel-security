@@ -1,0 +1,63 @@
+title: Registry Run Key Modified
+id: 46885b2d-0861-4768-a586-ee78b3268e15
+lab_id: bs-win-run-key-modified
+status: test
+description: >
+  A value was written under a Registry Run / RunOnce key - the simplest
+  persistence mechanism on Windows (survives logoff and reboot).
+  Synthetic lab rule - matches only fabricated BLUE-SENTINEL lab events.
+author: Pedro Lisboa
+date: 2026/10/02
+references:
+  - https://attack.mitre.org/techniques/T1547/001/
+logsource:
+  product: windows
+  service: sysmon
+detection:
+  selection:
+    category: audit
+    product: windows
+    event_id: '13'
+    action: registry_value_set
+  run_key:
+    target_object|contains|i:
+      - '\currentversion\run'
+      - '\currentversion\runonce'
+      - '\currentversion\windows\load'
+      - '\explorer\run'
+  condition: selection and run_key
+level: medium
+falsepositives:
+  - Software that registers a legitimate auto-start entry on install
+  - Administrators adding approved startup entries to shared workstations
+response:
+  - Read the written value and identify the binary it launches
+  - Remove the entry after capturing the binary for analysis
+  - Scan the host for other auto-start locations (services, tasks, startup folder)
+tags:
+  - attack.t1547_001
+lab_samples:
+  match:
+    - timestamp: '2024-12-03T02:17:44Z'
+      category: audit
+      action: registry_value_set
+      event_id: '13'
+      host: WS-LAB-04
+      user: j.rocha
+      ip: 198.51.100.71
+      product: windows
+      target_object: HKCU\Software\Microsoft\Windows\CurrentVersion\Run\OneDriveUpdate
+      details: C:\Users\j.rocha\AppData\Roaming\odupdate.exe
+      message: Registry value set.
+  no_match:
+    - timestamp: '2024-12-03T02:18:10Z'
+      category: audit
+      action: registry_value_set
+      event_id: '13'
+      host: WS-LAB-04
+      user: j.rocha
+      ip: 198.51.100.71
+      product: windows
+      target_object: HKCU\Software\Contoso\Settings\Theme
+      details: dark
+      message: Registry value set.

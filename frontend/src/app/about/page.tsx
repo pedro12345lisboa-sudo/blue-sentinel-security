@@ -136,7 +136,7 @@ function AboutPage() {
         stagger: 0.1,
         ease: 'expo.out',
       });
-    }, sectionRef.current);
+    }, sectionRef);
 
     return () => ctx.revert();
   }, [reducedMotion, isInView]);

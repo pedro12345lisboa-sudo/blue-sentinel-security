@@ -17,7 +17,9 @@ Personal cybersecurity portfolio showcasing Blue Team / Detection Engineering ex
 - **Database**: PostgreSQL 16 (contact messages, lab sessions, audit)
 - **Cache/Queue**: Redis 7 (rate limiting, GitHub stats cache, pub/sub, email queue)
 - **Worker**: Python background jobs (email sending, cleanup)
-- **Agent Showcase**: C++20 systems programming project
+- **Agent Showcase**: C++20 read-only telemetry agent — [agent/README.md](agent/README.md)
+
+  [![agent](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/actions/workflows/agent.yml/badge.svg)](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/actions/workflows/agent.yml)
 
 ## Quick Start
 
@@ -52,6 +54,12 @@ blue-sentinel/
 │   ├── public/         # Static assets
 │   ├── e2e/            # Playwright tests
 │   └── vitest.config.ts
+├── agent/              # C++20 telemetry agent (CMake, GoogleTest, CI)
+│   ├── include/sentinel/
+│   ├── src/core/
+│   ├── src/platform/{linux,windows}/
+│   ├── tests/
+│   └── README.md
 ├── backend/            # FastAPI application
 │   ├── app/
 │   │   ├── api/v1/     # API routes (health, contact, lab, github, status)
@@ -62,7 +70,8 @@ blue-sentinel/
 │   │   └── ...
 │   └── requirements.txt
 ├── docs/
-│   └── architecture/   # ADRs, overview diagrams (Mermaid)
+│   ├── architecture/   # ADRs, overview diagrams (Mermaid)
+│   └── security/       # Detection catalog & severity model (lab rules)
 ├── docker-compose.yml
 ├── docker-compose.override.yml.example
 └── .env.example
@@ -75,7 +84,7 @@ blue-sentinel/
 - **SOC Visual Identity**: Dark theme, cyan/blue/green accent colors, grid patterns, glow effects
 - **GSAP Animations**: Scroll-triggered reveals, counter animations, text reveals (respects `prefers-reduced-motion`)
 - **MDX Content**: Projects and writeups as `.mdx` files with frontmatter, custom components
-- **Interactive Lab** (`/lab`): Real-time WebSocket synthetic events + Sigma-like detection
+- **Interactive Lab** (`/lab`): Real-time WebSocket synthetic events + Sigma/YARA/correlation detection with auto-incident timeline
 - **System Status** (`/status`): Live metrics (CPU, RAM, disk, network, DB/Redis latency) with Recharts
 - **Contact Form**: Zod validation, react-hook-form, rate-limited, async email via worker
 - **Accessibility**: WCAG AA, semantic HTML, keyboard navigation, skip links, focus management
@@ -87,6 +96,34 @@ blue-sentinel/
 - **Detection Lab**: WebSocket server, synthetic event generator, Sigma rule engine
 - **GitHub Stats**: Cached repository metrics (stars, commits, languages)
 - **System Status**: Real-time metrics via psutil
+
+## Detection Rules (Sigma / YARA)
+
+Defensive-only rule library evaluated by the `/lab` engine. Every rule
+matches **synthetic** logs; the repository ships no malware, no exploit and
+no live payload.
+
+- **20 Sigma rules** in `rules/sigma/{windows,linux,web,cloud}` (kebab-case,
+  one file per rule, UUID + ATT&CK tags + explicit false positives)
+- **5 YARA rules** in `rules/yara` (text patterns over event fields)
+- **3 correlation patterns** in `rules/patterns` (N events in T seconds)
+- **50 fixtures** in `backend/tests/fixtures/detection/{positive,negative}`
+  (one positive + one negative per rule)
+
+| Doc | What it answers |
+|---|---|
+| [Detection catalog](docs/security/detection-catalog.md) | What each rule detects, its log source, severity and likely false positive |
+| [ATT&CK coverage](docs/security/attack-coverage.md) | Generated tactic × technique matrix **and the known gaps** |
+| [Tuning guide](docs/security/tuning-guide.md) | How to cut false positives without disabling detections |
+| [Severity model](docs/security/severity.md) | Alert → incident escalation rules |
+
+Validate the whole library (schema, unique UUIDs, ATT&CK tags, fixtures and
+fixture hit-rate) — CI runs exactly this:
+
+```bash
+python scripts/development/validate_rules.py     # hit-rate: 50/50 (100%)
+python scripts/development/validate_rules.py -v  # per-fixture verdicts
+```
 
 ## Development
 

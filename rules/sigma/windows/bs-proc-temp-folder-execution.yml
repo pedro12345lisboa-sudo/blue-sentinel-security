@@ -1,0 +1,57 @@
+title: Process Executed from a Temporary Folder
+id: 83f7f27d-e376-424c-9ce9-bca1b007faf5
+lab_id: bs-proc-temp-folder-execution
+status: test
+description: >
+  A process started from a path containing a temp directory. Stagers and
+  droppers commonly run from %TEMP%. Synthetic lab rule - matches only
+  fabricated BLUE-SENTINEL lab events.
+author: Pedro Lisboa
+date: 2026/10/02
+references:
+  - https://attack.mitre.org/techniques/T1105/
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection:
+    category: process
+    action: process_start
+    path|contains|i: '\temp\'
+  condition: selection
+level: medium
+falsepositives:
+  - Installers and updaters that legitimately run from %TEMP%
+  - Developers running build scripts from their temp directory
+response:
+  - Check the parent process and where the file came from
+  - Hash the image and compare it with the software inventory
+  - Isolate the endpoint if the file is unknown to the environment
+tags:
+  - attack.t1105
+  - attack.t1059
+lab_samples:
+  match:
+    - timestamp: '2024-05-21T18:30:05Z'
+      category: process
+      action: process_start
+      event_id: '4688'
+      host: WS-DEMO-01
+      user: jsilva
+      ip: 198.51.100.20
+      product: windows
+      process: powershell.exe
+      command_line: powershell.exe -nop -w hidden -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA
+      path: C:\Users\jsilva\AppData\Local\Temp\update.ps1
+  no_match:
+    - timestamp: '2024-05-21T18:29:00Z'
+      category: process
+      action: process_start
+      event_id: '4688'
+      host: WS-DEMO-01
+      user: jsilva
+      ip: 198.51.100.20
+      product: windows
+      process: cmd.exe
+      command_line: cmd.exe /c dir C:\Windows
+      path: C:\Windows\System32\cmd.exe

@@ -4,6 +4,7 @@ import { FeaturedProjects } from '@/components/sections/featured-projects';
 import { LabTeaser } from '@/components/sections/lab-teaser';
 import { Counters } from '@/components/sections/counters';
 import { CTA } from '@/components/sections/cta';
+import { getAllProjects } from '@/lib/projects';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -17,11 +18,24 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
+  const projects = getAllProjects()
+    .filter((project) => project.highlight)
+    .slice(0, 6)
+    .map((project) => ({
+      slug: project.slug,
+      title: project.title,
+      description: project.description,
+      tags: project.tags,
+      icon: project.icon,
+      highlight: project.highlight,
+      links: project.links,
+    }));
+
   return (
     <>
       <Hero />
       <Skills />
-      <FeaturedProjects />
+      <FeaturedProjects projects={projects} />
       <LabTeaser />
       <Counters />
       <CTA />

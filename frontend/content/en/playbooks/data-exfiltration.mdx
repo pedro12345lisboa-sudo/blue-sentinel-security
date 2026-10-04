@@ -1,0 +1,106 @@
+---
+title: "Suspected data exfiltration"
+description: "Signal of anomalous outbound data: confirm the volume and destination, contain the channel without destroying proof, quantify what was exposed, and trigger the notification obligations."
+severity: critical
+type: exfiltration
+order: 6
+updated: "2026-10-03"
+trigger:
+  description: "Heavy outbound traffic or traffic to an unusual destination, combined with access from a new location or mass collection of sensitive directories."
+  rules:
+    - id: bs-net-suspicious-outbound
+      path: rules/sigma/windows/bs-net-suspicious-outbound.yml
+    - id: bs-cloud-login-new-country
+      path: rules/sigma/cloud/bs-cloud-login-new-country.yml
+dataSources:
+  - "Network flow and proxy logs: outbound bytes per host, destination, and time"
+  - "Cloud authentication logs: mass downloads and access from a new location"
+  - "Endpoint telemetry: sequential reads of sensitive directories and archiving"
+  - "Email gateway and external sharing tool"
+  - "Database and bucket object export records"
+triage:
+  - "Which host sent, to which destination, how many bytes, and for how long?"
+  - "Is the destination a legitimate work cloud service, a personal service, or unknown infrastructure?"
+  - "Was there mass reading or archiving before the outbound transfer, and from which folders?"
+  - "Is the account involved privileged, a service account, or an ordinary user?"
+  - "Is there an approved migration, backup, or synchronization window that explains the volume?"
+  - "Did the access come from a new location or device for that account?"
+decisionTree: |
+  flowchart TD
+    A["Anomalous outbound alert"] --> B{"Is the volume justified by an approved change?"}
+    B -- Yes --> C["Validate with the data owner and close documenting the window"]
+    B -- No --> D["Treat as suspected exfiltration"]
+    D --> E["Block the destination at the edge and suspend the account session"]
+    E --> F{"Privileged account or access from a new location?"}
+    F -- Yes --> G["Incident: apply the credential playbook as well"]
+    F -- No --> H["Contain the host and preserve network logs"]
+    G --> H
+    H --> I["Eradication: eliminate the vector and derived persistence"]
+    I --> J["Recovery: restore access and monitor the destination for 14 days"]
+    J --> K["Communicate according to the nature of the exposed data"]
+phases:
+  - key: containment
+    summary: "Cut the channel: block the destination at the edge, suspend the session of the account involved, and preserve network logs before any cleanup."
+  - key: eradication
+    summary: "Eliminate the vector that allowed the collection — leaked credential, malware, forwarding rule, or exposed access key — and any persistence derived from it."
+  - key: recovery
+    summary: "Restore the approved state of access, rotate the credentials and keys involved, and keep watch on the blocked destination for 14 days."
+checklist:
+  - title: "Containment"
+    items:
+      - "Block the outbound destination in the firewall, DNS, and proxy, keeping the scope to the minimum necessary"
+      - "Suspend the session of the account involved and invalidate tokens and access keys"
+      - "Preserve network and proxy logs before any short retention expires"
+      - "Isolate the host if there is evidence of active remote control"
+  - title: "Eradication"
+    items:
+      - "Identify the collection vector: compromised credential, malware, or remote access"
+      - "Remove forwarding rules, external shares, and keys created during the period"
+      - "Review the scope: which directories, tables, or objects were read"
+      - "Confirm that no local copy or scheduled sending job remains active"
+  - title: "Recovery"
+    items:
+      - "Restore credentials, keys, and permissions to the approved state"
+      - "Validate with the data owner that legitimate access works again"
+      - "Keep the destination blocked and monitor attempts for 14 days"
+      - "Record the estimated volume and the nature of the data for the notification analysis"
+evidence:
+  - "Flow and proxy logs with bytes, destination, and time, exported before retention expires"
+  - "List of files, tables, or objects read during the suspected interval"
+  - "Record of the block executed at the edge, with date, time, and responsible person"
+  - "State of sessions, tokens, and access keys before and after the suspension"
+  - "Origin of the data: classification, presence of personal data, and system owner"
+  - "Consolidated timeline for assessing the notification obligation"
+comms:
+  - when: "Within the first 30 minutes of confirming unauthorized outbound activity"
+    who: "Incident response owner and the owner of the source system"
+  - when: "On confirmation of exposed personal data or business secret"
+    who: "Data protection officer, legal, executive leadership, and internal communications"
+  - when: "When the estimated scope is closed"
+    who: "Audit and, where applicable, the regulated areas involved"
+metrics:
+  mttd: "15 minutes from the traffic alert to triage"
+  mttr: "45 minutes to block the destination and suspend the session"
+lessons:
+  - "Blocking without preserving edge logs destroys the only proof of volume and destination"
+  - "A legitimate cloud service is also an exfiltration channel: the criterion is context, not the destination's reputation"
+  - "Quantifying the exposure after the case closes is what delays mandatory notification the most"
+labScenario: temp-process
+references:
+  - "NIST SP 800-61 Rev. 2 — Computer Security Incident Handling Guide"
+  - "LGPD (Law 13.709/2018) — incident notification to the data protection officer and to the ANPD"
+  - "MITRE ATT&CK T1048 — Exfiltration Over Alternative Protocol"
+  - "MITRE ATT&CK T1567 — Exfiltration Over Web Service"
+---
+
+Exfiltration is confirmed by volume, destination, and time — not by intent. This playbook organizes the reading of those three and keeps the chain of custody while the channel is closed.
+
+<Callout type="warning" title="Defensive boundary">Triage uses network flow, proxy logs, and authentication records. No step involves recovering exposed content on your own or interacting with the malicious destination.</Callout>
+
+## Context
+
+`bs-net-suspicious-outbound` covers an outbound connection to an unusual port or destination from a Windows workstation, and `bs-cloud-login-new-country` flags cloud access from a location never seen for that account. The combination of the two — anomalous outbound traffic and an identity in a new place — is the pattern that most quickly separates legitimate synchronization from exfiltration.
+
+## When not to use
+
+An approved migration or backup window, with compatible volume and a known destination, closes with the exception documented. This playbook applies when there is no matching change or when the destination is not part of the approved services inventory.

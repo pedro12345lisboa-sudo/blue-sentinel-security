@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { MDXComponents } from '@/components/mdx-components';
 import { ShareButtons } from '@/components/writeups/share-buttons';
 import { getWriteupBySlug } from '@/lib/writeups';
+import { defaultLocale, getSite } from '@/i18n';
 
 interface WriteupPageProps {
   params: { slug: string };
@@ -23,7 +24,7 @@ const formatDate = (date: string) =>
 export async function generateMetadata({
   params,
 }: WriteupPageProps): Promise<Metadata> {
-  const writeup = getWriteupBySlug(params.slug);
+  const writeup = getWriteupBySlug(defaultLocale, params.slug);
   if (!writeup) {
     return { title: 'Writeup Not Found' };
   }
@@ -41,7 +42,7 @@ export async function generateMetadata({
 }
 
 export default function WriteupPage({ params }: WriteupPageProps) {
-  const writeup = getWriteupBySlug(params.slug);
+  const writeup = getWriteupBySlug(defaultLocale, params.slug);
 
   if (!writeup) {
     notFound();
@@ -181,7 +182,7 @@ export default function WriteupPage({ params }: WriteupPageProps) {
           </aside>
 
           <div className="lg:col-span-3">
-            <MDXRemote source={content} components={MDXComponents({})} />
+            <MDXRemote source={content} components={MDXComponents({ site: getSite(defaultLocale) })} />
 
             <div className="mt-16 border-t border-border/50 pt-8">
               <h2 className="mb-6 text-xl font-semibold">Share this article</h2>

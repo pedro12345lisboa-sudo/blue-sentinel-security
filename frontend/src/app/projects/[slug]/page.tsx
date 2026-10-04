@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { MDXComponents } from '@/components/mdx-components';
 import { getProjectBySlug } from '@/lib/projects';
+import { defaultLocale, getSite } from '@/i18n';
 
 interface ProjectPageProps {
   params: { slug: string };
@@ -42,7 +43,7 @@ const getIcon = (iconName?: string) => {
 export async function generateMetadata({
   params,
 }: ProjectPageProps): Promise<Metadata> {
-  const project = getProjectBySlug(params.slug);
+  const project = getProjectBySlug(defaultLocale, params.slug);
   if (!project) {
     return { title: 'Project Not Found' };
   }
@@ -60,7 +61,7 @@ export async function generateMetadata({
 }
 
 export default function ProjectPage({ params }: ProjectPageProps) {
-  const project = getProjectBySlug(params.slug);
+  const project = getProjectBySlug(defaultLocale, params.slug);
 
   if (!project) {
     notFound();
@@ -243,7 +244,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
           </aside>
 
           <div className="lg:col-span-3">
-            <MDXRemote source={content} components={MDXComponents({})} />
+            <MDXRemote source={content} components={MDXComponents({ site: getSite(defaultLocale) })} />
           </div>
         </div>
       </div>

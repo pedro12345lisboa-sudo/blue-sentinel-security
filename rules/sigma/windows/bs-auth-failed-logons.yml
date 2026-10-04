@@ -1,0 +1,55 @@
+title: Repeated Failed Logons for One Account
+id: 433a319a-26f5-4cf3-90af-4dca74295a6f
+lab_id: bs-auth-failed-logons
+status: test
+description: >
+  Failed interactive logon attempts for the same account. Several events in
+  a short period are the first stage of password guessing / brute force.
+  Synthetic lab rule - matches only fabricated BLUE-SENTINEL lab events.
+author: Pedro Lisboa
+date: 2026/10/02
+references:
+  - https://attack.mitre.org/techniques/T1110/001/
+logsource:
+  product: windows
+  service: security
+  category: authentication_failure
+detection:
+  selection:
+    category: auth
+    action: failed_logon
+    event_id: '4625'
+    product: windows
+  condition: selection
+level: medium
+falsepositives:
+  - A user that routinely mistypes the password
+  - A service account with an expired password
+  - Availability tests that authenticate with wrong credentials on purpose
+response:
+  - Rate-limit the source IP and review the account logon history
+  - Confirm with the owner whether the attempts were theirs
+  - Require or verify multi-factor authentication for the account
+tags:
+  - attack.t1110_001
+lab_samples:
+  match:
+    - timestamp: '2024-06-18T13:10:00Z'
+      category: auth
+      action: failed_logon
+      event_id: '4625'
+      host: WS-DEMO-01
+      user: jsilva
+      ip: 203.0.113.77
+      product: windows
+      message: An account failed to log on.
+  no_match:
+    - timestamp: '2024-06-18T13:11:20Z'
+      category: auth
+      action: logon
+      event_id: '4624'
+      host: WS-DEMO-01
+      user: jsilva
+      ip: 203.0.113.77
+      product: windows
+      message: An account was successfully logged on.

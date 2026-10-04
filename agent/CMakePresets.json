@@ -1,0 +1,126 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 20,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "AGENT_BUILD_TESTS": "ON",
+        "AGENT_WERROR": "ON"
+      }
+    },
+    {
+      "name": "linux-debug",
+      "displayName": "Linux Debug (GCC/Clang)",
+      "inherits": "base",
+      "condition": {
+        "type": "notEquals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "linux-release",
+      "displayName": "Linux Release (GCC/Clang)",
+      "inherits": "linux-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "linux-asan",
+      "displayName": "Linux Debug + ASan/UBSan",
+      "inherits": "linux-debug",
+      "cacheVariables": {
+        "AGENT_SANITIZE": "ON"
+      }
+    },
+    {
+      "name": "mingw64-debug",
+      "displayName": "MSYS2 MinGW64 Debug",
+      "inherits": "base",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "mingw64-release",
+      "displayName": "MSYS2 MinGW64 Release",
+      "inherits": "mingw64-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "windows-msvc",
+      "displayName": "Windows MSVC + vcpkg",
+      "generator": "Visual Studio 17 2022",
+      "architecture": {
+        "value": "x64",
+        "strategy": "set"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "AGENT_BUILD_TESTS": "ON",
+        "AGENT_WERROR": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "linux-debug", "configurePreset": "linux-debug" },
+    { "name": "linux-release", "configurePreset": "linux-release" },
+    { "name": "linux-asan", "configurePreset": "linux-asan" },
+    { "name": "mingw64-debug", "configurePreset": "mingw64-debug" },
+    { "name": "mingw64-release", "configurePreset": "mingw64-release" },
+    { "name": "windows-msvc-release", "configurePreset": "windows-msvc", "configuration": "Release" }
+  ],
+  "testPresets": [
+    {
+      "name": "linux-debug",
+      "configurePreset": "linux-debug",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "linux-release",
+      "configurePreset": "linux-release",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "linux-asan",
+      "configurePreset": "linux-asan",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "mingw64-debug",
+      "configurePreset": "mingw64-debug",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "windows-msvc-release",
+      "configurePreset": "windows-msvc",
+      "configuration": "Release",
+      "output": { "outputOnFailure": true }
+    }
+  ]
+}

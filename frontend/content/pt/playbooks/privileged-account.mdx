@@ -1,0 +1,112 @@
+---
+title: "Criação suspeita de conta privilegiada"
+description: "Conta privilegiada criada fora de janela ou sem pedido de mudança: validar a autorização, revogar o privilégio concedido e fechar o caminho que levou à elevação."
+severity: high
+type: privileged-account
+order: 5
+updated: "2026-10-03"
+trigger:
+  description: "Criação ou elevação de conta administrativa fora de janela de mudança, com ticket ausente ou atribuição de privilégio incompatível com o perfil do usuário."
+  rules:
+    - id: bs-win-member-added-local-admin
+      path: rules/sigma/windows/bs-win-member-added-local-admin.yml
+    - id: bs-linux-user-created-uid-zero
+      path: rules/sigma/linux/bs-linux-user-created-uid-zero.yml
+    - id: bs-linux-sudo-unusual-account
+      path: rules/sigma/linux/bs-linux-sudo-unusual-account.yml
+dataSources:
+  - "Eventos 4720, 4732 e 4728 do Windows Security no domínio e nas estações"
+  - "auth.log e syslog de servidores Linux (useradd, visudo, sudoers.d)"
+  - "Ferramenta de gestão de identidade e catálogo de grupos privilegiados"
+  - "Sistema de chamados: registro de mudança aprovada no horário do evento"
+  - "Logs de acesso remoto associados à conta criada"
+triage:
+  - "Existe pedido de mudança aprovado cobrindo esta criação e este horário?"
+  - "Quem executou a criação, a partir de qual conta e de qual origem?"
+  - "A nova conta recebeu domínio, shell, sudo ou grupo administrativo além do necessário?"
+  - "A conta já teve logon, e a partir de qual IP e horário?"
+  - "A conta criada tem nome parecido com conta de serviço legítima ou com conta existente?"
+  - "Outras contas foram criadas ou elevadas na mesma janela pelo mesmo executor?"
+decisionTree: |
+  flowchart TD
+    A["Alerta de conta privilegiada criada"] --> B{"Existe mudanca aprovada no horario?"}
+    B -- Sim --> C["Valide a aprovacao com o dono da mudanca"]
+    B -- Nao --> D["Trate como incidente: revogue o privilegio agora"]
+    C --> E{"Escopo bate com o pedido?"}
+    E -- Sim --> F["Documente e feche com registro de excecao"]
+    E -- Nao --> D
+    D --> G["Bloqueie a conta e invalide sessoes ativas"]
+    G --> H["Erradicacao: identifique o caminho de elevacao usado"]
+    H --> I{"A origem segue comprometida?"}
+    I -- Sim --> J["Aplique o playbook de credenciais ou malware em paralelo"]
+    I -- Nao --> K["Remova a conta e restaure o grupo alterado"]
+    J --> K
+    K --> L["Recuperacao: monitore a conta e o executor por 7 dias"]
+    F --> L
+phases:
+  - key: containment
+    summary: "Bloqueie a conta recém-criada, invalide sessões e remova o privilégio concedido enquanto a autorização ainda é verificada."
+  - key: eradication
+    summary: "Identifique e feche o caminho de elevação: sessão exposta, ferramenta de administração, chave SSH ou política alterada que permitiu a criação."
+  - key: recovery
+    summary: "Restaure o estado aprovado dos grupos, devolva o acesso legítimo e monitore criações privilegiadas por 7 dias."
+checklist:
+  - title: "Contenção"
+    items:
+      - "Bloqueie a conta criada e invalide todas as sessões ativas dela"
+      - "Remova a conta dos grupos privilegiados sem apagar o objeto (preserve para análise)"
+      - "Valide com o dono do sistema se a criação foi autorizada"
+      - "Ative monitoramento em tempo real das próximas ações da conta e do executor"
+  - title: "Erradicação"
+    items:
+      - "Reconstitua o caminho de elevação: qual sessão, ferramenta ou credencial permitiu a criação"
+      - "Verifique se alguma política, chave SSH ou entrada de sudoers foi alterada junto"
+      - "Confirme se outras contas foram criadas ou elevadas na mesma janela"
+      - "Revise contas de serviço e contas temporárias criadas no período"
+      - "Troque credenciais privilegiadas se a origem da sessão estiver comprometida"
+  - title: "Recuperação"
+    items:
+      - "Remova a conta não autorizada e restaure a composição aprovada dos grupos"
+      - "Devolva o acesso legítimo ao titular, com MFA confirmado"
+      - "Mantenha alerta de criação privilegiada ativo por 7 dias"
+      - "Registre a causa raiz e a data da ação corretiva no ticket"
+evidence:
+  - "Eventos 4720, 4732 e 4728 (ou useradd/visudo do auth.log) exportados com fuso horário"
+  - "Identidade da conta executora, origem do logon e ferramenta utilizada"
+  - "Screenshot ou exportação do estado dos grupos privilegiados antes e depois da correção"
+  - "Registro da validação: quem confirmou a autorização e em que data"
+  - "Lista de ações executadas pela conta entre criação e bloqueio"
+  - "Ticket de mudança usado como referência, mesmo quando ausente (prova de ausência)"
+comms:
+  - when: "Imediatamente após o alerta sem mudança correspondente"
+    who: "Responsável pela resposta e dono do sistema afetado"
+  - when: "Na confirmação de criação não autorizada"
+    who: "Gestor da área, equipe de infraestrutura e segurança"
+  - when: "Ao encerrar, com causa raiz definida"
+    who: "Auditoria interna e, em ambiente regulado, o compliance"
+metrics:
+  mttd: "10 minutos entre o evento de criação e a triagem"
+  mttr: "30 minutos até bloqueio da conta e remoção do privilégio"
+lessons:
+  - "Apagar a conta logo depois destrói a evidência de quem a criou e qual caminho usou"
+  - "Criação privilegiada sem ticket é alerta de processo, mas incidente quando há logon em seguida"
+  - "Sandbox de mudança aprovada sem escopo definido gera falso positivo recorrente; registre o escopo na regra"
+labScenario: after-hours-login
+references:
+  - "NIST SP 800-61 Rev. 2 — Computer Security Incident Handling Guide"
+  - "NIST SP 800-53 Rev. 5 — AC-2 Account Management"
+  - "MITRE ATT&CK T1136.001 — Create Account: Local Account"
+  - "MITRE ATT&CK T1098 — Account Manipulation"
+---
+
+Uma conta privilegiada criada sem mudança correspondente é, ao mesmo tempo, um problema de processo e um possível vetor de persistência. Este playbook separa as duas coisas e trata a segunda sem esperar a primeira.
+
+<Callout type="info" title="Defensivo por padrão">A verificação é feita com registros de autenticação, catálogo de identidade e sistema de chamados. Nenhum passo envolve elevar privilégio em máquina alguma.</Callout>
+
+## Contexto
+
+`bs-win-member-added-local-admin` marca entrada em grupo administrativo no Windows, `bs-linux-user-created-uid-zero` pega conta criada com UID 0 no Linux e `bs-linux-sudo-unusual-account` cobre concessão de sudo fora do padrão da conta. Em ambientes com diretório, o mesmo padrão aparece na adição a grupos protegidos.
+
+## Quando não usar
+
+Criação de conta coberta por pedido de mudança aprovado e dentro do escopo descrito fecha como exceção documentada, sem contenção. Este playbook entra quando o pedido não existe, não cobre o horário ou não cobre o escopo.

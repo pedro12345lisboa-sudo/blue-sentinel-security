@@ -1,0 +1,103 @@
+name: agent
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'agent/**'
+      - '.github/workflows/agent.yml'
+  pull_request:
+    paths:
+      - 'agent/**'
+      - '.github/workflows/agent.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: Linux GCC
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake ninja-build g++ \
+            libcurl4-openssl-dev libssl-dev zlib1g-dev \
+            nlohmann-json3-dev libgtest-dev
+
+      - name: Configure
+        run: cmake --preset linux-debug
+
+      - name: Build (-Werror)
+        run: cmake --build --preset linux-debug -j
+
+      - name: Test
+        run: ctest --preset linux-debug
+
+  linux-asan:
+    name: Linux GCC + ASan/UBSan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake ninja-build g++ \
+            libcurl4-openssl-dev libssl-dev zlib1g-dev \
+            nlohmann-json3-dev libgtest-dev
+
+      - name: Configure
+        run: cmake --preset linux-asan
+
+      - name: Build
+        run: cmake --build --preset linux-asan -j
+
+      - name: Test under sanitizers
+        run: ctest --preset linux-asan
+        env:
+          ASAN_OPTIONS: detect_leaks=1:strict_string_checks=1:detect_stack_use_after_return=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+
+  windows:
+    name: Windows MSVC + vcpkg
+    runs-on: windows-latest
+    env:
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-cache
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare vcpkg cache and toolchain
+        shell: bash
+        run: |
+          mkdir -p "$VCPKG_DEFAULT_BINARY_CACHE"
+          echo "VCPKG_ROOT=${VCPKG_INSTALLATION_ROOT:-C:/vcpkg}" >> "$GITHUB_ENV"
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg-cache
+          key: vcpkg-agent-${{ runner.os }}-${{ hashFiles('agent/vcpkg.json') }}
+          restore-keys: |
+            vcpkg-agent-${{ runner.os }}-
+
+      - name: Configure
+        run: cmake --preset windows-msvc
+        working-directory: agent
+
+      - name: Build (-W4 /WX)
+        run: cmake --build --preset windows-msvc-release -j --config Release
+        working-directory: agent
+
+      - name: Test
+        run: ctest --preset windows-msvc-release
+        working-directory: agent

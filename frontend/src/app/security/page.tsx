@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { Shield, Lock, Globe, Database, Code, Search, AlertTriangle, CheckCircle, XCircle, ExternalLink, ArrowRight } from 'lucide-react';
+import { Shield, Lock, Globe, Database, Code, Search, AlertTriangle, CheckCircle, XCircle, ExternalLink, ArrowRight, Github } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

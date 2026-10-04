@@ -1,0 +1,47 @@
+---
+title: "SQL Injection probing in web logs"
+description: "Access lines with manipulated query patterns: the hunt that finds scanning before it becomes successful exploitation."
+severity: medium
+order: 6
+updated: "2026-10-03"
+hypothesis: "Requests to the public application contain classic SQL Injection payloads, indicating probing or an exploitation attempt against a form parameter."
+technique: "T1190"
+techniqueName: "Exploit Public-Facing Application"
+dataSource: "Access logs from the reverse proxy or the WAF (URI, user-agent and HTTP status columns)"
+query: |
+  SELECT
+    src_ip,
+    uri,
+    status,
+    COUNT(*)  AS attempts,
+    MIN(ts)   AS first_seen,
+    MAX(ts)   AS last_seen
+  FROM web_access
+  WHERE ts >= now() - INTERVAL '1 hour'
+    AND (
+      uri ILIKE '%union%select%'
+      OR uri ILIKE '%or%1=1%'
+      OR uri ILIKE '%sleep(%'
+      OR uri ILIKE '%benchmark(%'
+      OR uri ILIKE '%information_schema%'
+    )
+  GROUP BY src_ip, uri, status
+  HAVING COUNT(*) >= 5
+  ORDER BY attempts DESC;
+normal: "Applications with legitimate parameters containing the words used in the query, health checks and authorized crawlers produce isolated occurrences. Low volume, status 404/400 and an already-known scanning source are acceptable; a short burst, constant payload variation and an unexpected 200 response on a sensitive route are anomalous."
+escalation: "Escalate to an incident when a response returns 200 with an anomalous body on a data route, when a database error is exposed to the client, when the source matches earlier reconnaissance (mass 404s) or when the burst exceeds the defined threshold. Probing without an anomalous response becomes an edge block and a ticket to fix the parameter."
+sigma: "The rule `bs-web-sql-injection` already flags the signature and the `corr-sqli-burst` correlation turns the burst into an alert. The gain of the hunt is adding status 200 to the condition to separate attempt from success: publish that view as a Sigma rule with `critical` severity and keep the negative fixture with a form whose parameter contains the literal without a payload."
+labScenario: sqli-web
+references:
+  - "MITRE ATT&CK T1190 — Exploit Public-Facing Application"
+  - "OWASP Top 10 2021 — A03 Injection"
+  - "NIST SP 800-61 Rev. 2 — Computer Security Incident Handling Guide"
+---
+
+Probing is noise until it is not. The hunt exists to separate the routine scanner from the request that found a vulnerable parameter.
+
+<Callout type="info" title="Log inspection only">The query examines lines that have already been recorded. No payload is sent to the application or replayed during the hunt.</Callout>
+
+## How to use
+
+Run it in one-hour windows during traffic peaks, group by source and hand the routes with a suspicious 200 response to the application team, along with the public service exposure playbook.

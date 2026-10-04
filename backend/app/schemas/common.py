@@ -4,10 +4,15 @@ from pydantic import BaseModel, Field
 
 
 class ErrorResponse(BaseModel):
-    """RFC 9457 problem+json error format."""
+    """RFC 9457 problem+json error format.
+
+    `code` is a stable machine-readable error code; the frontend translates it
+    via `site.errors[code]`. Never put user-facing localized text here.
+    """
     type: str = Field(default="about:blank")
     title: str
     status: int
+    code: str = "ERROR"
     detail: str | None = None
     instance: str | None = None
     request_id: str = Field(default_factory=lambda: uuid.uuid4().hex)
@@ -17,6 +22,7 @@ class ErrorResponse(BaseModel):
             "type": "about:blank",
             "title": "Validation Error",
             "status": 422,
+            "code": "VALIDATION_ERROR",
             "detail": "name: Field required",
             "request_id": "a1b2c3d4e5f6",
         }
@@ -26,3 +32,30 @@ class ErrorResponse(BaseModel):
 class PaginationParams(BaseModel):
     skip: int = Field(default=0, ge=0, le=1000)
     limit: int = Field(default=50, ge=1, le=100)
+
+
+class ErrorEnvelope(BaseModel):
+    """Envelope do handler ``BlueSentinelError`` (``app.core.errors``)."""
+    error: str
+    message: str
+    request_id: str | None = None
+
+
+def problem_response(description: str, model: type[BaseModel] = ErrorResponse) -> dict:
+    """Declaração OpenAPI para erros problem+json (+ JSON puro nos handlers inline)."""
+    schema = model.model_json_schema()
+    return {
+        "description": description,
+        "content": {
+            "application/problem+json": {"schema": schema},
+            "application/json": {"schema": schema},
+        },
+    }
+
+
+def envelope_response(description: str, model: type[BaseModel] = ErrorEnvelope) -> dict:
+    """Declaração OpenAPI para ``{"error", "message", "request_id"}``."""
+    return {
+        "description": description,
+        "content": {"application/json": {"schema": model.model_json_schema()}},
+    }

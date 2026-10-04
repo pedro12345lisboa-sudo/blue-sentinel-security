@@ -1,31 +1,22 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { formatDate as intlFormatDate, formatRelativeTime as intlFormatRelativeTime } from '@/i18n/format';
+import { defaultLocale, type Locale } from '@/i18n/config';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(date: string | Date, locale: string = 'pt-BR'): string {
-  const d = new Date(date);
-  return d.toLocaleDateString(locale, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+export function formatDate(date: string | Date, locale: Locale = defaultLocale): string {
+  return intlFormatDate(date, locale, { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-export function formatRelativeTime(date: string | Date, locale: string = 'pt-BR'): string {
-  const d = new Date(date);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return 'Hoje';
-  if (diffDays === 1) return 'Ontem';
-  if (diffDays < 7) return `${diffDays} dias atrás`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} semana${Math.floor(diffDays / 7) > 1 ? 's' : ''} atrás`;
-  if (diffDays < 365) return `${Math.floor(diffDays / 30)} mês${Math.floor(diffDays / 30) > 1 ? 'es' : ''} atrás`;
-  return `${Math.floor(diffDays / 365)} ano${Math.floor(diffDays / 365) > 1 ? 's' : ''} atrás`;
+export function formatRelativeTime(
+  date: string | Date,
+  locale: Locale = defaultLocale,
+  now?: Date
+): string {
+  return intlFormatRelativeTime(date, locale, now);
 }
 
 export function readingTime(text: string): number {
@@ -45,7 +36,10 @@ export function slugify(text: string): string {
 
 export function truncate(str: string, length: number): string {
   if (str.length <= length) return str;
-  return str.slice(0, length).trim() + '...';
+  const sliced = str.slice(0, length);
+  const lastSpace = sliced.lastIndexOf(' ');
+  const base = lastSpace > 0 ? sliced.slice(0, lastSpace) : sliced;
+  return base.trim() + '...';
 }
 
 export function debounce<T extends (...args: unknown[]) => unknown>(

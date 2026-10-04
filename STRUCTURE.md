@@ -12,7 +12,7 @@ Comece só com `frontend/`, `backend/` e `docs/`. Crie o resto quando precisar.
 ./.gitattributes
 ./.github
 ./.github/workflows
-./.github/workflows/.gitkeep
+./.github/workflows/agent.yml
 ./.gitignore
 ./LICENSE
 ./README.md
@@ -20,18 +20,16 @@ Comece só com `frontend/`, `backend/` e `docs/`. Crie o resto quando precisar.
 ./STRUCTURE.md
 ./agent
 ./agent/CMakeLists.txt
+./agent/CMakePresets.json
+./agent/README.md
+./agent/vcpkg.json
 ./agent/include
-./agent/include/.gitkeep
 ./agent/src
 ./agent/src/core
-./agent/src/core/.gitkeep
 ./agent/src/platform
 ./agent/src/platform/linux
-./agent/src/platform/linux/.gitkeep
 ./agent/src/platform/windows
-./agent/src/platform/windows/.gitkeep
 ./agent/tests
-./agent/tests/.gitkeep
 ./assets-src
 ./assets-src/blender
 ./assets-src/blender/materials
@@ -60,6 +58,13 @@ Comece só com `frontend/`, `backend/` e `docs/`. Crie o resto quando precisar.
 ./backend/app/database/.gitkeep
 ./backend/app/detection
 ./backend/app/detection/.gitkeep
+./backend/app/detection/__init__.py
+./backend/app/detection/correlation.py
+./backend/app/detection/engine.py
+./backend/app/detection/mitre.py
+./backend/app/detection/severity.py
+./backend/app/detection/sigma_loader.py
+./backend/app/detection/yara_scanner.py
 ./backend/app/middleware
 ./backend/app/middleware/rate_limit.py
 ./backend/app/middleware/request_guard.py
@@ -93,10 +98,25 @@ Comece só com `frontend/`, `backend/` e `docs/`. Crie o resto quando precisar.
 ./backend/main.py
 ./backend/requirements.txt
 ./backend/tests
+./backend/tests/conftest.py
+./backend/tests/helpers.py
+./backend/tests/fixtures
+./backend/tests/fixtures/detection
+./backend/tests/fixtures/detection/negative
+./backend/tests/fixtures/detection/positive
 ./backend/tests/integration
 ./backend/tests/integration/.gitkeep
 ./backend/tests/unit
 ./backend/tests/unit/.gitkeep
+./backend/tests/unit/detection
+./backend/tests/unit/detection/test_correlation.py
+./backend/tests/unit/detection/test_engine.py
+./backend/tests/unit/detection/test_redos_guard.py
+./backend/tests/unit/detection/test_rules.py
+./backend/tests/unit/detection/test_severity_mitre.py
+./backend/tests/unit/detection/test_sigma_loader.py
+./backend/tests/unit/detection/test_validator.py
+./backend/tests/unit/detection/test_yara_scanner.py
 ./database
 ./database/migrations
 ./database/migrations/.gitkeep
@@ -116,6 +136,10 @@ Comece só com `frontend/`, `backend/` e `docs/`. Crie o resto quando precisar.
 ./docs/screenshots
 ./docs/screenshots/.gitkeep
 ./docs/security
+./docs/security/attack-coverage.md
+./docs/security/detection-catalog.md
+./docs/security/severity.md
+./docs/security/tuning-guide.md
 ./frontend
 ./frontend/Dockerfile
 ./frontend/public
@@ -125,8 +149,6 @@ Comece só com `frontend/`, `backend/` e `docs/`. Crie o resto quando precisar.
 ./frontend/public/images/.gitkeep
 ./frontend/public/models
 ./frontend/public/models/.gitkeep
-./frontend/public/robots.txt
-./frontend/public/sitemap.xml
 ./frontend/src
 ./frontend/src/app
 ./frontend/src/app/.gitkeep
@@ -146,25 +168,46 @@ Comece só com `frontend/`, `backend/` e `docs/`. Crie o resto quando precisar.
 ./frontend/tests/.gitkeep
 ./rules
 ./rules/patterns
-./rules/patterns/.gitkeep
+./rules/patterns/corr-brute-force-sequence.yaml
+./rules/patterns/corr-sqli-burst.yaml
+./rules/patterns/corr-web-scan-404.yaml
 ./rules/sigma
-./rules/sigma/.gitkeep
+./rules/sigma/cloud
+./rules/sigma/cloud/bs-cloud-access-key-created.yml
+./rules/sigma/cloud/bs-cloud-login-new-country.yml
+./rules/sigma/linux
+./rules/sigma/linux/bs-linux-crontab-modified.yml
+./rules/sigma/linux/bs-linux-ssh-failed-logons.yml
+./rules/sigma/linux/bs-linux-sudo-unusual-account.yml
+./rules/sigma/linux/bs-linux-user-created-uid-zero.yml
+./rules/sigma/web
+./rules/sigma/web/bs-web-path-traversal.yml
+./rules/sigma/web/bs-web-scanner-user-agent.yml
+./rules/sigma/web/bs-web-sql-injection.yml
+./rules/sigma/windows
+./rules/sigma/windows/bs-audit-log-cleared.yml
+./rules/sigma/windows/bs-auth-failed-logons.yml
+./rules/sigma/windows/bs-auth-rdp-external-logon.yml
+./rules/sigma/windows/bs-net-suspicious-outbound.yml
+./rules/sigma/windows/bs-proc-powershell-encoded-command.yml
+./rules/sigma/windows/bs-proc-temp-folder-execution.yml
+./rules/sigma/windows/bs-win-member-added-local-admin.yml
+./rules/sigma/windows/bs-win-office-spawned-shell.yml
+./rules/sigma/windows/bs-win-run-key-modified.yml
+./rules/sigma/windows/bs-win-scheduled-task-created.yml
+./rules/sigma/windows/bs-win-service-installed.yml
 ./rules/yara
-./rules/yara/.gitkeep
+./rules/yara/eicar-test-file.yar
+./rules/yara/office-macro-autoexec.yar
+./rules/yara/phishing-shorturl-social.yar
+./rules/yara/php-webshell-patterns.yar
+./rules/yara/suspicious-encoded-chain.yar
 ./scripts
+./scripts/build_design_tokens.py
 ./scripts/deployment
 ./scripts/deployment/.gitkeep
 ./scripts/development
-./scripts/development/.gitkeep
+./scripts/development/check_i18n.mjs
+./scripts/development/validate_rules.py
 ./scripts/setup
 ./scripts/setup/.gitkeep
-{
-  "$schema": "https://opencode.ai/config.json",
-  "mcp": {
-    "figma": {
-      "type": "remote",
-      "url": "https://mcp.figma.com/mcp",
-      "enabled": true
-    }
-  }
-}

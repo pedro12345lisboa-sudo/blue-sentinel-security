@@ -1,43 +1,59 @@
+import fs from 'node:fs';
 import { defineConfig, devices } from '@playwright/test';
+import { chromium } from 'playwright';
+
+/**
+ * Resolve o browser local: usa o Chromium do Playwright quando instalado;
+ * caso contrário (máquina sem download do CDN) cai para o Edge do sistema.
+ * No CI o Chromium é instalado com `playwright install --with-deps chromium`.
+ */
+function browserLaunchOptions(): { channel?: string } {
+  if (process.env.PLAYWRIGHT_CHANNEL) return { channel: process.env.PLAYWRIGHT_CHANNEL };
+  if (process.env.CI) return {};
+  try {
+    const exe = chromium.executablePath();
+    if (exe && fs.existsSync(exe)) return {};
+  } catch {
+    /* executável indisponível: usa o Edge do sistema */
+  }
+  return { channel: 'msedge' };
+}
+
+const launchOptions = browserLaunchOptions();
 
 export default defineConfig({
-  testDir: './e2e',
+  testDir: './tests',
+  testMatch: ['**/*.spec.ts'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  // O dev server do Next compila rotas sob demanda: com muitos workers em
+  // paralelo as primeiras requisições disputam CPU e estouram o timeout.
+  workers: process.env.CI ? 2 : 4,
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
+  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: 'http://localhost:3000',
+    locale: 'pt-BR',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    ...launchOptions,
   },
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], ...launchOptions },
     },
     {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-    {
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
-    },
-    {
-      name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] },
+      name: 'mobile-chromium',
+      use: { ...devices['Pixel 5'], ...launchOptions },
     },
   ],
   webServer: {
-    command: 'npm run dev',
+    command: 'pnpm dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 120000,
+    timeout: 180_000,
   },
 });

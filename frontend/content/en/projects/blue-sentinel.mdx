@@ -1,0 +1,95 @@
+---
+title: 'Blue-Sentinel — Full-stack security portfolio'
+description: 'Portfolio with Next.js frontend, FastAPI backend, protected form, health checks and an interactive detection lab.'
+date: '2024-01-15'
+tags: ['Next.js', 'FastAPI', 'PostgreSQL', 'Redis', 'Docker', 'TypeScript', 'Python']
+highlight: true
+icon: 'Shield'
+status: 'in production'
+links:
+  github: 'https://github.com/pedro12345lisboa-sudo/blue-sentinel-security'
+  demo: '/lab'
+---
+
+# Blue-Sentinel
+
+A full-stack portfolio where every decision is documented. Next.js frontend serving static pages, FastAPI backend for the form, lab and service health.
+
+## Problem
+
+Security portfolios are usually a PDF and a list of technologies. That does not show how a person thinks: how they write detection rules, how they handle failure, how they isolate a service on the network, how they document a decision.
+
+## Context
+
+I built the project under three constraints:
+
+- the site must keep standing even when the backend is down;
+- the backend must expose only what is necessary, with validation and rate limiting;
+- all text must come from content files, so the language can change without touching a component.
+
+## Solution
+
+- Next.js frontend with static pages and `generateStaticParams` for projects and articles, everything read from MDX files in `frontend/content/`.
+- FastAPI backend with contact, lab, health, GitHub and status endpoints, wired up in `backend/main.py`.
+- Contact form with Zod validation on the client and Pydantic on the server, a silent honeypot and a limit of 5 messages per hour per email (`backend/app/services/contact_service.py`).
+- Two exposed containers (3000 and 8000); PostgreSQL and Redis stay on the internal `backend-net` network only.
+- `/health/live` and `/health/ready` endpoints with a Docker healthcheck in compose.
+
+## Architecture
+
+```text
+Visitante ──HTTPS──▶ Next.js (SSG/ISR, porta 3000)
+                        │
+                        ├── arquivos .mdx (projetos, artigos, textos)
+                        └── /api/backend/* (rewrite)
+                                   │
+                                   ▼
+                          FastAPI (porta 8000)
+                          ├── /api/v1/contact   (honeypot + rate limit)
+                          ├── /api/v1/lab       (sessões e cenários)
+                          ├── /api/v1/ws/lab/*  (WebSocket com ticket)
+                          ├── /api/v1/health/*  (liveness/readiness)
+                          └── /api/v1/status    (métricas)
+                                   │
+                        ┌──────────┴──────────┐
+                        ▼                     ▼
+                  PostgreSQL               Redis
+                (backend-net)           (backend-net)
+```
+
+## Technical decisions and why
+
+| Decision | Why |
+|---------|---------|
+| Static pages on the frontend | The portfolio does not depend on the backend to render. Less surface in production. |
+| FastAPI + Pydantic | Validation declared in the same place the route lives; OpenAPI comes for free. |
+| Silent honeypot | The bot gets a 202 and nothing is stored. Revealing the block teaches the attacker. |
+| Rate limit per email (5/h) in SQL | A simple, auditable implementation with no extra infrastructure. The plan is to move to Redis when the limit also needs to apply per IP. |
+| `problem+json` for errors | Standardized error responses with `request_id`, without leaking stack traces. |
+| Text in `content/` | Changing language means changing a file, not a component. |
+
+## Challenges
+
+- Keeping the site working without the API: separating what is static from what is dynamic meant deciding, route by route, what may depend on the network.
+- Writing without inventing: several claims in the original material did not match the code (rate limit "per IP", Prometheus metrics, security.txt). I corrected the security page to show the real state: implemented, partial or planned.
+- Form with no mail server in dev: sending is asynchronous via `BackgroundTasks` and falls back to a queue when the worker is not active.
+
+## Results
+
+- Site renders without a backend: [MEASURED METRIC — e.g.: home page response time with the API down].
+- Form protected by a honeypot and a limit of 5 sends/hour per email.
+- [MEASURED METRIC — e.g.: frontend test coverage].
+- [MEASURED METRIC — e.g.: number of pt-BR pages coming from content/].
+
+## Lessons
+
+1. **Content separated from components is worth the cost.** At first it feels like excess indirection; on the first language switch it pays for itself.
+2. **Saying "partial" is stronger than pretending "implemented."** The security page got shorter and more credible once I stopped copying checklists off the internet.
+3. **A real health check prevents dashboard lying.** `/health/ready` checks the database; if there is no data, the page shows there is no data.
+
+## Links
+
+- [Source code](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security)
+- [Lab](/lab)
+- [Security architecture](/security)
+- [API documentation]([DOCUMENTATION URL])

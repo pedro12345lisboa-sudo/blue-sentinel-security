@@ -1,0 +1,17 @@
+{
+  "description": "negative fixture for bs-linux-sudo-unusual-account",
+  "event": {
+    "action": "sudo",
+    "category": "auth",
+    "event_id": "sudo",
+    "host": "srv-lab-edge-01",
+    "ip": "198.51.100.30",
+    "message": "deploy : TTY=pts/1 ; PWD=/opt/svc ; COMMAND=/usr/bin/systemctl restart api",
+    "product": "linux",
+    "service": "sudo",
+    "timestamp": "2025-03-02T09:16:00Z",
+    "user": "deploy"
+  },
+  "kind": "sigma",
+  "rule": "bs-linux-sudo-unusual-account"
+}

@@ -1,0 +1,45 @@
+---
+title: "Legitimate login from a never-seen country"
+description: "An account authenticated from a new location with no recorded travel: the hunt that separates real mobility from credential compromise."
+severity: high
+order: 5
+updated: "2026-10-03"
+hypothesis: "An account authenticated from a country or ASN it has never used before, with no recorded travel or remote work, indicating a valid credential being used by a third party."
+technique: "T1078"
+techniqueName: "Valid Accounts"
+dataSource: "Identity provider login signals (Entra ID, Google Workspace) and VPN/RDP logs"
+query: |
+  SELECT
+    user,
+    country,
+    src_ip,
+    ts,
+    outcome
+  FROM login_events
+  WHERE outcome = 'success'
+    AND country NOT IN (
+      SELECT DISTINCT country
+      FROM login_events
+      WHERE user = login_events.user
+        AND ts < login_events.ts - INTERVAL '90 days'
+        AND outcome = 'success'
+    )
+    AND ts >= now() - INTERVAL '7 days'
+  ORDER BY ts DESC;
+normal: "Travel, corporate VPN egressing in another country, mobile carriers and a new device explain most first logons. Completed MFA, a managed device and a plausible hour are acceptable; missing MFA or approval on a new device, a small-hours timestamp for that account and action taken immediately after are anomalous."
+escalation: "Escalate to an incident when privileged actions follow the login (rule change, export, account creation), when MFA is bypassed or approved on an unmanaged device, or when more than one account under the same manager appears from the same source. Without those signals, the case becomes a quick check with the account holder and a review of MFA factors."
+sigma: "Promote the query to the existing `bs-cloud-login-new-country` rule and add context: join with the managed device and with the travel calendar in correlation format (`rules/patterns/`), using `notin` for approved countries and ASNs documented in `falsepositives`. Pin the history threshold (90 days) as a rule constant and cover the approved-travel case with a negative fixture."
+labScenario: after-hours-login
+references:
+  - "MITRE ATT&CK T1078 — Valid Accounts"
+  - "NIST SP 800-61 Rev. 2 — Computer Security Incident Handling Guide"
+  - "MITRE ATT&CK T1078.004 — Valid Accounts: Cloud Accounts"
+---
+
+Valid accounts are the quietest vector because nothing breaks: the login simply succeeds. What is left for the hunt is context — geography, device, time of day and the first action after authentication.
+
+<Callout type="info" title="Read-only log access">The query aggregates login events that have already been collected. No step involves authenticating, testing factors or accessing accounts.</Callout>
+
+## How to use
+
+Run it daily per identity provider, discard travel confirmed with the account holder and hand the remaining cases to the credential attack playbook with the timeline of the first access.

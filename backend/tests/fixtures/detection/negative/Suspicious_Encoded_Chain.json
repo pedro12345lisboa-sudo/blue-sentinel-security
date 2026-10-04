@@ -1,0 +1,18 @@
+{
+  "description": "negative fixture for Suspicious_Encoded_Chain",
+  "event": {
+    "action": "process_start",
+    "category": "process",
+    "command_line": "pwsh.exe -NoProfile -EncodedCommand SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA",
+    "event_id": "4688",
+    "host": "WS-LAB-02",
+    "ip": "198.51.100.10",
+    "path": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+    "process": "pwsh.exe",
+    "product": "windows",
+    "timestamp": "2025-06-01T12:11:00Z",
+    "user": "r.martins"
+  },
+  "kind": "yara",
+  "rule": "Suspicious_Encoded_Chain"
+}

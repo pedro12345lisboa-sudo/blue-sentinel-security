@@ -1,0 +1,62 @@
+title: New Service Installed from a User-Writable Path
+id: 91fd9bf4-6f84-421f-8ffe-63a4dc89aeb8
+lab_id: bs-win-service-installed
+status: test
+description: >
+  A service was registered (Event 7045) whose binary lives in a
+  user-writable location such as %TEMP%, %APPDATA% or Public - installers
+  do not normally run from there, droppers do. Synthetic lab rule -
+  matches only fabricated BLUE-SENTINEL lab events.
+author: Pedro Lisboa
+date: 2026/10/02
+references:
+  - https://attack.mitre.org/techniques/T1543/003/
+logsource:
+  product: windows
+  service: system
+detection:
+  selection:
+    category: audit
+    product: windows
+    event_id: '7045'
+  writable_path:
+    image_path|contains|i:
+      - '\temp\'
+      - '\appdata\'
+      - '\users\public\'
+  condition: selection and writable_path
+level: high
+falsepositives:
+  - Installers that unpack their payload into %TEMP% before registering the service
+  - Endpoint agents deployed by hand from a user profile during a pilot
+response:
+  - Stop the service and quarantine the binary
+  - Compare the image hash with the software inventory and the vendor release
+  - Hunt for the same hash or path on the rest of the estate
+tags:
+  - attack.t1543_003
+lab_samples:
+  match:
+    - timestamp: '2024-09-02T04:12:00Z'
+      category: audit
+      action: service_installed
+      event_id: '7045'
+      host: SRV-LAB-11
+      user: SYSTEM
+      ip: 198.51.100.41
+      product: windows
+      service_name: WinSockDrv
+      image_path: C:\Users\Public\svchost32.exe
+      message: A new service was installed.
+  no_match:
+    - timestamp: '2024-09-02T04:10:00Z'
+      category: audit
+      action: service_installed
+      event_id: '7045'
+      host: SRV-LAB-11
+      user: SYSTEM
+      ip: 198.51.100.41
+      product: windows
+      service_name: ContosoAgent
+      image_path: C:\Program Files\Contoso\agent.exe
+      message: A new service was installed.

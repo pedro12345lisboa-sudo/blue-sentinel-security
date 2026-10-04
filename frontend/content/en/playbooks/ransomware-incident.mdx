@@ -1,0 +1,116 @@
+---
+title: "Ransomware indicators: focus on containment"
+description: "How to act in the first minutes of a possible ransomware: stop the spread before investigating, preserve volatile evidence, and decide recovery without paying a ransom."
+severity: critical
+type: ransomware
+order: 4
+updated: "2026-10-03"
+trigger:
+  description: "A sequence of audit log clearing, run key modification, or anomalous outbound traffic combined with a report of renamed files or a ransom note."
+  rules:
+    - id: bs-audit-log-cleared
+      path: rules/sigma/windows/bs-audit-log-cleared.yml
+    - id: bs-win-run-key-modified
+      path: rules/sigma/windows/bs-win-run-key-modified.yml
+    - id: bs-net-suspicious-outbound
+      path: rules/sigma/windows/bs-net-suspicious-outbound.yml
+dataSources:
+  - "Endpoint telemetry: waves of file writes, mass renames, and Office child processes"
+  - "Windows security logs: 1102 (audit cleared), 4688, and scheduled task events"
+  - "Domain controllers: GPO changes, accounts, and group members"
+  - "File gateway and NAS: write volume per unit and per user"
+  - "VPN and identity logs for the scope of affected accounts"
+triage:
+  - "Is there a ransom note or a renamed file, and on which shares?"
+  - "On how many workstations and servers did the write wave start, and in what order?"
+  - "Was the audit cleared or was a log deleted before the event?"
+  - "Is there a domain account or a credential used on more than one affected machine?"
+  - "Is there outbound traffic to an unusual destination at the same time as the wave?"
+  - "What is the most recent intact backup copy, and does it predate the first indicator?"
+decisionTree: |
+  flowchart TD
+    A["Ransomware indicator"] --> B{"Target and scope known?"}
+    B -- No --> C["Rapid collection of signals: mass writes, 1102, accounts used"]
+    B -- Yes --> D["Isolate affected segments and block the account used"]
+    C --> D
+    D --> E{"File server affected?"}
+    E -- Yes --> F["Disconnect shares and freeze the domain account involved"]
+    E -- No --> G["Isolate the workstations and terminate active sessions"]
+    F --> H["Eradication: eliminate vector, persistence and exposed credential"]
+    G --> H
+    H --> I["Recovery: restore from the most recent intact copy"]
+    I --> J{"New indicator after restoration?"}
+    J -- Yes --> K["Return to containment and review the copy used"]
+    J -- No --> L["Enhanced monitoring for 14 days and formal notification"]
+    K --> L
+phases:
+  - key: containment
+    summary: "Cut the spread first: disconnect shares, isolate segments, freeze the credential used, and only then investigate the origin."
+  - key: eradication
+    summary: "Eliminate the entry vector, the persistence, and the compromised credential; close any way back in before restoring."
+  - key: recovery
+    summary: "Restore only from intact copies predating the first indicator, confirm integrity, and keep enhanced monitoring for 14 days."
+checklist:
+  - title: "Containment"
+    items:
+      - "Disconnect affected shares and network drives without shutting the machines down"
+      - "Isolate the network segments that contain affected workstations and servers, preserving administrative access"
+      - "Freeze the accounts used on the affected workstations and invalidate their sessions"
+      - "Block the outbound destinations correlated with the event at the edge"
+      - "Keep the machine running to capture volatile evidence before any restoration"
+  - title: "Eradication"
+    items:
+      - "Identify the vector: attachment, credential, exposed vulnerability, or remote access"
+      - "Remove persistence: scheduled task, run key, service, and created account"
+      - "Change the privileged and domain credentials used within the affected scope"
+      - "Verify that audit logging resumes and that the log channel is intact"
+      - "Confirm that no active encryption process remains on servers"
+  - title: "Recovery"
+    items:
+      - "Restore only from an intact copy dated before the first indicator"
+      - "Validate the integrity of restored files with sampling across critical directories"
+      - "Return servers to service in stages, monitoring writes and traffic"
+      - "Confirm the destinations stay blocked and that no new wave appears for 14 days"
+      - "Record the date of the last copy used and who performed the restoration"
+evidence:
+  - "Initial timeline: first affected workstation, first rename, and alert time"
+  - "Volatile state of the affected machine (processes, connections, task list) captured before full isolation"
+  - "Events 1102, 4624, and 4688 exported with time zone before any retention policy applies"
+  - "Copy of the ransom note and of the renaming pattern, preserved as an artifact"
+  - "Record of the accounts frozen, sessions invalidated, and edge blocks executed"
+  - "Provenance of the restored backup: date, origin, and integrity verification"
+comms:
+  - when: "Within the first 15 minutes of confirming the indicator"
+    who: "Incident response owner, crisis command, and owners of the affected systems"
+  - when: "On confirmation of scope beyond a single workstation"
+    who: "Executive leadership, legal, internal communications, and, when personal data is involved, the data protection officer"
+  - when: "When restoration begins"
+    who: "Affected business areas, with the expected return date"
+  - when: "When the case is closed"
+    who: "Audit, executive management, and the formal lessons-learned channel"
+metrics:
+  mttd: "5 minutes from the correlation alert to response activation"
+  mttr: "1 hour to contain the scope and freeze the credential used"
+lessons:
+  - "Shutting the machine down before collecting volatile evidence costs the origin of the vector and delays eradication"
+  - "Restoring from a backup that does not predate the first indicator reintroduces the threat in the same week"
+  - "Freezing the credential used contained the incident faster than any IP block in domain environments"
+labScenario: log-clearing
+references:
+  - "NIST SP 800-61 Rev. 2 — Computer Security Incident Handling Guide"
+  - "NIST SP 800-34 Rev. 1 — Contingency Planning Guide"
+  - "MITRE ATT&CK T1486 — Data Encrypted for Impact"
+  - "MITRE ATT&CK T1070.001 — Indicator Removal: Clear Windows Event Logs"
+---
+
+Ransomware is the case where containment time weighs more than analysis. This playbook prioritizes cutting the spread and preserving volatile evidence, with recovery anchored to a verified backup copy.
+
+<Callout type="danger" title="No payment and no interaction">No step provides for contacting the actor, negotiating, or paying. The recovery path is always an intact backup copy and a reversal of scope.</Callout>
+
+## Context
+
+`bs-audit-log-cleared` flags classic anti-forensics (`event 1102`), `bs-win-run-key-modified` points to boot persistence, and `bs-net-suspicious-outbound` covers the outbound traffic that usually accompanies prior exfiltration. When the three appear together with a report of renaming, the case is treated as ransomware until proven otherwise.
+
+## Playbook boundary
+
+If the report is only about a renamed file with no telemetry alert, the path is common malware triage until encryption at scope is confirmed. Only indicators with a combination of signals or scope beyond a single isolated file belong here.

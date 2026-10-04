@@ -1,0 +1,18 @@
+{
+  "description": "negative fixture for bs-win-service-installed",
+  "event": {
+    "action": "service_installed",
+    "category": "audit",
+    "event_id": "7045",
+    "host": "SRV-LAB-07",
+    "image_path": "C:\\Program Files\\Contoso\\agent.exe",
+    "ip": "198.51.100.12",
+    "message": "A new service was installed.",
+    "product": "windows",
+    "service_name": "ContosoAgent",
+    "timestamp": "2025-02-05T19:00:00Z",
+    "user": "SYSTEM"
+  },
+  "kind": "sigma",
+  "rule": "bs-win-service-installed"
+}

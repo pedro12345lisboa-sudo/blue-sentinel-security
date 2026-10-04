@@ -1,0 +1,21 @@
+{
+  "description": "positive fixture for bs-linux-crontab-modified",
+  "event": {
+    "action": "file_modify",
+    "category": "file",
+    "event_id": "audit",
+    "host": "srv-lab-edge-01",
+    "ip": "198.51.100.30",
+    "message": "crontab modified",
+    "path": "/var/spool/cron/crontabs/deploy",
+    "process": "crontab",
+    "product": "linux",
+    "timestamp": "2025-03-02T02:40:00Z",
+    "user": "root"
+  },
+  "expect": [
+    "bs-linux-crontab-modified"
+  ],
+  "kind": "sigma",
+  "rule": "bs-linux-crontab-modified"
+}

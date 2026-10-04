@@ -1,0 +1,47 @@
+---
+title: "Sondagem de SQL Injection em logs web"
+description: "Linhas de acesso com padrões de consulta manipulada: a caça que encontra varredura antes que ela vire exploração bem-sucedida."
+severity: medium
+order: 6
+updated: "2026-10-03"
+hypothesis: "Requisições ao aplicativo público contêm payloads clássicos de SQL Injection, indicando sondagem ou tentativa de exploração contra parâmetro de formulário."
+technique: "T1190"
+techniqueName: "Exploit Public-Facing Application"
+dataSource: "Logs de acesso do proxy reverso ou do WAF (colunas de URI, user-agent e status HTTP)"
+query: |
+  SELECT
+    ip_origem,
+    uri,
+    status,
+    COUNT(*)  AS tentativas,
+    MIN(ts)   AS primeira,
+    MAX(ts)   AS ultima
+  FROM web_access
+  WHERE ts >= agora() - INTERVALO '1 hora'
+    AND (
+      uri ILIKE '%union%select%'
+      OR uri ILIKE '%or%1=1%'
+      OR uri ILIKE '%sleep(%'
+      OR uri ILIKE '%benchmark(%'
+      OR uri ILIKE '%information_schema%'
+    )
+  GROUP BY ip_origem, uri, status
+  HAVING COUNT(*) >= 5
+  ORDER BY tentativas DESC;
+normal: "Aplicativos com parâmetros legítimos que contêm as palavras usadas na consulta, health checks e crawlers autorizados geram ocorrências isoladas. O aceitável é volume baixo, status 404/400 e origem de varredura já conhecida; o anômalo é rajada curta, variação constante de payload e resposta 200 inesperada em rota sensível."
+escalation: "Escalar para incidente quando alguma resposta retornar 200 com corpo anômalo em rota de dados, quando houver erro de banco exposto ao cliente, quando a origem coincidir com reconnaissance anterior (404 em massa) ou quando a rajada ultrapassar o limiar definido. Sondagem sem resposta anômala vira bloqueio na borda e ticket de correção de parâmetro."
+sigma: "A regra `bs-web-sql-injection` já marca a assinatura e a correlação `corr-sqli-burst` transforma a rajada em alerta. O ganho da caça é adicionar status 200 à condição para separar tentativa de sucesso: publique essa visão como regra Sigma de severidade `critical` e mantenha a fixture negativa com formulário cujo parâmetro contenha o literal sem payload."
+labScenario: sqli-web
+references:
+  - "MITRE ATT&CK T1190 — Exploit Public-Facing Application"
+  - "OWASP Top 10 2021 — A03 Injection"
+  - "NIST SP 800-61 Rev. 2 — Computer Security Incident Handling Guide"
+---
+
+Sondagem é barulho até deixar de ser. A caça existe para separar o varredor de routine da requisição que encontrou um parâmetro vulnerável.
+
+<Callout type="info" title="Só inspeção de logs">A consulta examina linhas já registradas. Nenhuma carga é enviada ao aplicativo nem reproduzida durante a caça.</Callout>
+
+## Como usar
+
+Rode em janelas de uma hora durante picos de tráfego, agrupe por origem e devolva ao time de aplicação as rotas com resposta 200 suspeita, junto com o playbook de exposição de serviço público.

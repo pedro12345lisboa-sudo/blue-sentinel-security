@@ -1,0 +1,106 @@
+---
+title: "Suspeita de exfiltração de dados"
+description: "Sinal de saída de dados anômala: confirme o volume e o destino, contenha o canal sem apagar a prova, quantify o exposto e acione as obrigações de notificação."
+severity: critical
+type: exfiltration
+order: 6
+updated: "2026-10-03"
+trigger:
+  description: "Tráfego de saída volumoso ou para destino incomum, combinado com acesso a partir de localidade nova ou com coleta em massa de diretórios sensíveis."
+  rules:
+    - id: bs-net-suspicious-outbound
+      path: rules/sigma/windows/bs-net-suspicious-outbound.yml
+    - id: bs-cloud-login-new-country
+      path: rules/sigma/cloud/bs-cloud-login-new-country.yml
+dataSources:
+  - "Fluxo de rede e logs de proxy: bytes de saída por host, destino e horário"
+  - "Logs de autenticação de nuvem: download em massa e acesso de nova localidade"
+  - "Telemetria de endpoint: leitura sequencial de diretórios sensíveis e arquivamento"
+  - "Gateway de e-mail e ferramenta de compartilhamento externo"
+  - "Registros de exportação do banco de dados e de objetos do bucket"
+triage:
+  - "Qual host enviou, para qual destino, em quantos bytes e por quanto tempo?"
+  - "O destino é nuvem legítima de trabalho, serviço pessoal ou infraestrutura desconhecida?"
+  - "Houve leitura em massa ou arquivamento antes da saída, e de quais pastas?"
+  - "A conta envolvida é privilegiada, de serviço ou de usuário comum?"
+  - "Existe janela aprovada de migração, backup ou sincronização que explique o volume?"
+  - "O acesso veio de localidade ou dispositivo novo para essa conta?"
+decisionTree: |
+  flowchart TD
+    A["Alerta de saida anomala"] --> B{"O volume e justificado por mudanca aprovada?"}
+    B -- Sim --> C["Valide com o dono do dado e feche documentando a janela"]
+    B -- Nao --> D["Trate como suspeita de exfiltracao"]
+    D --> E["Bloqueie o destino na borda e suspenda a sessao da conta"]
+    E --> F{"Conta privilegiada ou acesso de localidade nova?"}
+    F -- Sim --> G["Incidente: aplique tambem o playbook de credenciais"]
+    F -- Nao --> H["Contenha o host e preserve os logs de rede"]
+    G --> H
+    H --> I["Erradicacao: elimine o vetor e a persistencia derivada"]
+    I --> J["Recuperacao: restaure acessos e monitore o destino por 14 dias"]
+    J --> K["Comunique conforme a natureza dos dados expostos"]
+phases:
+  - key: containment
+    summary: "Corte o canal: bloqueie o destino na borda, suspenda a sessão da conta envolvida e preserve os logs de rede antes de qualquer limpeza."
+  - key: eradication
+    summary: "Elimine o vetor que permitiu a coleta — credencial vazada, malware, regra de encaminhamento ou chave de acesso exposta — e qualquer persistência derivada."
+  - key: recovery
+    summary: "Restaure o estado aprovado de acessos, rotate credenciais e chaves envolvidas e mantenha vigilância no destino bloqueado por 14 dias."
+checklist:
+  - title: "Contenção"
+    items:
+      - "Bloqueie o destino de saída em firewall, DNS e proxy, mantendo o escopo mínimo necessário"
+      - "Suspenda a sessão da conta envolvida e invalide tokens e chaves de acesso"
+      - "Preserve os logs de rede e de proxy antes de qualquer retenção curta expirar"
+      - "Isole o host se houver indício de controle remoto ativo"
+  - title: "Erradicação"
+    items:
+      - "Identifique o vetor de coleta: credencial comprometida, malware ou acesso remoto"
+      - "Remova regras de encaminhamento, compartilhamentos externos e chaves criadas no período"
+      - "Revise o escopo: quais diretórios, tabelas ou objetos foram lidos"
+      - "Confirme que nenhuma cópia local ou agenda agendada de envio permanece ativa"
+  - title: "Recuperação"
+    items:
+      - "Restaure credenciais, chaves e permissões para o estado aprovado"
+      - "Valide com o dono do dado que o acesso legítimo voltou a funcionar"
+      - "Mantenha o destino bloqueado e monitore tentativas por 14 dias"
+      - "Registre o volume estimado e a natureza dos dados para a análise de notificação"
+evidence:
+  - "Logs de fluxo e proxy com bytes, destino e horário, exportados antes da retenção expirar"
+  - "Lista de arquivos, tabelas ou objetos lidos no intervalo da suspeita"
+  - "Registro do bloqueio executado na borda, com data, hora e responsável"
+  - "Estado de sessões, tokens e chaves de acesso antes e depois da suspensão"
+  - "Origem do dado: classificação, presença de dado pessoal e responsável pelo sistema"
+  - "Linha do tempo consolidada para avaliação de obrigação de notificação"
+comms:
+  - when: "Nos primeiros 30 minutos da confirmação de saída não autorizada"
+    who: "Responsável pela resposta e dono do sistema de origem"
+  - when: "Na confirmação de dado pessoal ou segredo de negócio exposto"
+    who: "Encarregado de dados, jurídico, direção e comunicação interna"
+  - when: "Ao fechar o escopo estimado"
+    who: "Auditoria e, quando aplicável, as áreas reguladas envolvidas"
+metrics:
+  mttd: "15 minutos entre o alerta de tráfego e a triagem"
+  mttr: "45 minutos até bloqueio do destino e suspensão da sessão"
+lessons:
+  - "Bloquear sem preservar logs de borda destrói a única prova de volume e destino"
+  - "Serviço de nuvem legítimo também é canal de exfiltração: o critério é o contexto, não a reputação do destino"
+  - "Quantificar o exposto depois do caso fecha é o que mais atrasa a notificação obrigatória"
+labScenario: temp-process
+references:
+  - "NIST SP 800-61 Rev. 2 — Computer Security Incident Handling Guide"
+  - "LGPD (Lei 13.709/2018) — comunicação de incidente ao encarregado e à ANPD"
+  - "MITRE ATT&CK T1048 — Exfiltration Over Alternative Protocol"
+  - "MITRE ATT&CK T1567 — Exfiltration Over Web Service"
+---
+
+Exfiltração é confirmada por volume, destino e tempo — não por intenção. Este playbook organiza a leitura desses três e mantém a cadeia de custódia enquanto o canal é fechado.
+
+<Callout type="warning" title="Limite defensivo">A triagem usa fluxo de rede, logs de proxy e registros de autenticação. Nenhum passo envolve recuperar conteúdo exposto por meios próprios nem interagir com o destino malicioso.</Callout>
+
+## Contexto
+
+`bs-net-suspicious-outbound` cobre conexão de saída para porta ou destino incomum a partir de estação Windows, e `bs-cloud-login-new-country` marca acesso a nuvem de localidade nunca vista para a conta. A combinação dos dois — saída anômala e identidade em lugar novo — é o padrão que mais rápido separa sincronização legítima de exfiltração.
+
+## Quando não usar
+
+Janela aprovada de migração ou backup, com volume compatível e destino conhecido, fecha com documentação da exceção. Este playbook entra quando não há mudança correspondente ou quando o destino não faz parte do inventário de serviços aprovados.

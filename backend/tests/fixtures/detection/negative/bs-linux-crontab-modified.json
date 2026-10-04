@@ -1,0 +1,18 @@
+{
+  "description": "negative fixture for bs-linux-crontab-modified",
+  "event": {
+    "action": "file_modify",
+    "category": "file",
+    "event_id": "audit",
+    "host": "srv-lab-edge-01",
+    "ip": "198.51.100.30",
+    "message": "file modified",
+    "path": "/etc/hosts",
+    "process": "vim",
+    "product": "linux",
+    "timestamp": "2025-03-02T02:41:00Z",
+    "user": "root"
+  },
+  "kind": "sigma",
+  "rule": "bs-linux-crontab-modified"
+}

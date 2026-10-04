@@ -1,0 +1,62 @@
+title: Cron Schedule Modified Outside the Standard Directories
+id: 2d2ccf35-ed8f-4e23-9037-b17fe7eb17ed
+lab_id: bs-linux-crontab-modified
+status: test
+description: >
+  A crontab file or cron schedule was written to - the Linux equivalent of
+  scheduled persistence (T1053.003). Synthetic lab rule - matches only
+  fabricated BLUE-SENTINEL lab events.
+author: Pedro Lisboa
+date: 2026/10/02
+references:
+  - https://attack.mitre.org/techniques/T1053/003/
+logsource:
+  product: linux
+  category: file_event
+detection:
+  selection:
+    category: file
+    product: linux
+    action: file_modify
+  schedule_path:
+    path|contains|i:
+      - '/etc/crontab'
+      - '/etc/cron.d/'
+      - '/var/spool/cron/'
+      - '/var/spool/cron/crontabs/'
+  condition: selection and schedule_path
+level: medium
+falsepositives:
+  - Administrators editing schedules during a maintenance window
+  - Configuration management (Ansible, Puppet) applying cron jobs
+response:
+  - Read the new schedule and the binary or script it launches
+  - Compare the file with your configuration management source of truth
+  - Watch for new files dropped by the scheduled job
+tags:
+  - attack.t1053_003
+lab_samples:
+  match:
+    - timestamp: '2024-08-30T03:25:11Z'
+      category: file
+      action: file_modify
+      event_id: 'audit'
+      host: srv-lab-app-03
+      user: root
+      ip: 198.51.100.81
+      product: linux
+      process: crontab
+      path: /var/spool/cron/crontabs/root
+      message: crontab modified
+  no_match:
+    - timestamp: '2024-08-30T03:26:00Z'
+      category: file
+      action: file_modify
+      event_id: 'audit'
+      host: srv-lab-app-03
+      user: root
+      ip: 198.51.100.81
+      product: linux
+      process: vim
+      path: /etc/hosts
+      message: file modified

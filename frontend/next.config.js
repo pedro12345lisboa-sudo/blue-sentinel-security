@@ -2,11 +2,6 @@
 const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
-  i18n: {
-    locales: ['en', 'pt-BR'],
-    defaultLocale: 'pt-BR',
-    localeDetection: false,
-  },
   images: {
     remotePatterns: [
       {

@@ -1,0 +1,116 @@
+---
+title: "Indícios de ransomware: foco em contenção"
+description: "Como agir nos primeiros minutos de um possível ransomware: conter o alastramento antes de investigar, preservar evidência volátil e decidir recuperação sem pagar resgate."
+severity: critical
+type: ransomware
+order: 4
+updated: "2026-10-03"
+trigger:
+  description: "Sequência de limpeza de auditoria, modificação de chave de execução ou tráfego de saída anômalo combinada com relato de arquivos renomeados ou nota de resgate."
+  rules:
+    - id: bs-audit-log-cleared
+      path: rules/sigma/windows/bs-audit-log-cleared.yml
+    - id: bs-win-run-key-modified
+      path: rules/sigma/windows/bs-win-run-key-modified.yml
+    - id: bs-net-suspicious-outbound
+      path: rules/sigma/windows/bs-net-suspicious-outbound.yml
+dataSources:
+  - "Telemetria de endpoint: ondas de escrita de arquivo, renomeações em massa e processos filhos do Office"
+  - "Logs de segurança do Windows: 1102 (auditoria limpa), 4688 e eventos de tarefa agendada"
+  - "Controle de domínio: mudanças de GPO, contas e membros de grupo"
+  - "Gateway de arquivos e NAS: volume de escrita por unidade e por usuário"
+  - "Logs de VPN e de identidade para escopo de contas atingidas"
+triage:
+  - "Há nota de resgate ou arquivo renomeado, e em quais compartilhamentos?"
+  - "Em quantas estações e servidores a onda de escrita começou e em que ordem?"
+  - "A auditoria foi limpa ou algum log foi apagado antes do evento?"
+  - "Existe conta de domínio ou credencial usada em mais de uma máquina afetada?"
+  - "Há tráfego de saída para destino incomum no mesmo horário da onda?"
+  - "Qual a última cópia de backup íntegra disponível e ela é anterior ao primeiro indício?"
+decisionTree: |
+  flowchart TD
+    A["Indicio de ransomware"] --> B{"Alvo e escopo conhecidos?"}
+    B -- Nao --> C["Coleta rapida de sinais: escrita em massa, 1102, contas usadas"]
+    B -- Sim --> D["Isole segmentos afetados e bloqueie a conta usada"]
+    C --> D
+    D --> E{"Servidor de arquivos afetado?"}
+    E -- Sim --> F["Desconecte shares e congele a conta de dominio envolvida"]
+    E -- Nao --> G["Isole as estacoes e encerre sessoes ativas"]
+    F --> H["Erradicacao: elimine vetor, persistencia e credencial exposta"]
+    G --> H
+    H --> I["Recuperacao: restaure da copia integra mais recente"]
+    I --> J{"Novos indicio apos a restauracao?"}
+    J -- Sim --> K["Retorne a contencao e revise a copia usada"]
+    J -- Nao --> L["Monitoramento reforçado por 14 dias e comunicado formal"]
+    K --> L
+phases:
+  - key: containment
+    summary: "Corte o alastramento primeiro: desconecte compartilhamentos, isole segmentos, congele a credencial usada e só então investigue a origem."
+  - key: eradication
+    summary: "Elimine o vetor de entrada, a persistência e a credencial comprometida; apague qualquer porta de retorno antes de restaurar."
+  - key: recovery
+    summary: "Restaure somente de cópias íntegras anteriores ao primeiro indício, confirme integridade e mantenha monitoramento reforçado por 14 dias."
+checklist:
+  - title: "Contenção"
+    items:
+      - "Desconecte compartilhamentos e unidades de rede afetadas sem desligar as máquinas"
+      - "Isole os segmentos de rede com estação e servidor afetados, preservando acesso administrativo"
+      - "Congele as contas usadas nas estações afetadas e invalide as sessões delas"
+      - "Bloqueie na borda os destinos de saída correlacionados ao evento"
+      - "Preserve a máquina em execução para captura de evidência volátil antes de qualquer restauração"
+  - title: "Erradicação"
+    items:
+      - "Identifique o vetor: anexo, credencial, vulnerabilidade exposta ou acesso remoto"
+      - "Remova persistência: tarefa agendada, chave de execução, serviço e conta criada"
+      - "Troque credenciais privilegiadas e do domínio usadas no escopo afetado"
+      - "Verifique se a auditoria volta a ser registrada e se o canal de logs está intacto"
+      - "Confirme que nenhum processo de criptografia ativo permanece em servidores"
+  - title: "Recuperação"
+    items:
+      - "Restaure apenas de cópia íntegra com data anterior ao primeiro indício"
+      - "Valide integridade dos arquivos restaurados com amostragem por diretório crítico"
+      - "Devolva servidores ao ar por etapas, monitorando escrita e tráfego"
+      - "Confirme bloqueio dos destinos e ausência de nova onda por 14 dias"
+      - "Registre a data da última cópia usada e o responsável pela restauração"
+evidence:
+  - "Linha do tempo inicial: primeira estação afetada, primeira renomeação e horário do alerta"
+  - "Estado volátil da máquina afetada (processos, conexões, lista de tarefas) capturado antes do isolamento completo"
+  - "Eventos 1102, 4624 e 4688 exportados com fuso horário antes de qualquer política de retenção"
+  - "Cópia da nota de resgate e do padrão de renomeação, preservada como artefato"
+  - "Registro das contas congeladas, sessões invalidadas e bloqueios de borda executados"
+  - "Proveniência do backup restaurado: data, origem e verificação de integridade"
+comms:
+  - when: "Nos primeiros 15 minutos da confirmação do indício"
+    who: "Responsável pela resposta, comando da crise e donos dos sistemas afetados"
+  - when: "Na confirmação de escopo além de uma estação"
+    who: "Diretoria, jurídico, comunicação interna e, se houver dado pessoal, o encarregado de dados"
+  - when: "Ao iniciar a restauração"
+    who: "Áreas de negócio afetadas, com data prevista de retorno"
+  - when: "Ao encerrar o caso"
+    who: "Auditoria, direção e canal formal de lições aprendidas"
+metrics:
+  mttd: "5 minutos entre o alerta de correlação e o acionamento da resposta"
+  mttr: "1 hora até contenção de escopo e congelamento da credencial usada"
+lessons:
+  - "Desligar a máquina antes de coletar evidência volátil custa a origem do vetor e atrasa a erradicação"
+  - "Restaurar de backup sem data anterior ao primeiro indício reintroduz a ameaça na mesma semana"
+  - "Congelar a credencial usada conteve mais rápido do que qualquer bloqueio de IP em ambientes com domínio"
+labScenario: log-clearing
+references:
+  - "NIST SP 800-61 Rev. 2 — Computer Security Incident Handling Guide"
+  - "NIST SP 800-34 Rev. 1 — Contingency Planning Guide"
+  - "MITRE ATT&CK T1486 — Data Encrypted for Impact"
+  - "MITRE ATT&CK T1070.001 — Indicator Removal: Clear Windows Event Logs"
+---
+
+Ransomware é o caso em que o tempo de contenção pesa mais que a análise. Este playbook prioriza cortar o alastramento e preservar evidência volátil, com recuperação ancorada em cópia de backup verificada.
+
+<Callout type="danger" title="Sem pagamento e sem interação">Nenhum passo prevê contato com ator, negociação ou pagamento. O caminho de recuperação é cópia de backup íntegra e reversão de escopo, sempre.</Callout>
+
+## Contexto
+
+`bs-audit-log-cleared` marca anti-forense clássico (`event 1102`), `bs-win-run-key-modified` aponta persistência de inicialização e `bs-net-suspicious-outbound` cobre o tráfego de saída que costuma acompanhar exfiltração prévia. Quando os três aparecem juntos com relato de renomeação, o caso é tratado como ransomware até prova em contrário.
+
+## Limite do playbook
+
+Se o relato for apenas de arquivo renomeado sem alerta de telemetria, o caminho é triagem de malware comum até confirmar criptografia em escopo. Aqui só entram indícios com combinação de sinais ou escopo além de um arquivo isolado.

@@ -1,0 +1,118 @@
+---
+title: 'Sentinel Agent — agente de telemetria em C++20'
+description: 'Agente de endpoint em C++20 com coleta somente leitura de metadados, HMAC-SHA256 com anti-replay e fila local limitada: desenho, decisões e resultados medidos.'
+date: '2026-10-03'
+tags: ['C++20', 'CMake', 'HMAC-SHA256', 'libcurl', 'GoogleTest']
+highlight: true
+icon: 'Code'
+status: 'v0.1 publicado'
+links:
+  github: 'https://github.com/pedro12345lisboa-sudo/blue-sentinel-security'
+---
+
+[![agent](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/actions/workflows/agent.yml/badge.svg)](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/actions/workflows/agent.yml)
+
+# Sentinel Agent
+
+Agente de telemetria de endpoint em C++20. Coleta **somente metadados** (processos, estado de rede, eventos de autentificação, inventário do host), normaliza tudo em um único schema JSON e envia ao laboratório por HTTPS com autenticação HMAC-SHA256 e janela anti-replay. Não lê conteúdo de arquivos, não escreve nada no sistema e não abre socket além do endpoint configurado.
+
+## Problema
+
+Aprender detecção só no SIEM esconde a parte mais difícil: de onde vem o evento. Sem coletar processo, rede e autenticação na origem, não dá para entender custo, formato, perda de eventos nem o que é ruído. O outro lado do problema é confiabilidade: um agente que trava o host monitorado quando a rede cai, ou que aceita certificado TLS inválido "para facilitar o lab", é pior do que não ter agente.
+
+## Contexto
+
+Este case já existiu como desenho sem código: `agent/` tinha só estrutura de diretórios e um `CMakeLists.txt` vazio, com status "em construção". Esta versão descreve o que foi **implementado e medido**:
+
+- **4.499 linhas** em 52 arquivos `.cpp`/`.hpp` (1.405 de lógica comum, 910 Windows, 886 Linux, 856 de testes, 442 de cabeçalhos públicos).
+- **68 casos de teste** no `ctest` (67 unitários + 1 de integração), passando com `-Werror`.
+- Compilação validada em **MinGW-w64 localmente** (GCC 16, `-Wall -Wextra -Wpedantic -Wshadow -Wformat=2 -Wcast-qual -Wdouble-promotion` virados em erro) e em **CI para Linux (GCC), Linux com ASan/UBSan e Windows (MSVC + vcpkg)**.
+
+## Solução
+
+Quatro blocos, na ordem em que os dados fluem:
+
+1. **Coletores por plataforma** — um `ICollector` por fonte, implementação escolhida em tempo de compilação pelo CMake (sem `#ifdef` na lógica do agente).
+2. **Normalização** — todo evento vira `{type, ts, data}` com timestamp ISO-8601 UTC; o envelope agrega contagem por tipo.
+3. **Transporte** — lote assinado (HMAC-SHA256 sobre `timestamp.body`), gzip, verificação de certificado obrigatória.
+4. **Fila local** — spool limitado por quantidade e por bytes, com backoff exponencial + jitter e orçamento de tentativas antes de descartar.
+
+O motor de avaliação de regras (Sigma/YARA) ficou **fora** do v0.1 de propósito: o agente entrega fatios, o laboratório faz a detecção. Ver "Limitações".
+
+## Arquitetura
+
+```text
+┌─────────────────────────────────────────────────────┐
+│                  Sentinel Agent                     │
+│                                                     │
+│  [process] [network] [eventlog|auth_log] [system]   │
+│              │  coletores incrementais              │
+│              ▼                                      │
+│  [Envelope: schema 1.0 + contagem por tipo]         │
+│              │                                      │
+│              ▼                                      │
+│  [gzip] ──▶ [HMAC-SHA256 + janela ±300s] ──▶ HTTPS  │
+│              │                                      │
+│              ▼  falha de transporte                 │
+│  [fila local limitada] ──backoff+jitter──▶ retry    │
+└─────────────────────────────────────────────────────┘
+```
+
+## O que cada coletor lê
+
+| Coletor | Windows | Linux |
+|---------|---------|-------|
+| `process` | Toolhelp32, token do processo, `GetProcessTimes`, SHA-256 opcional do executável | `/proc/<pid>/stat`, `comm`, `Uid`, `btime` |
+| `eventlog` | `wevtapi`: Security 4624/4625/4634/4648 e System 7045/7034/7036 | — |
+| `auth_log` | — | tail de `/var/log/auth.log` ou `/var/log/secure` (offset + rotação) |
+| `network` | `GetExtendedTcpTable` v4/v6 com PID dono | `/proc/net/tcp{,6}` com dono via `/proc/<pid>/fd` |
+| `system` | registro, `GlobalMemoryStatusEx`, `GetSystemTimes`, discos fixos | `/proc/uptime`, `/proc/meminfo`, `/proc/stat`, `statvfs`, `uname` |
+
+Coleta incremental onde importa: `process` reporta só PIDs novos e `auth_log` lê apenas bytes anexados desde a última passada.
+
+## Decisões técnicas e por quê
+
+| Decisão | Por quê |
+|---------|---------|
+| C++20 com `-std=c++20` estrito + `_DEFAULT_SOURCE` | Compilar sem extensões GNU esconde `readlink`, `gethostname`, `timegm` e `setenv` no glibc/newlib (`__STRICT_ANSI__`). Definir a feature macro explicitamente é mais honesto que trocar para `gnu++20` e deixar passar o que não devia. |
+| Camada de plataforma escolhida pelo CMake | Nenhum `#ifdef` no núcleo; adicionar um coletor é adicionar um arquivo em `src/platform/<so>/` e uma linha na factory. |
+| Somente `https://`, sem flag para desligar verificação | `HttpClient::is_https_url` rejeita o resto antes de tocar na rede. O caso de teste prova que um certificado autoassinado é recusado. |
+| HMAC por lote **e** TLS | TLS dá confidencialidade/integridade do canal; HMAC dá autenticação do remetente e, com a janela de ±300 s, impede replay de lote capturado. São camadas diferentes, não redundantes. |
+| Fila limitada por eventos **e** por bytes, descartando o mais antigo | Endpoint inacessível não pode encher o disco do host monitorado. A política está em código e testada, não em comentário. |
+| Backoff exponencial com jitter | Evita sincronizar dezenas de agentes num único retry quando o laboratório volta. O teste verifica que o atraso mínimo de N+1 nunca fica abaixo do máximo de N. |
+| `FetchContent` como fallback, pacotes do sistema como primeiro | A build funciona sem rede quando nlohmann/json e GTest estão instalados; no CI elas vêm do sistema ou do vcpkg. |
+| `-Werror` desde o primeiro commit | Toda ferramenta nova (MinGW, MSVC, GCC) entrega build limpo ou a CI falha. |
+
+## Desafios
+
+- **Endianness do `/proc/net/tcp`.** O endereço vem como hex em *little-endian por dword*; converter como se fosse big-endian produz IP invertido (`7f.0.0.1`). O teste de sanidade foi bater `127.0.0.1` na mão antes de confiar no coletor.
+- **Assinaturas de API divergentes entre SDKs.** `EvtRender`/`EvtNext` existem com nomes de enum diferentes no MinGW (`EvtRenderEventXml`) e no SDK da Microsoft, e `LookupAccountSidW` exige os sete argumentos mesmo na chamada de medição de tamanho. Só a build em duas toolchains expõe isso.
+- **Permissão do log de segurança.** Ler o canal Security exige elevação ou grupo *Event Log Readers*. Em vez de falhar, o coletor emite **um** aviso por execução e devolve lote vazio — o agente precisa ser inofensivo rodando sem privilégio.
+- **`-std=c++20` quebrando POSIX.** O erro (`'readlink' was not declared`) só aparece em ambiente POSIX estrito; foi o que motivou a decisão de feature macro explícita acima.
+
+## Resultados
+
+- **Build limpa com `-Werror`** em MinGW-w64 (GCC 16) e no check sintático equivalente ao Linux; CI configura GCC, ASan/UBSan e MSVC.
+- **68/68 testes passando** no `ctest`: vetores RFC 4231 de HMAC, SHA-256, janela anti-replay (expirada/futura/tamperada), round-trip de gzip e limite de zip-bomb, limites de fila e lote, crescimento e teto do backoff, precedência de configuração, rejeição de `http://`, smoke dos coletores (sem exceção, eventos bem formados, coleta incremental) e integração `--once`.
+- **Execução real nesta máquina (Windows, sem admin):** `sentinel-agent --once` gerou **411 eventos** em 0,5 s; o aviso de permissão do canal Security apareceu exatamente como projetado.
+- **Saída validada de ponta a ponta:** `--once --output` grava envelope com `schema_version`, `events_by_type` e eventos serializáveis de volta para JSON.
+
+## Limitações e próximos passos
+
+- Sem coleta em nível de kernel ainda (eBPF/auditd/ETW): o v0.1 fica em interfaces que funcionam sem privilégio.
+- Sem avaliação local de regras Sigma/YARA.
+- Estado incremental vive em memória: um restart re-reporta a tabela de processos uma vez.
+- Só TCP IPv4/IPv6 é enumerado (sem UDP/Unix sockets).
+
+## Aprendizados
+
+1. **Case study sem código força honestidade — e o contrário também.** Manter o status "em construção" enquanto o código não existia foi o que tornou esta atualização possível sem reescrever a história.
+2. **Duas toolchains valem mais que uma.** MinGW e MSVC divergem em nomes de enum, aridade de função e headers; a build dupla virou requisito, não desejo.
+3. **Segurança precisa de teste negativo.** Provar que o TLS *recusa* um certificado autoassinado vale mais do que declarar "verificação obrigatória" no README.
+4. **Os limites são parte do desenho.** Fila com teto, orçamento de retries e teto de descompressão só valem algo porque estão no código e nos testes.
+
+## Links
+
+- [Código-fonte](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/tree/main/agent)
+- [README do agente](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/agent/README.md)
+- [Workflow de CI](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/actions/workflows/agent.yml)

@@ -21,4 +21,4 @@ class ContactMessage(Base):
     status: Mapped[str] = mapped_column(String(50), nullable=True, default="new")
     read: Mapped[bool] = mapped_column(Boolean, nullable=True, default=False)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now)
+    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())

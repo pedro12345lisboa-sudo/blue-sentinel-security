@@ -1,0 +1,56 @@
+title: Cloud Access Key Created
+id: dca2de1a-ad63-4d0b-88da-5c3d5e20c21f
+lab_id: bs-cloud-access-key-created
+status: test
+description: >
+  A new programmatic access key was issued for a cloud identity -
+  additional cloud credentials are a durable way to keep access after the
+  initial foothold is removed. Synthetic lab rule - matches only
+  fabricated BLUE-SENTINEL lab events.
+author: Pedro Lisboa
+date: 2026/10/02
+references:
+  - https://attack.mitre.org/techniques/T1098/001/
+logsource:
+  product: cloud
+detection:
+  selection:
+    category: audit
+    product: cloud
+    action: access_key_created
+  condition: selection
+level: high
+falsepositives:
+  - Planned onboarding of a new service or CI/CD pipeline
+  - Key rotation performed inside an approved change window
+response:
+  - Confirm the key owner and the workload it belongs to
+  - Rotate and delete any key that was not requested through the change process
+  - Review the key's activity in the cloud provider audit log
+tags:
+  - attack.t1098_001
+lab_samples:
+  match:
+    - timestamp: '2024-12-18T06:44:12Z'
+      category: audit
+      action: access_key_created
+      event_id: 'CreateAccessKey'
+      host: cloud-lab-tenant
+      user: svc_ci
+      ip: 198.51.100.22
+      product: cloud
+      provider: aws
+      target_user: ci-deploy
+      message: Access key created for ci-deploy.
+  no_match:
+    - timestamp: '2024-12-18T06:45:00Z'
+      category: audit
+      action: access_key_deleted
+      event_id: 'DeleteAccessKey'
+      host: cloud-lab-tenant
+      user: svc_ci
+      ip: 198.51.100.22
+      product: cloud
+      provider: aws
+      target_user: ci-deploy
+      message: Access key deleted for ci-deploy.

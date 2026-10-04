@@ -1,0 +1,62 @@
+title: PowerShell Started With an Encoded Command
+id: ffac7866-0264-49d6-bcb1-7f2cb9f6fc09
+lab_id: bs-proc-powershell-encoded-command
+status: test
+description: >
+  PowerShell launched with an encoded command line argument (-enc /
+  -EncodedCommand). Encoded payloads hide the real command from casual
+  inspection. Synthetic lab rule - matches only fabricated BLUE-SENTINEL
+  lab events.
+author: Pedro Lisboa
+date: 2026/10/02
+references:
+  - https://attack.mitre.org/techniques/T1059/001/
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection:
+    category: process
+    action: process_start
+    process|endswith|i: 'powershell.exe'
+  encoded:
+    command_line|contains|i:
+      - ' -enc '
+      - ' -encodedcommand '
+      - ' -ec '
+  condition: selection and encoded
+level: high
+falsepositives:
+  - Administrative scripts that encode commands to hide passwords
+  - Some endpoint management agents that ship encoded payloads
+response:
+  - Decode the command with the PowerShell -EncodedCommand tooling for review
+  - Inspect the parent process and any file the command dropped
+  - Constrain or block PowerShell script execution for standard users
+tags:
+  - attack.t1059_001
+lab_samples:
+  match:
+    - timestamp: '2024-05-21T18:30:05Z'
+      category: process
+      action: process_start
+      event_id: '4688'
+      host: WS-DEMO-01
+      user: jsilva
+      ip: 198.51.100.20
+      product: windows
+      process: powershell.exe
+      command_line: powershell.exe -nop -w hidden -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA
+      path: C:\Users\jsilva\AppData\Local\Temp\update.ps1
+  no_match:
+    - timestamp: '2024-05-21T18:29:30Z'
+      category: process
+      action: process_start
+      event_id: '4688'
+      host: WS-DEMO-01
+      user: jsilva
+      ip: 198.51.100.20
+      product: windows
+      process: powershell.exe
+      command_line: powershell.exe -File C:\scripts\report.ps1
+      path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe

@@ -1,0 +1,42 @@
+---
+title: "Processo do Office iniciando shell"
+description: "Documento aberto que gera PowerShell ou cmd: a caça que separa macro legítima de anexo que já executa código na estação."
+severity: high
+order: 2
+updated: "2026-10-03"
+hypothesis: "Um documento aberto no Office iniciou interpretador de comando, o que indica que o anexo executou código e não apenas exibiu conteúdo."
+technique: "T1059.001"
+techniqueName: "Command and Scripting Interpreter: PowerShell"
+dataSource: "Telemetria de processo do endpoint (Sysmon 1, eventos 4688) com árvore de processos"
+query: |
+  SELECT
+    processo_pai,
+    processo_filho,
+    usuario,
+    host,
+    ts
+  FROM process_events
+  WHERE processo_pai IN ('WINWORD.EXE', 'EXCEL.EXE', 'POWERPNT.EXE', 'OUTLOOK.EXE')
+    AND processo_filho IN (
+      'powershell.exe', 'pwsh.exe', 'cmd.exe', 'wscript.exe',
+      'cscript.exe', 'mshta.exe', 'rundll32.exe'
+    )
+    AND ts >= agora() - INTERVALO '24 horas'
+  ORDER BY ts DESC;
+normal: "Integrações corporativas legítimas existem: impressão via cmd, macros aprovadas que chamam utilitários internos e add-ins assinados. O aceitável é linha de comando fixa, caminho conhecido e assinatura válida; o anômalo é cadeia com parâmetro codificado, caminho em pasta temporária ou origem em mensagens recebidas."
+escalation: "Escalar para incidente quando o filho carregar código codificado ou ofuscado, quando houver escrita em pasta temporária logo em seguida, quando a conexão de saída aparecer no mesmo minuto ou quando o mesmo padrão se repetir em mais de uma estação. Macro isolada, sem esses sinais, vira apenas bloqueio do anexo e revisão de regra de e-mail."
+sigma: "Promova a consulta à regra Sigma `bs-win-office-spawned-shell` já existente: a condição é `selection_parent` (processos do Office) e `selection_child` (interpretadores), com `filter` para os caminhos aprovados documentados em `falsepositives`. O ganho de precisão vem de exigir também `CommandLine|contains` de parâmetro ofuscado ou de escrita em `%TEMP%`, e a fixture negativa deve conter o add-in legítimo da organização."
+labScenario: temp-process
+references:
+  - "MITRE ATT&CK T1059.001 — Command and Scripting Interpreter: PowerShell"
+  - "MITRE ATT&CK T1204.002 — User Execution: Malicious File"
+  - "SigmaHQ — Process Creation Rules"
+---
+
+O valor da caça está no pai e no filho juntos: sem a árvore de processos, o mesmo `powershell.exe` é rotina de administração e, dentro do Office, é comprometimento.
+
+<Callout type="info" title="Leitura defensiva">A consulta lê registros de processo já existentes. Nenhum documento é aberto nem executado durante a caça.</Callout>
+
+## Como usar
+
+Rode a consulta por dia, separe as ocorrências com caminho assinado e conhecido das que vêm de pasta temporária, e devolva as segundas ao playbook de malware em estação com a linha do tempo do processo pai e filho.

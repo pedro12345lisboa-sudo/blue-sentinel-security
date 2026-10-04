@@ -1,0 +1,169 @@
+---
+title: 'Rate limiting com Redis: janela deslizante, fail-open e o que isso não resolve'
+description: 'Janela deslizante em Redis com script Lua atômico, fail-open/fail-closed configurável, 429 com Retry-After e os limites do método.'
+date: '2026-10-03'
+updated: '2026-10-03'
+tags: ['Backend Security', 'Redis', 'Rate Limiting', 'FastAPI', 'Disponibilidade']
+readingTime: 7
+cover: '/images/writeups/rate-limiting-redis-janela-deslizante.png'
+series: 'Blue-Sentinel na prática · Parte 3 de 4'
+---
+
+
+Terceira parte da série **Blue-Sentinel na prática**. Nas partes anteriores: [binds e allowlist contra SQL Injection](/writeups/sql-injection-fastapi) e [regras Sigma com fixtures ±](/writeups/da-hipotese-a-regra-sigma). Aqui a preocupação é outra: um endpoint público precisa de um teto de uso **que sobreviva a múltiplos workers** e cuja política de falha seja uma escolha, não um acidente. O texto fecha com [o agente em C++](/writeups/agente-cpp-coleta-endpoint).
+
+## O problema
+
+O `POST /api/v1/contact` é barato para o cliente e caro para o servidor: grava no banco, dispara e-mail assíncrono e passa por validação de schema. Sem limite por IP, um script envia milhares de mensagens (spam, exaustão de disco, envenenamento de caixa de entrada do dono).
+
+Dois limites já existiam no projeto, e cada um tem uma falha típica:
+
+```python
+# app/services/lab_service.py — janela fixa em memória, por worker
+_session_creations: dict[str, deque[float]] = {}
+SESSION_RATE_LIMIT = 10
+SESSION_RATE_WINDOW_SECONDS = 600
+```
+
+```python
+# app/services/contact_service.py — por e-mail, no banco, 5/hora
+count = await db.scalar(select(func.count()).select_from(ContactMessage).where(...))
+if (count or 0) >= CONTACT_RATE_LIMIT:
+    raise RateLimitError(retry_after=3600)
+```
+
+A segunda linha de defesa é ótima, mas protege a **regra de negócio**, não a **borda**: para contar, o request já passou por parse de corpo, Pydantic e conexão com o banco. E o limite em memória do laboratório morre no restart e não vale entre workers.
+
+<Callout type="warning" title="O bug da janela fixa">
+Com janela fixa ("10 por minuto" zerando a cada virada), um cliente pode fazer **20 requests** em 2 segundos: 10 às 09:59:59 e 10 às 10:00:00. É o mesmo teto formal, com o dobro de tráfego real.
+</Callout>
+
+## Decisão: janela deslizante em ZSET, atômica em Lua, política de falha explícita
+
+**Decisão: `SlidingWindowRateLimiter` com Redis (ZSET por identidade) + script Lua único + `FailureMode` configurável (padrão fail-open).**
+
+Alternativas descartadas:
+
+1. **Janela fixa (contador + TTL).** Resolve com um byte de estado, mas entrega o problema 2n acima — e esconde a conta atrás de um `INCR` que ninguém audita.
+2. **Token bucket / leaky bucket.** Excelente para controle de vazão constante (streaming, APIs de alto volume), mas o comportamento "esperar o próximo token" é mais difícil de explicar num 429 e não combina com endpoints discretos. Janela deslizante tem semantics mais óbvias para quem lê o `Retry-After`.
+3. **Apenas o contador em memória.** Já está no laboratório e continua lá como limite barato; para a API, `uvicorn --workers N` faria cada worker ter o **seu próprio** teto — o limite real vira `N × limite`.
+4. **Fail-closed por padrão.** Decisão honesta e discutível: rate limit é controle de abuso, não autenticação. Se o Redis cair e a API bloquear todo mundo, a indisponibilidade causada por nós é pior que alguns minutos de abuso. Por isso a política é **configurável** (`RATE_LIMIT_FAIL_CLOSED`) e documentada — o padrão é escolha, não conveniência.
+
+<Mermaid
+  chart={`flowchart TD
+    R[Request POST /contact] --> L[Limiter janela deslizante]
+    L --> Q{Redis responde?}
+    Q -- sim --> Z[ZSET prune + ZCARD + ZADD em 1 EVAL]
+    Q -- nao --> F{FailureMode}
+    F -- open --> A[Deixa passar e loga warning]
+    F -- closed --> B[Bloqueia com retry_after]
+    Z --> C{Dentro do limite?}
+    C -- sim --> P[Segue para o servico]
+    C -- nao --> E[429 + Retry-After]
+    A --> P
+  `}
+  caption="Caminho do request pelo limitador: a política de falha do Redis é um ramo explícito do fluxo."
+/>
+
+## Implementação
+
+### 1. O algoritmo (um único `EVAL`)
+
+O estado é um ZSET por identidade (`bluesentinel:ratelimit:contact-ip:<ip>:60:10`), com o timestamp de cada request como score. Tudo acontece num script Lua ([`app/middleware/rate_limit.py`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/backend/app/middleware/rate_limit.py)):
+
+```lua
+redis.call('ZREMRANGEBYSCORE', key, '-inf', now - window)
+local used = redis.call('ZCARD', key)
+if used < limit then
+  redis.call('ZADD', key, now, member)
+  redis.call('EXPIRE', key, ttl)
+  return {1, limit - used - 1, 0}
+end
+local oldest = redis.call('ZRANGE', key, 0, 0, 'WITHSCORES')
+local retry_after = math.ceil(tonumber(oldest[2]) + window - now)
+return {0, 0, retry_after}
+```
+
+Por que Lua e não quatro comandos? `ZCARD` e `ZADD` em round-trips separados deixam uma janela de corrida: dois requests simultâneos leem `used = limit - 1` e **ambos** passam. Dentro do `EVAL` o Redis serializa a execução — a corrida desaparece por construção, e o teste de concorrência da suíte prova o comportamento.
+
+O `retry_after` vem direto do score do evento **mais antigo**: ele expira primeiro, então o `Retry-After` é a definição literal de "quando uma vaga abre".
+
+### 2. Cliente e wiring
+
+[`app/cache/redis.py`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/backend/app/cache/redis.py) cria o cliente de forma **lazy** (sem conexão no import, `socket_connect_timeout=1s` — falha rápido para o fail-open não custar segundo inteiro). No endpoint de contato:
+
+```python
+CONTACT_IP_RATE_LIMIT = 10
+CONTACT_IP_RATE_WINDOW_SECONDS = 60
+
+contact_ip_limiter = SlidingWindowRateLimiter(
+    get_redis(),
+    limit=CONTACT_IP_RATE_LIMIT,
+    window_seconds=CONTACT_IP_RATE_WINDOW_SECONDS,
+    failure_mode=FailureMode.from_settings(),
+)
+...
+try:
+    await contact_ip_limiter.enforce(f"contact-ip:{client_ip}")
+    accepted = await ContactService.submit(...)
+except RateLimitError as exc:
+    return JSONResponse(status_code=exc.status_code, headers={"Retry-After": str(exc.retry_after)})
+```
+
+Resultado: **10 requests/60 s por IP** na borda (barato, em Redis), **5/hora por e-mail** no banco (regra de negócio, incontornável por troca de IP) e **10/600 s por IP** no laboratório — três camadas com papéis diferentes.
+
+### 3. O 429 que o cliente entende
+
+`RateLimitError` carrega `retry_after` e vira `429` com `Retry-After` (padrão `app/core/errors.py`, e o mapa de códigos do `main.py` traduz 429 → `RATE_LIMIT` no contrato do frontend). RFC 6585 §4 exatamente para isto: informar **quando tentar de novo**, em segundos absolutos.
+
+## Testes
+
+Oito casos em [`tests/unit/test_rate_limit.py`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/backend/tests/unit/test_rate_limit.py), com `fakeredis` (com suporte a Lua) e um relógio falso injetável — sem `sleep` na suíte:
+
+| Teste | Garantia |
+|-------|----------|
+| `test_allows_up_to_limit_then_blocks` | `remaining` decrementa 10→0; 11ª chamada bloqueia com `1 ≤ retry_after ≤ 60` |
+| `test_window_slides_instead_of_resetting` | em `t+59s` segue bloqueado; em `t+61s` abre **1** vaga (não 10) |
+| `test_identities_do_not_share_budget` | IP A esgotado não afeta IP B |
+| `test_concurrent_hits_never_exceed_limit` | **20 hits via `asyncio.gather` → exatamente 5 aceitos** |
+| `test_fail_open_when_redis_is_down` | Redis fora → deixa passar, `retry_after = 0` |
+| `test_fail_closed_when_redis_is_down` | `FailureMode.CLOSED` → bloqueia com `retry_after = window` |
+| `test_enforce_raises_rate_limit_error_with_retry_after` | `RateLimitError` com `status_code=429`, `code=RATE_LIMIT` |
+| `test_invalid_configuration_is_rejected` | `limit=0` ou `window=0` → `ValueError` no boot |
+
+Roda com o resto do backend: **206 testes verdes** no total (`pytest` no `backend/`).
+
+Vale notar o que o campo `remaining` traz para quem consome a API: ele não é decoração. Cliente bem-comportado que lê `remaining` e diminui a cadência antes de tomar 429 se comporta melhor do que cliente que só aprende com o erro — e como o número é calculado **dentro** do mesmo script que decide a admissão, nunca existe divergência entre "o que o servidor contou" e "o que ele reportou".
+
+## Resultado
+
+- **10 req/60 s por IP** no `POST /api/v1/contact`, em janela deslizante real (não fixa), com atomicidade garantida por `EVAL`.
+- **429 + `Retry-After`** em segundos, com o valor derivado do evento mais antigo da janela.
+- **Fail-open por padrão** (e `RATE_LIMIT_FAIL_CLOSED=true` para quem prefere o contrário): política de indisponibilidade do Redis é configuração versionada em [`.env.example`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/.env.example), não comportamento implícito.
+- **8 testes do limitador** (206 no backend) verdes; concorrência comprovada com 20 requests simultâneos.
+
+## Limitações — o que rate limit **não** resolve
+
+<Callout type="danger" title="Isto não é defesa contra DDoS">
+DDoS volumétrico (gigabits/s) acontece **antes** do seu processo: rate limit no aplicativo só é alcançado se o tráfego chegar até ele. Mitigação de volume é camada externa — CDN/anycast/scrubbing —, e nenhum script Python muda isso.
+</Callout>
+
+- **Fail-open é um trade-off assumido**: se o Redis cair, o teto deixa de existir até ele voltar (o log de warning existe justamente para isso virar alerta).
+- **`request.client.host` confia no peer TCP**: atrás de proxy/load balancer, todos os requests parecem vir do proxy. Usar `X-Forwarded-For` sem cadeia de confiança troca um problema por outro (IP forjável). A regra aqui é configurar o proxy para **sobrescrever** o header e só confiar no último salto.
+- **Limite por IP não é identidade**: NAT (um escritório inteiro = um IP) gera bloqueio colateral; botnets com IPs distribuídos escapam. Por isso a segunda camada por e-mail no banco.
+- **Não substitui autenticação nem antispam**: quem tem credencial válida continua autenticado; honeypot e validação seguem os papéis deles.
+
+## Próximos passos
+
+- Proxy confiável de verdade (header chain + allowlist de hops) para o limite valer atrás do nginx.
+- Métricas do próprio limitador (aceitos/bloqueados por minuto) para virar `[MÉTRICA MEDIDA]` de verdade.
+- Estender a janela deslizante para `GET`s caros (ex.: stats do GitHub já têm cache, mas sem teto por IP) e para o endpoint de ingestão do laboratório.
+- Trocar o limite em memória do laboratório pela mesma primitiva Redis quando o modo de produção do laboratório amadurecer (a implementação compartilhada já existe).
+
+## Referências
+
+- [OWASP API Security — API4:2023 Unrestricted Resource Consumption](https://owasp.org/API-Security/editions/2023/en/0xa4-unrestricted-resource-consumption/)
+- [RFC 6585 §4 — 429 Too Many Requests](https://www.rfc-editor.org/rfc/rfc6585.html#section-4)
+- [Redis — Sorted Set commands (`ZADD`, `ZREMRANGEBYSCORE`, `ZRANGE`)](https://redis.io/docs/latest/commands/zadd/)
+- [Redis — EVAL: scripting atômico](https://redis.io/docs/latest/commands/eval/)
+- [MDN — `Retry-After` header field](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Retry-After)

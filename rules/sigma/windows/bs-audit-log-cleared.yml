@@ -1,0 +1,83 @@
+title: Windows Audit Log Cleared or EVTX Removed
+id: cc988067-8ea7-479d-937d-0a155d811218
+lab_id: bs-audit-log-cleared
+status: test
+description: >
+  Anti-forensics on a Windows host: the Security event log was cleared
+  (Event 1102), the System log clear was recorded (Event 104), or an .evtx
+  file was deleted from disk. Any of the three hides activity.
+  Synthetic lab rule - matches only fabricated BLUE-SENTINEL lab events.
+author: Pedro Lisboa
+date: 2026/10/02
+references:
+  - https://attack.mitre.org/techniques/T1070/001/
+  - https://attack.mitre.org/techniques/T1070/004/
+logsource:
+  product: windows
+detection:
+  audit_cleared:
+    category: audit
+    product: windows
+    event_id: ['1102', '104']
+  evtx_deleted:
+    category: file
+    product: windows
+    action: file_delete
+    path|endswith|i: '.evtx'
+  condition: audit_cleared or evtx_deleted
+level: critical
+falsepositives:
+  - Legitimate log rotation or an administrator resetting the audit trail
+  - Image builds that start from a clean audit baseline
+  - A support process that archives old evtx files before deletion
+response:
+  - Preserve the host state (memory and logs) before touching it again
+  - Correlate with process creation to see who ran the clear or delete command
+  - Restore the auditing policy and enable central log forwarding
+tags:
+  - attack.t1070_001
+  - attack.t1070_004
+lab_samples:
+  match:
+    - timestamp: '2024-04-02T22:40:12Z'
+      category: audit
+      action: audit_clear
+      event_id: '1102'
+      host: SRV-DEMO-02
+      user: admin.demo
+      ip: 198.51.100.20
+      product: windows
+      process: System
+      message: The audit log was cleared.
+    - timestamp: '2024-04-02T22:41:05Z'
+      category: file
+      action: file_delete
+      event_id: '23'
+      host: SRV-DEMO-02
+      user: admin.demo
+      ip: 198.51.100.20
+      product: windows
+      process: cmd.exe
+      path: C:\Windows\System32\winevt\Logs\Security.evtx
+      message: File deleted.
+  no_match:
+    - timestamp: '2024-04-02T22:00:00Z'
+      category: audit
+      action: audit_policy_change
+      event_id: '4719'
+      host: SRV-DEMO-02
+      user: admin.demo
+      ip: 198.51.100.20
+      product: windows
+      message: System audit policy was changed.
+    - timestamp: '2024-04-02T22:42:00Z'
+      category: file
+      action: file_delete
+      event_id: '23'
+      host: SRV-DEMO-02
+      user: admin.demo
+      ip: 198.51.100.20
+      product: windows
+      process: cmd.exe
+      path: C:\ProgramData\Contoso\logs\agent-old.log
+      message: File deleted.

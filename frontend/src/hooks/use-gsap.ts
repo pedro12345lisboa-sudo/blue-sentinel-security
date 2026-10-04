@@ -5,8 +5,8 @@ import { useReducedMotion } from './use-reduced-motion';
 
 export function useGSAP() {
   const reducedMotion = useReducedMotion();
-  const gsapRef = useRef<typeof import('gsap') | null>(null);
-  const scrollTriggerRef = useRef<typeof import('gsap/ScrollTrigger') | null>(null);
+  const gsapRef = useRef<(typeof import('gsap'))['default'] | null>(null);
+  const scrollTriggerRef = useRef<(typeof import('gsap/ScrollTrigger'))['default'] | null>(null);
 
   useEffect(() => {
     if (reducedMotion) return;
@@ -24,9 +24,8 @@ export function useGSAP() {
     loadGSAP();
 
     return () => {
-      if (gsapRef.current) {
-        gsapRef.current.killAll();
-      }
+      gsapRef.current = null;
+      scrollTriggerRef.current = null;
     };
   }, [reducedMotion]);
 

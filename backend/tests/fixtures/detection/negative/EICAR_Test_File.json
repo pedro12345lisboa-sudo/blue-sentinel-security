@@ -1,0 +1,18 @@
+{
+  "description": "negative fixture for EICAR_Test_File",
+  "event": {
+    "action": "file_create",
+    "category": "file",
+    "detail": "X5O!P%@AP[4\\PZX54(P^)7CC)7}$",
+    "event_id": "11",
+    "host": "WS-LAB-02",
+    "ip": "198.51.100.10",
+    "path": "C:\\Users\\Public\\av-note.txt",
+    "process": "notepad.exe",
+    "product": "windows",
+    "timestamp": "2025-06-01T12:01:00Z",
+    "user": "r.martins"
+  },
+  "kind": "yara",
+  "rule": "EICAR_Test_File"
+}

@@ -1,0 +1,104 @@
+---
+title: "Phishing reportado por usuário"
+description: "Como tratar um relatório de phishing: validar a mensagem, saber se houve clique ou credencial digitada, conter o alcance e provar a cadeia de custódia do arquivo."
+severity: medium
+type: phishing
+order: 2
+updated: "2026-09-30"
+trigger:
+  description: "Relato de usuário pelo canal de denúncia ou detecção de URL encurtada, anexo com macro ou processo do Office iniciando shell."
+  rules:
+    - id: Phishing_Shortened_URL_Social
+      path: rules/yara/phishing-shorturl-social.yar
+    - id: Office_Macro_AutoExec
+      path: rules/yara/office-macro-autoexec.yar
+    - id: bs-win-office-spawned-shell
+      path: rules/sigma/windows/bs-win-office-spawned-shell.yml
+dataSources:
+  - "Gateway de e-mail e relatórios SPF, DKIM e DMARC"
+  - "Cabeçalho completo da mensagem exportado pelo usuário ou pelo admin de e-mail"
+  - "Telemetria de endpoint: processos filhos do Office e escrita em pasta temporária"
+  - "Logs de autenticação do provedor de identidade"
+  - "Proxy web e filtro de navegação"
+triage:
+  - "A mensagem foi aberta, o link foi clicado ou a senha foi digitada?"
+  - "O remetente passou nas verificações SPF, DKIM e DMARC?"
+  - "Quantos destinatários receberam a mesma mensagem dentro da organização?"
+  - "O anexo contém macro ou foi salvo e executado em estação do usuário?"
+  - "Houve login suspeito nas contas dos destinatários nos últimos 30 minutos?"
+  - "O destino do link é domínio novo, encurtador conhecido ou domínio parecido com o oficial?"
+decisionTree: |
+  flowchart TD
+    A["Phishing reportado"] --> B{"Link clicado ou senha digitada?"}
+    B -- Nao --> C["Bloqueie o remetente e a URL, purge da caixa dos destinatarios"]
+    B -- Sim --> D{"A credencial foi digitada?"}
+    D -- Sim --> E["Reset forcado, invalidacao de sessoes e revisao de MFA"]
+    D -- Nao --> F["Monitore a sessao e isole a estacao se houve execucao"]
+    C --> G["Erradicacao: bloqueie dominio e URL em DNS e proxy"]
+    E --> G
+    F --> G
+    G --> H["Recuperacao: confirme purga total e oriente os usuarios"]
+phases:
+  - key: containment
+    summary: "Remova a mensagem das caixas, bloqueie remetente, domínio e URL, e trate credencial exposta ou estação com execução antes de qualquer investigação longa."
+  - key: eradication
+    summary: "Elimine o vetor: purge em toda a organização, bloqueio de domínio em DNS e proxy, remoção de artefatos no endpoint e revogação de sessões."
+  - key: recovery
+    summary: "Confirme que não restou cópia nem acesso derivado, oriente os destinatários e mantenha vigilância por 7 dias nos domínios bloqueados."
+checklist:
+  - title: "Contenção"
+    items:
+      - "Bloqueie o remetente e a URL no gateway de e-mail"
+      - "Purge a mensagem das caixas de todos os destinatários internos"
+      - "Se a senha foi digitada: troque a credencial e invalide as sessões"
+      - "Se houve execução: isole a estação pela ferramenta de gerenciamento de endpoints"
+  - title: "Erradicação"
+    items:
+      - "Bloqueie o domínio do destino em DNS e no proxy corporativo"
+      - "Remova artefatos deixados no endpoint e verifique persistência"
+      - "Confirme se a mesma campanha atingiu outros destinatários e repita a purga"
+      - "Revise regras de encaminhamento criadas na caixa afetada"
+  - title: "Recuperação"
+    items:
+      - "Confirme com o gateway que não resta nenhuma cópia da mensagem"
+      - "Oriente os destinatários com um aviso curto do que observar"
+      - "Mantenha o domínio bloqueado e revise os registros após 7 dias"
+      - "Registre a campanha na base de indicadores do time de segurança"
+evidence:
+  - "Mensagem original em formato .eml com cabeçalho completo, preservada como evidência"
+  - "Captura do link e do domínio de destino, com data e hora do relato"
+  - "Confirmação do clique ou da digitação de senha com o horário exato informado pelo usuário"
+  - "Registro de bloqueio e de purge executados, com identificação de quem executou"
+  - "Estado das sessões e fatores MFA antes e depois da troca de credencial"
+comms:
+  - when: "Imediatamente após aceitar o relato do usuário"
+    who: "Usuário reportante, para confirmar o que foi feito"
+  - when: "Ao confirmar clique ou execução"
+    who: "Responsável pela resposta, dono da conta e gestor da área"
+  - when: "Ao encerrar com mais de cinco destinatários atingidos"
+    who: "Comunicação interna ampla e, se houver dado pessoal, o encarregado de dados"
+metrics:
+  mttd: "10 minutos entre o relato e a triagem inicial"
+  mttr: "4 horas até purge, bloqueio e troca de credencial quando aplicável"
+lessons:
+  - "O tempo entre clique e contenção é o que define o dano: medir o relato por relógio, não por ticket"
+  - "Bloquear o domínio só no e-mail deixa a navegação aberta, então DNS e proxy entram junto"
+  - "Mensagem em formato .eml é a única forma de preservar autenticação e cabeçalhos para prova"
+labScenario: after-hours-login
+references:
+  - "NIST SP 800-61 Rev. 2 — Computer Security Incident Handling Guide"
+  - "MITRE ATT&CK T1566 — Phishing"
+  - "MITRE ATT&CK T1204 — User Execution"
+---
+
+Quando um usuário reporta phishing, o tempo curto vale mais do que a análise perfeita. Este playbook começa validando o relato e termina com o vetor bloqueado, a evidência preservada e o usuário informado do que observar.
+
+<Callout type="info" title="Só dados defensivos">A triagem usa cabeçalhos, telemetria de endpoint e registros de autenticação. Nenhum passo envolve acessar o endereço malicioso ou interagir com o anexo fora de ambiente controlado.</Callout>
+
+## Contexto
+
+Relato humano é o gatilho mais comum e o mais rápido. A regra `Phishing_Shortened_URL_Social` cobre o caso em que a URL já circulou em logs, `Office_Macro_AutoExec` marca anexo com macro automatizada e `bs-win-office-spawned-shell` indica que a estação já executou código a partir do Office.
+
+## Limite do playbook
+
+Se a campanha indicar comprometimento de caixa de e-mail com regra de encaminhamento, o caso também passa por revisão de conta comprometida, mantendo este playbook como linha do tempo principal.

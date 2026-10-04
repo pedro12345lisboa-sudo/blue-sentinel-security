@@ -1,0 +1,21 @@
+{
+  "description": "positive fixture for bs-win-scheduled-task-created",
+  "event": {
+    "action": "task_created",
+    "category": "audit",
+    "event_id": "4698",
+    "host": "WS-LAB-02",
+    "ip": "198.51.100.10",
+    "message": "A scheduled task was created.",
+    "product": "windows",
+    "task_action": "powershell.exe -File C:\\ProgramData\\upd\\check.ps1",
+    "task_name": "\\Microsoft\\Windows\\Update Check",
+    "timestamp": "2025-02-06T01:20:00Z",
+    "user": "r.martins"
+  },
+  "expect": [
+    "bs-win-scheduled-task-created"
+  ],
+  "kind": "sigma",
+  "rule": "bs-win-scheduled-task-created"
+}

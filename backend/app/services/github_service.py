@@ -3,6 +3,7 @@ import logging
 
 import httpx
 
+from app.cache.redis import get_redis
 from app.core.config import settings
 from app.core.errors import BlueSentinelError
 from app.schemas.github import GitHubStatsResponse, GitHubRepoStats
@@ -32,7 +33,7 @@ class GitHubService:
 
     async def _cache_get(self) -> GitHubStatsResponse | None:
         try:
-            raw = await settings.redis.get("github:stats")
+            raw = await get_redis().get("github:stats")
             if raw:
                 return GitHubStatsResponse.model_validate_json(raw)
         except Exception:
@@ -41,7 +42,7 @@ class GitHubService:
 
     async def _cache_set(self, stats: GitHubStatsResponse) -> None:
         try:
-            await settings.redis.setex(
+            await get_redis().setex(
                 "github:stats", CACHE_TTL, stats.model_dump_json()
             )
         except Exception:

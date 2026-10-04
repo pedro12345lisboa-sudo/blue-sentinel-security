@@ -36,7 +36,7 @@ const mockRules = [
 function LabPage() {
   const reducedMotion = useReducedMotion();
   const { gsap } = useGSAP();
-  const sectionRef = useRef<HTMLSectionElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
   const [ref, isInView] = useInView<HTMLDivElement>({ triggerOnce: true, rootMargin: '0px 0px -50px 0px' });
   const eventsEndRef = useRef<HTMLDivElement>(null);
 
@@ -346,8 +346,8 @@ function LabPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <label className="label-base">Event Generation Rate</label>
-                  <select className="input-base" defaultValue="3000">
+                  <label htmlFor="event-rate" className="label-base">Event Generation Rate</label>
+                  <select id="event-rate" className="input-base" defaultValue="3000">
                     <option value="1000">1 second</option>
                     <option value="3000">3 seconds</option>
                     <option value="5000">5 seconds</option>
@@ -355,8 +355,8 @@ function LabPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="label-base">Max Events in Buffer</label>
-                  <select className="input-base" defaultValue="100">
+                  <label htmlFor="max-events" className="label-base">Max Events in Buffer</label>
+                  <select id="max-events" className="input-base" defaultValue="100">
                     <option value="50">50</option>
                     <option value="100">100</option>
                     <option value="200">200</option>

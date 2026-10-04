@@ -16,8 +16,8 @@ const allTags = ['Detection', 'Automation', 'C++', 'Python', 'Go', 'Sigma', 'eBP
 
 export default function ProjectsPage() {
   const projects = getAllProjects();
-  const highlightedProjects = projects.filter((p) => p.frontmatter.highlight);
-  const regularProjects = projects.filter((p) => !p.frontmatter.highlight);
+  const highlightedProjects = projects.filter((p) => p.highlight);
+  const regularProjects = projects.filter((p) => !p.highlight);
 
   const getIcon = (iconName?: string) => {
     switch (iconName) {
@@ -86,36 +86,36 @@ export default function ProjectsPage() {
                   >
                     <div className="mb-4 flex items-center justify-between">
                       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                        {getIcon(project.frontmatter.icon)}
+                        {getIcon(project.icon)}
                       </div>
-                      {project.frontmatter.highlight && (
+                      {project.highlight && (
                         <Badge variant="success">Destaque</Badge>
                       )}
                     </div>
                     <CardTitle className="mb-2 text-xl group-hover:text-primary transition-colors">
-                      {project.frontmatter.title}
+                      {project.title}
                     </CardTitle>
-                    <p className="mb-4 text-muted-foreground">{project.frontmatter.description}</p>
+                    <p className="mb-4 text-muted-foreground">{project.description}</p>
                     <div className="mb-4 flex flex-wrap gap-2">
-                      {project.frontmatter.tags.slice(0, 5).map((tag) => (
+                      {project.tags.slice(0, 5).map((tag) => (
                         <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
                       ))}
-                      {project.frontmatter.tags.length > 5 && (
-                        <Badge variant="ghost" className="text-xs">+{project.frontmatter.tags.length - 5}</Badge>
+                      {project.tags.length > 5 && (
+                        <Badge variant="ghost" className="text-xs">+{project.tags.length - 5}</Badge>
                       )}
                     </div>
                     <div className="flex items-center gap-3 pt-4 border-t border-border/50">
-                      {project.frontmatter.links?.github && (
+                      {project.links?.github && (
                         <Button variant="ghost" size="sm" asChild>
-                          <a href={project.frontmatter.links.github} target="_blank" rel="noopener noreferrer">
+                          <a href={project.links.github} target="_blank" rel="noopener noreferrer">
                             <Github className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
                             Code
                           </a>
                         </Button>
                       )}
-                      {project.frontmatter.links?.demo && (
+                      {project.links?.demo && (
                         <Button variant="ghost" size="sm" asChild>
-                          <a href={project.frontmatter.links.demo}>
+                          <a href={project.links.demo}>
                             <ArrowRight className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
                             Demo
                           </a>
@@ -144,34 +144,34 @@ export default function ProjectsPage() {
                 >
                   <div className="mb-4 flex items-center justify-between">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      {getIcon(project.frontmatter.icon)}
+                      {getIcon(project.icon)}
                     </div>
-                    <span className="text-xs font-mono text-muted-foreground">{project.frontmatter.date.split('-')[0]}</span>
+                    <span className="text-xs font-mono text-muted-foreground">{project.date.split('-')[0]}</span>
                   </div>
                   <CardTitle className="mb-2 group-hover:text-primary transition-colors">
-                    {project.frontmatter.title}
+                    {project.title}
                   </CardTitle>
-                  <p className="mb-4 text-sm text-muted-foreground line-clamp-2">{project.frontmatter.description}</p>
+                  <p className="mb-4 text-sm text-muted-foreground line-clamp-2">{project.description}</p>
                   <div className="mb-4 flex flex-wrap gap-1.5">
-                    {project.frontmatter.tags.slice(0, 4).map((tag) => (
+                    {project.tags.slice(0, 4).map((tag) => (
                       <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
                     ))}
-                    {project.frontmatter.tags.length > 4 && (
-                      <Badge variant="ghost" className="text-xs">+{project.frontmatter.tags.length - 4}</Badge>
+                    {project.tags.length > 4 && (
+                      <Badge variant="ghost" className="text-xs">+{project.tags.length - 4}</Badge>
                     )}
                   </div>
                   <div className="flex items-center gap-2 pt-4 border-t border-border/50">
-                    {project.frontmatter.links?.github && (
+                    {project.links?.github && (
                       <Button variant="ghost" size="sm" asChild>
-                        <a href={project.frontmatter.links.github} target="_blank" rel="noopener noreferrer" className="text-xs gap-1.5">
+                        <a href={project.links.github} target="_blank" rel="noopener noreferrer" className="text-xs gap-1.5">
                           <Github className="h-3 w-3" aria-hidden="true" />
                           Code
                         </a>
                       </Button>
                     )}
-                    {project.frontmatter.links?.demo && (
+                    {project.links?.demo && (
                       <Button variant="ghost" size="sm" asChild>
-                        <a href={project.frontmatter.links.demo} className="text-xs gap-1.5">
+                        <a href={project.links.demo} className="text-xs gap-1.5">
                           <ExternalLink className="h-3 w-3" aria-hidden="true" />
                           Demo
                         </a>

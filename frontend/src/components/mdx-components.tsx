@@ -1,30 +1,45 @@
 import { cn } from '@/lib/utils';
+import type { Messages } from '@/i18n';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Github, ExternalLink, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
 import { CodeBlock } from '@/components/common/code-block';
 import { TableOfContents } from '@/components/common/table-of-contents';
+import { Mermaid } from '@/components/common/mermaid';
+import { nodeText, slugify } from '@/lib/slugify';
 
 interface MDXComponentsProps {
-  components: Record<string, React.ComponentType<any>>;
+  components?: Record<string, React.ComponentType<Record<string, unknown>>>;
+  site: Messages;
 }
 
-export function MDXComponents({ components }: MDXComponentsProps) {
+export function MDXComponents({ components, site }: MDXComponentsProps) {
   return {
     ...components,
     h1: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
-      <h1 {...props} className={cn('text-3xl font-display font-bold tracking-tight mt-8 mb-4', props.className)} />
+      <h1 {...props} className={cn('text-3xl font-display font-bold tracking-tight mt-8 mb-4', props.className)}>{props.children}</h1>
     ),
     h2: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
-      <h2 {...props} className={cn('text-2xl font-display font-semibold tracking-tight mt-10 mb-4 pb-2 border-b border-border/50', props.className)} />
+      <h2
+        {...props}
+        id={props.id ?? (nodeText(props.children) ? slugify(nodeText(props.children)) : undefined)}
+        className={cn('text-2xl font-display font-semibold tracking-tight mt-10 mb-4 pb-2 border-b border-border/50 scroll-mt-24', props.className)}
+      >
+        {props.children}
+      </h2>
     ),
     h3: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
-      <h3 {...props} className={cn('text-xl font-semibold mt-8 mb-3', props.className)} />
+      <h3
+        {...props}
+        id={props.id ?? (nodeText(props.children) ? slugify(nodeText(props.children)) : undefined)}
+        className={cn('text-xl font-semibold mt-8 mb-3 scroll-mt-24', props.className)}
+      >
+        {props.children}
+      </h3>
     ),
     h4: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
-      <h4 {...props} className={cn('text-lg font-medium mt-6 mb-2', props.className)} />
+      <h4 {...props} className={cn('text-lg font-medium mt-6 mb-2', props.className)}>{props.children}</h4>
     ),
     p: (props: React.HTMLAttributes<HTMLParagraphElement>) => (
       <p {...props} className={cn('text-base text-muted-foreground leading-relaxed mb-4', props.className)} />
@@ -72,10 +87,14 @@ export function MDXComponents({ components }: MDXComponentsProps) {
     td: (props: React.TdHTMLAttributes<HTMLTableCellElement>) => (
       <td {...props} className={cn('border border-border p-3', props.className)} />
     ),
-    img: (props: React.ImgHTMLAttributes<HTMLImageElement>) => (
+    img: ({ alt, ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => (
       <figure className="my-6">
-        <img {...props} className={cn('rounded-lg border border-border/50 max-w-full h-auto', props.className)} />
-        {props.alt && <figcaption className="text-center text-sm text-muted-foreground mt-2">{props.alt}</figcaption>}
+        <img
+          {...props}
+          alt={alt ?? ''}
+          className={cn('rounded-lg border border-border/50 max-w-full h-auto', props.className)}
+        />
+        {alt && <figcaption className="text-center text-sm text-muted-foreground mt-2">{alt}</figcaption>}
       </figure>
     ),
     Callout: ({ children, type = 'info', title }: { children: React.ReactNode; type?: 'info' | 'warning' | 'danger' | 'success'; title?: string }) => {
@@ -95,6 +114,9 @@ export function MDXComponents({ components }: MDXComponentsProps) {
     TableOfContents: ({ headings }: { headings: Array<{ id: string; text: string; level: number }> }) => (
       <TableOfContents headings={headings} />
     ),
+    Mermaid: ({ chart, caption }: { chart: string; caption?: string }) => (
+      <Mermaid chart={chart} caption={caption ?? 'Diagrama'} />
+    ),
     ProjectCard: ({ project }: { project: any }) => (
       <Card className="group hover:border-primary/30 hover:shadow-glow transition-all">
         <CardHeader>
@@ -112,7 +134,7 @@ export function MDXComponents({ components }: MDXComponentsProps) {
               <Button variant="ghost" size="sm" asChild>
                 <a href={project.links.github} target="_blank" rel="noopener noreferrer">
                   <Github className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
-                  Code
+                  {site.microcopy.projectCard.code}
                 </a>
               </Button>
             )}
@@ -120,7 +142,7 @@ export function MDXComponents({ components }: MDXComponentsProps) {
               <Button variant="ghost" size="sm" asChild>
                 <a href={project.links.demo}>
                   <ArrowRight className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
-                  Demo
+                  {site.microcopy.projectCard.demo}
                 </a>
               </Button>
             )}

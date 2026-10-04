@@ -1,0 +1,25 @@
+id: corr-web-scan-404
+title: Directory scan detected from a burst of 404 responses
+description: >
+  Twenty or more HTTP requests answered with 404 against the same host
+  inside a 60 second window - the signature of directory or content
+  discovery scanning rather than a human browsing the site.
+severity: medium
+window_seconds: 60
+group_by: [host]
+stages:
+  - id: not_found
+    min_events: 20
+    source:
+      event:
+        category: web
+        action: http_request
+        status: 404
+mitre: [T1595.002]
+false_positives:
+  - A monitoring probe that intentionally checks retired paths
+  - Broken client bookmarks right after a large site reorganisation
+response:
+  - Rate-limit or block the source IP at the edge
+  - Check whether any requested path revealed an error page with stack details
+  - Feed the paths back into the WAF rules and the site map

@@ -1,0 +1,18 @@
+{
+  "description": "negative fixture for bs-win-run-key-modified",
+  "event": {
+    "action": "registry_value_set",
+    "category": "audit",
+    "details": "dark",
+    "event_id": "13",
+    "host": "WS-LAB-02",
+    "ip": "198.51.100.10",
+    "message": "Registry value set.",
+    "product": "windows",
+    "target_object": "HKCU\\Software\\Contoso\\Preferences\\Theme",
+    "timestamp": "2025-02-07T04:45:00Z",
+    "user": "r.martins"
+  },
+  "kind": "sigma",
+  "rule": "bs-win-run-key-modified"
+}

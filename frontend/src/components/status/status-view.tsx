@@ -34,6 +34,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useReducedMotion } from '@/hooks';
+import {
+  defaultLocale,
+  formatNumber,
+  formatPercent,
+  formatTime,
+  useLocale,
+  useSite,
+  type Locale,
+} from '@/i18n';
 
 const API = '/api/backend/api/v1';
 const POLL_MS = 10_000;
@@ -77,30 +86,33 @@ function getLevel(health: HealthPayload | null): Level {
   return 'healthy';
 }
 
+const LEVEL_LABEL_KEYS: Record<Level, 'HEALTHY' | 'DEGRADED' | 'UNHEALTHY' | 'UNKNOWN'> = {
+  healthy: 'HEALTHY',
+  degraded: 'DEGRADED',
+  unhealthy: 'UNHEALTHY',
+  unknown: 'UNKNOWN',
+};
+
 const LEVEL_UI: Record<
   Level,
-  { label: string; variant: 'success' | 'destructive' | 'outline'; className: string; icon: ReactNode }
+  { variant: 'success' | 'destructive' | 'outline'; className: string; icon: ReactNode }
 > = {
   healthy: {
-    label: 'HEALTHY',
     variant: 'success',
     className: '',
     icon: <CheckCircle className="h-4 w-4" aria-hidden="true" />,
   },
   degraded: {
-    label: 'DEGRADED',
     variant: 'outline',
     className: 'border-warning text-warning',
     icon: <AlertTriangle className="h-4 w-4" aria-hidden="true" />,
   },
   unhealthy: {
-    label: 'UNHEALTHY',
     variant: 'destructive',
     className: '',
     icon: <XCircle className="h-4 w-4" aria-hidden="true" />,
   },
   unknown: {
-    label: 'UNKNOWN',
     variant: 'outline',
     className: '',
     icon: <Minus className="h-4 w-4" aria-hidden="true" />,
@@ -110,22 +122,25 @@ const LEVEL_UI: Record<
 const clampPct = (value?: number) =>
   Math.min(100, Math.max(0, typeof value === 'number' && Number.isFinite(value) ? value : 0));
 
-const fmtPct = (value?: number) =>
-  typeof value === 'number' && Number.isFinite(value) ? `${value.toFixed(1)}%` : '—';
+const fmtPct = (value?: number, locale: Locale = defaultLocale) =>
+  typeof value === 'number' && Number.isFinite(value)
+    ? formatPercent(value, locale, 1)
+    : '—';
 
-function formatBytes(bytes?: number) {
-  if (!bytes || bytes <= 0) return '0 B';
+function formatBytes(bytes?: number, locale: Locale = defaultLocale) {
+  if (!bytes || bytes <= 0) return `0 B`;
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
-  return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(2))} ${units[i]}`;
+  const amount = parseFloat((bytes / Math.pow(1024, i)).toFixed(2));
+  return `${formatNumber(amount, locale, { maximumFractionDigits: 2 })} ${units[i]}`;
 }
 
-function formatUptime(seconds?: number) {
+function formatUptime(seconds?: number, locale: Locale = defaultLocale) {
   if (!seconds || seconds < 0) return '—';
   const d = Math.floor(seconds / 86400);
   const h = Math.floor((seconds % 86400) / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  return `${d}d ${h}h ${m}m`;
+  return `${formatNumber(d, locale)}d ${formatNumber(h, locale)}h ${formatNumber(m, locale)}m`;
 }
 
 interface MetricCardProps {
@@ -180,7 +195,7 @@ function MetricCard({
             aria-valuenow={Math.round(width)}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-label={`${label} percentage`}
+            aria-label={label}
           />
         </div>
       ) : (
@@ -196,11 +211,19 @@ interface SeriesDef {
   color: string;
 }
 
-function HistoryChart({ data, series }: { data: Sample[]; series: SeriesDef[] }) {
+function HistoryChart({
+  data,
+  series,
+  emptyText,
+}: {
+  data: Sample[];
+  series: SeriesDef[];
+  emptyText: string;
+}) {
   if (data.length < 2) {
     return (
       <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-        Waiting for live data…
+        {emptyText}
       </div>
     );
   }
@@ -254,33 +277,35 @@ interface ServiceCardProps {
   title: string;
   status?: string;
   latency?: number;
-  latencyLabel: string;
   className: string;
   style?: CSSProperties;
 }
 
-function ServiceCard({
-  icon,
-  title,
-  status,
-  latency,
-  latencyLabel,
-  className,
-  style,
-}: ServiceCardProps) {
+function ServiceCard({ icon, title, status, latency, className, style }: ServiceCardProps) {
+  const site = useSite();
+  const page = site.pages.status;
   const known = status !== undefined;
   const ok = isOk(status);
   return (
     <Card className={`transition-all duration-500 ${className}`} style={style}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          {icon}
-          {title}
+        <CardTitle className="flex items-center justify-between gap-2">
+          <span className="flex items-center gap-2">
+            {icon}
+            {title}
+          </span>
+          {typeof latency === 'number' && (
+            <Badge variant="outline" className="font-mono text-xs">
+              {latency} ms
+            </Badge>
+          )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Connection status</span>
+          <span className="text-sm text-muted-foreground">
+            {site.pages.security.columns.status}
+          </span>
           <Badge variant={!known ? 'outline' : ok ? 'success' : 'destructive'} className="gap-1.5">
             {!known ? (
               <Minus className="h-4 w-4" aria-hidden="true" />
@@ -289,14 +314,8 @@ function ServiceCard({
             ) : (
               <XCircle className="h-4 w-4" aria-hidden="true" />
             )}
-            {status ?? 'unknown'}
+            {status ?? page.levels.UNKNOWN}
           </Badge>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">{latencyLabel}</span>
-          <span className="font-mono text-foreground">
-            {typeof latency === 'number' ? `${latency} ms` : '—'}
-          </span>
         </div>
       </CardContent>
     </Card>
@@ -304,15 +323,19 @@ function ServiceCard({
 }
 
 const ENDPOINTS = [
-  { method: 'GET', path: '/api/v1/health/live', purpose: 'Process is running' },
-  { method: 'GET', path: '/api/v1/health/ready', purpose: 'Database and cache reachable' },
-  { method: 'GET', path: '/api/v1/status', purpose: 'Public resource metrics' },
-  { method: 'GET', path: '/api/v1/github/stats', purpose: 'Repository stats (cached)' },
-  { method: 'POST', path: '/api/v1/contact', purpose: 'Contact form (rate limited)' },
-  { method: 'WS', path: '/ws/lab/{session_id}', purpose: 'Detection lab event stream' },
+  { method: 'GET', path: '/api/v1/health/live' },
+  { method: 'GET', path: '/api/v1/health/ready' },
+  { method: 'GET', path: '/api/v1/status' },
+  { method: 'GET', path: '/api/v1/github/stats' },
+  { method: 'POST', path: '/api/v1/contact' },
+  { method: 'WS', path: '/ws/lab/{session_id}' },
 ];
 
 export function StatusView() {
+  const site = useSite();
+  const locale = useLocale();
+  const page = site.pages.status;
+  const lastUpdatedLabel = site.microcopy.misc.lastUpdated;
   const reducedMotion = useReducedMotion();
   const [mounted, setMounted] = useState(false);
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
@@ -346,11 +369,7 @@ export function StatusView() {
             [
               ...prev,
               {
-                time: new Date().toLocaleTimeString('pt-BR', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  second: '2-digit',
-                }),
+                time: formatTime(new Date(), locale),
                 cpu: m.cpu,
                 memory: m.memory?.percentage ?? 0,
                 disk: m.disk?.percentage ?? 0,
@@ -374,7 +393,7 @@ export function StatusView() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     load();
@@ -384,10 +403,12 @@ export function StatusView() {
 
   const level = getLevel(health);
   const levelUi = LEVEL_UI[level];
+  const levelLabel = page.levels[LEVEL_LABEL_KEYS[level]];
   const visible = mounted || reducedMotion;
   const revealClass = visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4';
   const delay = (i: number): CSSProperties | undefined =>
     reducedMotion ? undefined : { transitionDelay: `${i * 80}ms` };
+  const chartEmptyText = loading ? page.loading : page.empty;
 
   return (
     <div className="min-h-screen">
@@ -397,24 +418,25 @@ export function StatusView() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="font-display text-display-sm font-bold tracking-tight">
-                System Status
+                {page.title}
               </h1>
               <p className="mt-1 text-muted-foreground">
-                Health and resource metrics reported by the Blue-Sentinel backend.
-                {lastUpdate && ` Last update: ${lastUpdate.toLocaleTimeString('pt-BR')}.`}
+                {page.description}
+                {lastUpdate &&
+                  ` ${lastUpdatedLabel}: ${formatTime(lastUpdate, locale)}.`}
               </p>
             </div>
             <div className="flex items-center gap-3">
               <Badge variant={levelUi.variant} className={`gap-1.5 ${levelUi.className}`}>
                 {levelUi.icon}
-                {levelUi.label}
+                {levelLabel}
               </Badge>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={load}
                 disabled={refreshing}
-                aria-label="Refresh metrics"
+                aria-label={page.refresh}
               >
                 <RefreshCw
                   className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`}
@@ -432,11 +454,8 @@ export function StatusView() {
             role="status"
             className="mb-8 rounded-2xl border border-warning/40 bg-warning/10 p-4 text-sm"
           >
-            <p className="font-medium text-foreground">Backend unreachable</p>
-            <p className="mt-1 text-muted-foreground">
-              Live metrics are unavailable right now. This is expected until the API is deployed
-              or when it is temporarily down. No placeholder data is shown.
-            </p>
+            <p className="font-medium text-foreground">{page.error}</p>
+            <p className="mt-1 text-muted-foreground">{page.offline}</p>
           </div>
         )}
 
@@ -445,14 +464,14 @@ export function StatusView() {
           aria-labelledby="overview-title"
         >
           <h2 id="overview-title" className="sr-only">
-            System overview
+            {page.overview}
           </h2>
 
           <MetricCard
             icon={<Cpu className="h-6 w-6" aria-hidden="true" />}
             iconClass="bg-primary/10 text-primary"
-            label="CPU usage"
-            value={fmtPct(metrics?.cpu)}
+            label={page.gauges.cpu}
+            value={fmtPct(metrics?.cpu, locale)}
             pct={metrics ? metrics.cpu : 0}
             barClass="bg-primary"
             className={revealClass}
@@ -461,13 +480,13 @@ export function StatusView() {
           <MetricCard
             icon={<MemoryStick className="h-6 w-6" aria-hidden="true" />}
             iconClass="bg-success/10 text-success"
-            label="Memory usage"
-            value={fmtPct(metrics?.memory?.percentage)}
+            label={page.gauges.memory}
+            value={fmtPct(metrics?.memory?.percentage, locale)}
             pct={metrics?.memory?.percentage ?? 0}
             barClass="bg-success"
             badge={
               metrics?.memory
-                ? `${formatBytes(metrics.memory.used)} / ${formatBytes(metrics.memory.total)}`
+                ? `${formatBytes(metrics.memory.used, locale)} / ${formatBytes(metrics.memory.total, locale)}`
                 : undefined
             }
             className={revealClass}
@@ -476,13 +495,13 @@ export function StatusView() {
           <MetricCard
             icon={<HardDrive className="h-6 w-6" aria-hidden="true" />}
             iconClass="bg-warning/10 text-warning"
-            label="Disk usage"
-            value={fmtPct(metrics?.disk?.percentage)}
+            label={page.gauges.disk}
+            value={fmtPct(metrics?.disk?.percentage, locale)}
             pct={metrics?.disk?.percentage ?? 0}
             barClass="bg-warning"
             badge={
               metrics?.disk
-                ? `${formatBytes(metrics.disk.used)} / ${formatBytes(metrics.disk.total)}`
+                ? `${formatBytes(metrics.disk.used, locale)} / ${formatBytes(metrics.disk.total, locale)}`
                 : undefined
             }
             className={revealClass}
@@ -491,8 +510,8 @@ export function StatusView() {
           <MetricCard
             icon={<Activity className="h-6 w-6" aria-hidden="true" />}
             iconClass="bg-primary/10 text-primary"
-            label="Uptime"
-            value={formatUptime(metrics?.uptime)}
+            label={page.gauges.uptime}
+            value={formatUptime(metrics?.uptime, locale)}
             badge={
               metrics?.network
                 ? `↓ ${(metrics.network.rx / 1024 / 1024).toFixed(1)} MB/s`
@@ -501,8 +520,8 @@ export function StatusView() {
             barClass=""
             footer={
               metrics?.network
-                ? `↑ ${(metrics.network.tx / 1024 / 1024).toFixed(1)} MB/s upload`
-                : 'Network data unavailable'
+                ? `↑ ${(metrics.network.tx / 1024 / 1024).toFixed(1)} MB/s`
+                : page.empty
             }
             className={revealClass}
             style={delay(3)}
@@ -511,24 +530,27 @@ export function StatusView() {
 
         <section className="mb-8 grid gap-6 lg:grid-cols-2" aria-labelledby="charts-title">
           <h2 id="charts-title" className="sr-only">
-            Metric history
+            {page.charts}
           </h2>
 
           <Card className={`transition-all duration-500 ${revealClass}`} style={delay(4)}>
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>CPU &amp; memory history</span>
+              <CardTitle className="flex items-center justify-between gap-2">
+                <span>
+                  {page.gauges.cpu} · {page.gauges.memory}
+                </span>
                 <Badge variant="outline" className="font-mono text-xs">
-                  {history.length} samples
+                  {history.length}
                 </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <HistoryChart
                 data={history}
+                emptyText={chartEmptyText}
                 series={[
-                  { key: 'cpu', name: 'CPU %', color: 'hsl(var(--primary))' },
-                  { key: 'memory', name: 'Memory %', color: 'hsl(var(--success))' },
+                  { key: 'cpu', name: page.gauges.cpu, color: 'hsl(var(--primary))' },
+                  { key: 'memory', name: page.gauges.memory, color: 'hsl(var(--success))' },
                 ]}
               />
             </CardContent>
@@ -536,17 +558,18 @@ export function StatusView() {
 
           <Card className={`transition-all duration-500 ${revealClass}`} style={delay(5)}>
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Disk usage trend</span>
+              <CardTitle className="flex items-center justify-between gap-2">
+                <span>{page.gauges.disk}</span>
                 <Badge variant="outline" className="font-mono text-xs">
-                  Current: {fmtPct(metrics?.disk?.percentage)}
+                  {fmtPct(metrics?.disk?.percentage, locale)}
                 </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <HistoryChart
                 data={history}
-                series={[{ key: 'disk', name: 'Disk %', color: 'hsl(var(--warning))' }]}
+                emptyText={chartEmptyText}
+                series={[{ key: 'disk', name: page.gauges.disk, color: 'hsl(var(--warning))' }]}
               />
             </CardContent>
           </Card>
@@ -554,7 +577,7 @@ export function StatusView() {
 
         <section className="grid gap-6 lg:grid-cols-2" aria-labelledby="services-title">
           <h2 id="services-title" className="sr-only">
-            Service health
+            {page.services}
           </h2>
 
           <ServiceCard
@@ -562,7 +585,6 @@ export function StatusView() {
             title="PostgreSQL"
             status={health?.checks?.postgres}
             latency={health?.latency?.postgres}
-            latencyLabel="Query latency"
             className={revealClass}
             style={delay(6)}
           />
@@ -571,7 +593,6 @@ export function StatusView() {
             title="Redis"
             status={health?.checks?.redis}
             latency={health?.latency?.redis}
-            latencyLabel="Ping latency"
             className={revealClass}
             style={delay(7)}
           />
@@ -580,7 +601,7 @@ export function StatusView() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Activity className="h-5 w-5" aria-hidden="true" />
-                Public API surface
+                {page.services}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -588,9 +609,8 @@ export function StatusView() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border/50 text-left">
-                      <th className="p-3 font-medium">Method</th>
-                      <th className="p-3 font-medium">Endpoint</th>
-                      <th className="p-3 font-medium">Purpose</th>
+                      <th className="p-3 font-medium">{site.pages.projects.detail.type}</th>
+                      <th className="p-3 font-medium">{page.services}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -607,7 +627,6 @@ export function StatusView() {
                         <td className="p-3">
                           <code className="font-mono">{endpoint.path}</code>
                         </td>
-                        <td className="p-3 text-muted-foreground">{endpoint.purpose}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -1,0 +1,112 @@
+---
+title: "Suspicious privileged account creation"
+description: "A privileged account created outside a change window or without a change request: validate the authorization, revoke the granted privilege, and close the path that led to the elevation."
+severity: high
+type: privileged-account
+order: 5
+updated: "2026-10-03"
+trigger:
+  description: "Creation or elevation of an administrative account outside a change window, with a missing ticket or a privilege assignment incompatible with the user's profile."
+  rules:
+    - id: bs-win-member-added-local-admin
+      path: rules/sigma/windows/bs-win-member-added-local-admin.yml
+    - id: bs-linux-user-created-uid-zero
+      path: rules/sigma/linux/bs-linux-user-created-uid-zero.yml
+    - id: bs-linux-sudo-unusual-account
+      path: rules/sigma/linux/bs-linux-sudo-unusual-account.yml
+dataSources:
+  - "Windows Security events 4720, 4732, and 4728 on the domain and on workstations"
+  - "auth.log and syslog on Linux servers (useradd, visudo, sudoers.d)"
+  - "Identity management tool and catalog of privileged groups"
+  - "Ticketing system: approved change record at the time of the event"
+  - "Remote access logs associated with the created account"
+triage:
+  - "Is there an approved change request covering this creation and this time?"
+  - "Who performed the creation, from which account and from which source?"
+  - "Did the new account receive a domain, shell, sudo, or administrative group beyond what is needed?"
+  - "Has the account already logged on, and from which IP and at what time?"
+  - "Does the created account have a name similar to a legitimate service account or to an existing account?"
+  - "Were other accounts created or elevated in the same window by the same executor?"
+decisionTree: |
+  flowchart TD
+    A["Privileged account creation alert"] --> B{"Approved change at this time?"}
+    B -- Yes --> C["Validate the approval with the change owner"]
+    B -- No --> D["Treat as an incident: revoke the privilege now"]
+    C --> E{"Does the scope match the request?"}
+    E -- Yes --> F["Document and close with an exception record"]
+    E -- No --> D
+    D --> G["Block the account and invalidate active sessions"]
+    G --> H["Eradication: identify the elevation path used"]
+    H --> I{"Is the source still compromised?"}
+    I -- Yes --> J["Apply the credential or malware playbook in parallel"]
+    I -- No --> K["Remove the account and restore the modified group"]
+    J --> K
+    K --> L["Recovery: monitor the account and the executor for 7 days"]
+    F --> L
+phases:
+  - key: containment
+    summary: "Block the newly created account, invalidate sessions, and remove the granted privilege while the authorization is still being verified."
+  - key: eradication
+    summary: "Identify and close the elevation path: exposed session, administration tool, SSH key, or modified policy that allowed the creation."
+  - key: recovery
+    summary: "Restore the approved state of the groups, return legitimate access, and monitor privileged creations for 7 days."
+checklist:
+  - title: "Containment"
+    items:
+      - "Block the created account and invalidate all of its active sessions"
+      - "Remove the account from the privileged groups without deleting the object (preserve it for analysis)"
+      - "Validate with the system owner whether the creation was authorized"
+      - "Enable real-time monitoring of the next actions of the account and of the executor"
+  - title: "Eradication"
+    items:
+      - "Reconstruct the elevation path: which session, tool, or credential allowed the creation"
+      - "Check whether any policy, SSH key, or sudoers entry was changed along with it"
+      - "Confirm whether other accounts were created or elevated in the same window"
+      - "Review service accounts and temporary accounts created during the period"
+      - "Change privileged credentials if the session source is compromised"
+  - title: "Recovery"
+    items:
+      - "Remove the unauthorized account and restore the approved composition of the groups"
+      - "Return legitimate access to the rightful owner, with MFA confirmed"
+      - "Keep the privileged creation alert active for 7 days"
+      - "Record the root cause and the date of the corrective action in the ticket"
+evidence:
+  - "Events 4720, 4732, and 4728 (or useradd/visudo from auth.log) exported with time zone"
+  - "Identity of the executing account, logon source, and tool used"
+  - "Screenshot or export of the state of the privileged groups before and after the fix"
+  - "Validation record: who confirmed the authorization and on what date"
+  - "List of actions executed by the account between creation and block"
+  - "Change ticket used as reference, even when it is missing (proof of absence)"
+comms:
+  - when: "Right after the alert with no matching change"
+    who: "Incident response owner and the owner of the affected system"
+  - when: "On confirmation of unauthorized creation"
+    who: "Manager of the area, infrastructure team, and security team"
+  - when: "On closure, with root cause defined"
+    who: "Internal audit and, in regulated environments, compliance"
+metrics:
+  mttd: "10 minutes from the creation event to triage"
+  mttr: "30 minutes to block the account and remove the privilege"
+lessons:
+  - "Deleting the account right away destroys the evidence of who created it and which path they used"
+  - "Privileged creation without a ticket is a process alert, but an incident when a logon follows"
+  - "A change sandbox approved without a defined scope produces recurring false positives; record the scope in the rule"
+labScenario: after-hours-login
+references:
+  - "NIST SP 800-61 Rev. 2 — Computer Security Incident Handling Guide"
+  - "NIST SP 800-53 Rev. 5 — AC-2 Account Management"
+  - "MITRE ATT&CK T1136.001 — Create Account: Local Account"
+  - "MITRE ATT&CK T1098 — Account Manipulation"
+---
+
+A privileged account created with no matching change is at once a process problem and a possible persistence vector. This playbook separates the two and handles the second without waiting for the first.
+
+<Callout type="info" title="Defensive by default">The check is done with authentication records, the identity catalog, and the ticketing system. No step involves elevating privilege on any machine.</Callout>
+
+## Context
+
+`bs-win-member-added-local-admin` flags entry into an administrative group on Windows, `bs-linux-user-created-uid-zero` catches an account created with UID 0 on Linux, and `bs-linux-sudo-unusual-account` covers sudo grants outside the account's normal pattern. In directory environments, the same pattern appears as addition to protected groups.
+
+## When not to use
+
+An account creation covered by an approved change request and within the described scope closes as a documented exception, with no containment. This playbook applies when the request does not exist, does not cover the time, or does not cover the scope.

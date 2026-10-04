@@ -4,15 +4,27 @@ from datetime import datetime, timezone, timedelta
 
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import ColumnElement
 
 from app.core.config import settings
-from app.core.errors import BlueSentinelError, RateLimitError
+from app.core.errors import BlueSentinelError, RateLimitError, ValidationError
 from app.models.contact_message import ContactMessage
 from app.schemas.contact import ContactRequest, ContactAccepted
+from app.security.sql_injection import UnsafeSortError, apply_sort
 
 logger = logging.getLogger(__name__)
 
 CONTACT_RATE_LIMIT = 5  # per hour per email
+
+# Allowlist de ordenação do endpoint de listagem: só colunas mapeadas aqui
+# podem aparecer em ORDER BY (o resto é rejeitado antes de tocar o banco).
+MESSAGE_SORTABLE: dict[str, ColumnElement] = {
+    "created_at": ContactMessage.created_at,
+    "id": ContactMessage.id,
+    "subject": ContactMessage.subject,
+    "email": ContactMessage.email,
+}
+MESSAGE_SORT_DEFAULT = "created_at"
 
 
 class ContactService:
@@ -67,15 +79,26 @@ class ContactService:
         db: AsyncSession,
         skip: int = 0,
         limit: int = 50,
+        sort: str | None = None,
+        direction: str | None = None,
     ) -> tuple[list[ContactMessage], int]:
+        # Valida a ordenação ANTES de tocar no banco (allowlist anti-injection)
+        try:
+            stmt = apply_sort(
+                select(ContactMessage),
+                sort=sort,
+                direction=direction,
+                allowed=MESSAGE_SORTABLE,
+                default=MESSAGE_SORT_DEFAULT,
+            )
+        except UnsafeSortError as exc:
+            raise ValidationError(str(exc)) from exc
+
         total = await db.scalar(
             select(func.count()).select_from(ContactMessage)
         )
         result = await db.execute(
-            select(ContactMessage)
-            .order_by(ContactMessage.created_at.desc())
-            .offset(skip)
-            .limit(min(limit, 100))
+            stmt.offset(skip).limit(min(limit, 100))
         )
         return list(result.scalars().all()), total or 0
 

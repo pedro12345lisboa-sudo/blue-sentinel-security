@@ -1,0 +1,45 @@
+---
+title: "Login legítimo vindo de país nunca visto"
+description: "Conta autenticada de localidade nova, sem viagem registrada: a caça que separa mobilidade real de comprometimento de credencial."
+severity: high
+order: 5
+updated: "2026-10-03"
+hypothesis: "Uma conta autenticou de país ou ASN nunca usados antes por ela, sem viagem ou trabalho remoto registrado, indicando uso de credencial válida por terceiro."
+technique: "T1078"
+techniqueName: "Valid Accounts"
+dataSource: "Sinais de login do provedor de identidade (Entra ID, Google Workspace) e logs de VPN/RDP"
+query: |
+  SELECT
+    usuario,
+    pais,
+    ip_origem,
+    ts,
+    resultado
+  FROM login_events
+  WHERE resultado = 'sucesso'
+    AND pais NOT IN (
+      SELECT DISTINCT pais
+      FROM login_events
+      WHERE usuario = login_events.usuario
+        AND ts < login_events.ts - INTERVALO '90 dias'
+        AND resultado = 'sucesso'
+    )
+    AND ts >= agora() - INTERVALO '7 dias'
+  ORDER BY ts DESC;
+normal: "Viagens, VPN corporativa com saída em outro país, provedor móvel e novo dispositivo explicam a maior parte dos primeiros logins. O aceitável é MFA concluído, dispositivo gerenciado e horário compatível; o anômalo é MFA ausente ou aprovado em dispositivo novo, horário da madrugada para o padrão da conta e ação imediatamente em seguida."
+escalation: "Escalar para incidente quando houver ações privilegiadas logo após o login (mudança de regra, exportação, criação de conta), quando o MFA for contornado ou aprovado por dispositivo não gerenciado, ou quando mais de uma conta do mesmo gestor aparecer na mesma origem. Sem esses sinais, o caso vira verificação rápida com o titular e revisão de fatores MFA."
+sigma: "Promova a consulta à regra `bs-cloud-login-new-country`, já existente, e acrescente contexto: junção com dispositivo gerenciado e com calendário de viagens em formato de correlação (`rules/patterns/`), usando `notin` para países e ASNs aprovados documentados em `falsepositives`. Fixe o limiar de histórico (90 dias) como constante da regra e cubra o caso de viagem aprovada com fixture negativa."
+labScenario: after-hours-login
+references:
+  - "MITRE ATT&CK T1078 — Valid Accounts"
+  - "NIST SP 800-61 Rev. 2 — Computer Security Incident Handling Guide"
+  - "MITRE ATT&CK T1078.004 — Valid Accounts: Cloud Accounts"
+---
+
+Credencial válida é o vetor mais silencioso porque nada quebra: o login é bem-sucedido. O que sobra para a caça é o contexto — geografia, dispositivo, horário e a primeira ação depois da autenticação.
+
+<Callout type="info" title="Só leitura de logs">A consulta agrega eventos de login já coletados. Nenhuma etapa envolve autenticar, testar fatores ou acessar contas.</Callout>
+
+## Como usar
+
+Rode diariamente por provedor de identidade, descarte viagens confirmadas com o titular e devolva os casos restantes ao playbook de ataque de credenciais com a linha do tempo do primeiro acesso.

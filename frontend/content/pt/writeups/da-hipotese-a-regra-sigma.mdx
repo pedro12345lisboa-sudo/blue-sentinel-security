@@ -1,0 +1,158 @@
+---
+title: 'Da hipótese à regra Sigma: detecção com fixture positiva e negativa'
+description: 'Como transformar hipótese de ataque em regra Sigma com fixture positiva e negativa — o que medir e o que ainda é [MÉTRICA MEDIDA].'
+date: '2026-10-03'
+updated: '2026-10-03'
+tags: ['Detection Engineering', 'Sigma', 'MITRE ATT&CK', 'Testes', 'Blue Team']
+readingTime: 7
+cover: '/images/writeups/da-hipotese-a-regra-sigma.png'
+series: 'Blue-Sentinel na prática · Parte 2 de 4'
+---
+
+
+Segunda parte da série **Blue-Sentinel na prática**. Depois de [blindar a API contra SQL Injection](/writeups/sql-injection-fastapi), o próximo passo é transformar hipóteses de ataque em detecção testável. Os textos seguintes cobrem [rate limiting com Redis](/writeups/rate-limiting-redis-janela-deslizante) e [o agente em C++](/writeups/agente-cpp-coleta-endpoint), que fornece a telemetria usada aqui.
+
+## O problema
+
+Uma regra de detecção sem teste é opinião. Dois fracassos clássicos se repetem:
+
+- **Regra cega demais**: pega qualquer `powershell` e enche o SOC de alertas até ninguém olhar (falsos positivos viram ruído aceito).
+- **Regra estreita demais**: só dispara no cenário exato em que foi escrita e perde a variação do atacante (falsos negativos silenciosos).
+
+O terceiro fracasso é de processo: importar 200 regras prontas de um marketplace sem saber o que cada uma faz no **seu** ambiente. A pergunta que este artigo responde é: como o Blue-Sentinel leva uma hipótese ("tentativas de SQLi no acesso do webserver") até uma regra que **tem teste que falha** quando a detecção quebra?
+
+## Decisão: subconjunto Sigma auditável + contrato de fixtures ±
+
+**Decisão: regras em YAML Sigma padrão, avaliadas por um loader interno pequeno, e cada regra publicada com uma fixture que DEVE disparar e outra que NÃO PODE disparar.**
+
+Alternativas descartadas:
+
+1. **pySigma completo.** O loader interno explica o porquê no próprio cabeçalho do arquivo ([`sigma_loader.py`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/backend/app/detection/sigma_loader.py)): a suíte precisa rodar offline em CI com "somente stdlib + PyYAML"; o subconjunto cobre tudo que as 20 regras usam, é auditável linha a linha e **levanta erro no load** para constrições não suportadas — em vez de ignorá-las em silêncio. As regras continuam sendo Sigma padrão e podem ser reprocessadas por pySigma depois, sem reescrita.
+2. **Só copiar regras de terceiros.** Sem fixture, ninguém sabe se a regra funciona aqui; sem `lab_samples`, o time nunca viu o que "dispara" de verdade.
+3. **Detectar dentro do agente.** O agente [entrega fatos, não julga](/writeups/agente-cpp-coleta-endpoint): manter regras no endpoint exigiria privilegio, atualização por host e duplicaria a lógica já versionada no laboratório.
+
+<Mermaid
+  chart={`flowchart TD
+    H[Hipotese do playbook] --> F[Fonte de log]
+    F --> N[Evento normalizado]
+    N --> S[Regra Sigma]
+    N --> Y[Regra YARA]
+    S --> D[Dedup 120s]
+    Y --> D
+    D --> K[Correlacao 3 padroes]
+    K --> I[Incidente high]
+    I --> P[Playbook de resposta]
+  `}
+  caption="Da hipótese ao playbook: cada seta tem um teste correspondente na suíte de detecção."
+/>
+
+## Implementação
+
+### 1. Fonte de log e normalização
+
+Os eventos entram com o formato da fonte real que imitam — syslog de autenticação (`/var/log/auth.log`), access log de nginx, eventos de plano de controle de nuvem e Windows Event Log — e passam por `normalize()` ([`app/collectors/normalizer.py`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/backend/app/collectors/normalizer.py)), que produz a visão canônica (`category`, `action`, `host`, `ip`...) usada pelas regras. O gerador de cenários do laboratório emite exatamente esse formato, então fixture, teste e cenário compartilham o mesmo contrato.
+
+### 2. A regra
+
+Uma regra real, [`rules/sigma/web/bs-web-sql-injection.yml`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/rules/sigma/web/bs-web-sql-injection.yml):
+
+```yaml
+logsource:
+  category: web
+detection:
+  request:
+    category: web
+    action: http_request
+  payload:
+    url|re|i: '''1''=''1|union(%20| )select|waitfor(%20| )delay|information_schema|sleep\('
+  condition: request and payload
+level: high
+falsepositives:
+  - Authorised vulnerability scanners or WAF test campaigns
+tags:
+  - attack.t1190
+```
+
+Detalhes que importam: `condition` booleano com seleções (`request and payload`), modificadores (`|re|i`), `level` que alimenta o severidade, `falsepositives` documentados **na própria regra**, tag MITRE (`attack.t1190`) resolvida por [`mitre.py`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/backend/app/detection/mitre.py), e `lab_samples` com pares `match`/`no_match` embutidos no YAML — a regra carrega junto a prova do que deve e do que não deve casar.
+
+### 3. O avaliador
+
+O loader cobre `logsource`, seleções com modificadores (`contains`, `startswith`, `re`, `in`, `cidr`, `gte`...), condições booleanas (`N of them`, glob) e valida tudo **no carregamento** — regex com quantificadores aninhados são marcadas por `redos_risk()` e limitadas em tamanho; padrões lentos estouram `RULE_TIMEOUT_S` e aparecem nas estatísticas. O [`DetectionEngine`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/backend/app/detection/engine.py) deduplica alertas na janela de 120 s (regra + host + usuário), avança os padrões de correlação e abre incidente em `high` ou acima, com hot-reload quando os arquivos de regra mudam.
+
+## Testes: o contrato ±
+
+O coração está em [`tests/unit/detection/test_rules.py`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/backend/tests/unit/detection/test_rules.py): **cada regra publicada tem uma fixture positiva e uma negativa** (25 + 25 arquivos em [`tests/fixtures/detection/`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/backend/tests/fixtures/detection)).
+
+```python
+@pytest.mark.parametrize("entry", POSITIVE, ids=lambda entry: entry["rule"])
+def test_positive_fixture_fires_exactly_the_expected_rules(sigma, yara, entry):
+    hits = fired_rules(sigma, yara, entry["event"])
+    assert hits == set(entry["expect"]), (
+        f"{entry['file']}: expected {sorted(entry['expect'])}, fired {sorted(hits)}"
+    )
+
+@pytest.mark.parametrize("entry", NEGATIVE, ids=lambda entry: entry["rule"])
+def test_negative_fixture_fires_no_rule(sigma, yara, entry):
+    hits = fired_rules(sigma, yara, entry["event"])
+    assert hits == set(), f"{entry['file']}: unexpected {sorted(hits)}"
+```
+
+Duas propriedades fortes aqui:
+
+- **Exatidão**: a positiva não espera "algum alerta", espera **exatamente** o conjunto `expect` — uma regra vizinha que dispare junto quebra o teste (isso é um falso positivo detectado em CI).
+- **Silêncio**: a negativa espera **zero** regras, não só a própria — tráfego legítimo (`/products?id=42`, login normal, `sudo` de rotina) não pode acordar nada.
+
+O inventário também é travado: `test_fixture_inventory` falha se uma regra existir sem par ± ou se o YAML declarar `lab_samples` inconsistentes com as fixtures.
+
+O valor prático desse contrato aparece quando uma regra muda. Ao ajustar uma condição — digamos, tolerar um novo campo de usuário-agent num falso positivo conhecido — o autor rodava a suíte localmente antes de abrir o pull request: a positiva acusa se a mudança deixou de detectar o que prometia, e a negativa acusa se a mudança ficou ampla demais e começou a disparar em tráfego limpo. As duas falhas apontam para o arquivo exato (o `id` do parametrize nomeia a regra envolvida), então a correção é guiada, não tentativa. O mesmo ritual vale para a normalização: como a fixture entra como registro cru do gerador de cenários, uma regressão em [`normalizer.py`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/backend/app/collectors/normalizer.py) — mapear mal uma categoria, perder um campo de origem — quebra o match Sigma e derruba a positiva, mesmo que a regra em si não tenha sido tocada. Detecção e ingestão são testadas como um contrato único, que é como elas rodarão em produção.
+
+O formato da fixture é propositalmente chato de se ler rápido — porque é chato, é difícil esquecer o contrato:
+
+```json
+{
+  "event": {
+    "action": "http_request", "category": "web",
+    "url": "/search?q=UNION%20SELECT%20password%20FROM%20accounts", "status": 500
+  },
+  "expect": ["bs-web-sql-injection"],
+  "kind": "sigma",
+  "rule": "bs-web-sql-injection"
+}
+```
+
+Na positiva, `expect` lista **tudo** que pode disparar naquele evento — inclusive regras vizinhas legitimamente acionadas (uma tentativa de SQLi que também parece scanner pode esperar duas regras, e isso é declarado, não aceito por acaso). Na negativa, o mesmo evento alterado em um campo (`/products?id=42`, `status: 200`) tem de resultar em conjunto vazio. Como as fixtures são registros brutos no formato do gerador de cenários, o mesmo teste exercita normalização, matching Sigma e varredura YARA de uma vez só.
+
+## Resultado
+
+Medido nesta máquina, com `pytest tests/unit/detection` no `backend/`:
+
+- **20 regras Sigma** (windows 11, linux 4, web 3, cloud 2) + **5 regras YARA** + **3 padrões de correlação**.
+- **50 fixtures** de detecção (25 ±) e **184 testes de detecção verdes**, incluindo o teste de latência de avaliação (orçamento de `<1 s` por evento do laboratório).
+- Cobertura MITRE mapeada por tag em todas as regras; a `bs-web-sql-injection` aponta para T1190.
+- Falsos positivos **conhecidos e declarados** por regra (ex.: scanners de vulnerabilidade autorizados) e **regredidos** pelas fixtures negativas.
+
+<Callout type="warning" title="O que ainda não é métrica">
+Taxa de falsos positivos em produção (alerts/chamadas legítimas) é `[MÉTRICA MEDIDA]` — o laboratório roda eventos sintéticos, não telemetria real. O que temos hoje é um **piso**: nenhum falso positivo pode entrar sem quebrar CI. Medir o teto exige ingestão de log real, que é o próximo passo.
+</Callout>
+
+## Limitações
+
+- Fixtures sintéticas: provam consistência, não representatividade. Um atacante que variantar o payload (case, URL-encoding duplo) passa pelas regex atuais — e o teste não dispara.
+- O subconjunto Sigma não implementa agregações (`|count`, `|sum`) nem pipes de backend; a correlação vive em código próprio ([`correlation.py`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/backend/app/detection/correlation.py)), o que troca compatibilidade por auditabilidade.
+- Dedup e incidente usam o **relógio simulado do laboratório**; em produção isso vira relógio real e TTL diferente (o armazenamento de janela já tem implementação opcional em Redis, pronta para plugar).
+- Seis hipóteses de threat hunting (["Do zero ao threat hunting"](/writeups/threat-hunting-methodology)) guiam hoje a demanda por novas regras — cobertura fora delas é sorte.
+
+## Próximos passos
+
+- Ingerir log real (auth + access) para produzir a primeira curva de falsos positivos e fixar um `FP budget` por regra.
+- Fechar o loop com os [playbooks de resposta](/playbooks): cada alerta de `high` deve apontar para um runbook existente.
+- Estender o contrato ± para correlação: fixture de sequência que **deve** abrir incidente e a de ruído que **não** pode (hoje os padrões têm testes unitários próprios, mas ainda não o contrato ponta a ponta).
+- Guia de sintaxe completa no artigo antigo [Sigma Rules 101](/writeups/sigma-rules-101).
+
+## Referências
+
+- [Sigma — Generic Signature Format for SIEM Systems (especificação)](https://sigmahq.github.io/sigma-specification/)
+- [SigmaHQ — Regras comunitárias (formato e convenções)](https://github.com/SigmaHQ/sigma)
+- [MITRE ATT&CK — T1190: Exploit Public-Facing Application](https://attack.mitre.org/techniques/T1190/)
+- [pySigma — projeto de referência (por que não usamos tudo)](https://github.com/SigmaHQ/pySigma)
+- [YARA — The pattern matching swiss knife](https://yara.readthedocs.io/)

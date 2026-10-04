@@ -1,0 +1,18 @@
+{
+  "description": "negative fixture for bs-win-member-added-local-admin",
+  "event": {
+    "action": "group_member_added",
+    "category": "audit",
+    "event_id": "4732",
+    "host": "WS-LAB-02",
+    "ip": "198.51.100.10",
+    "member": "intern.user",
+    "message": "A member was added to a local group.",
+    "product": "windows",
+    "target_group": "Remote Desktop Users",
+    "timestamp": "2025-02-05T08:05:00Z",
+    "user": "r.martins"
+  },
+  "kind": "sigma",
+  "rule": "bs-win-member-added-local-admin"
+}

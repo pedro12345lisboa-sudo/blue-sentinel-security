@@ -1,0 +1,42 @@
+---
+title: "Spraying horizontal a partir de uma origem"
+description: "Uma origem testa uma ou duas senhas comuns em dezenas de contas: a caça que transforma falhas individuais ruidosas em um sinal único por origem e janela."
+severity: high
+order: 1
+updated: "2026-10-03"
+hypothesis: "Uma única origem está testando poucas senhas comuns contra muitas contas em poucos minutos, de modo que cada conta isolada parece inócima mas o conjunto revela spraying."
+technique: "T1110.003"
+techniqueName: "Brute Force: Password Spraying"
+dataSource: "Eventos de autenticação (Windows 4625, sshd/auth.log, sinais de login do provedor de identidade)"
+query: |
+  SELECT
+    src_ip,
+    COUNT(*)                       AS tentativas,
+    COUNT(DISTINCT user)           AS contas_alvo,
+    MIN(ts)                        AS primeira,
+    MAX(ts)                        AS ultima
+  FROM auth_events
+  WHERE resultado = 'falha'
+    AND ts >= agora() - INTERVALO '10 minutos'
+  GROUP BY src_ip
+  HAVING COUNT(DISTINCT user) >= 10
+     AND COUNT(*) >= 10
+     AND COUNT(DISTINCT user) < COUNT(*) * 0.5
+  ORDER BY contas_alvo DESC;
+normal: "Varreduras de segurança autorizadas, balanceadores que tentam autenticação de health check e usuários que trocam de dispositivo geram falhas, mas costumam se concentrar em poucas contas e em janelas de mudança aprovadas. O aceitável é falha alta com contas poucas; o anômalo é muitas contas com uma ou duas tentativas cada."
+escalation: "Escalar para incidente quando houver qualquer logon bem-sucedido após a sequência, quando as contas atingidas incluírem administrativas ou de serviço, ou quando a origem aparecer em duas unidades distintas no mesmo turno. Sem logon bem-sucedido e com origem única, o caso segue como tentativa contida e vira chamado de bloqueio."
+sigma: "A consulta vira regra Sigma de contagem por `src_ip` dentro de janela de 600 segundos com `count(user) >= 10`, usando `correlation` do pacote de padrões (`rules/patterns/corr-brute-force-sequence.yaml`) quando a fonte for correlação; para a regra Sigma isolada, o grupo é `src_ip` e a condição combina `selection_falha` com `threshold`. O passo final é registrar a regra em `rules/sigma/windows/` ou `rules/sigma/linux/`, fixar o limiar com base em baseline medido e adicionar a fixture positiva e a negativa em `backend/tests/fixtures/detection/`."
+labScenario: brute-force
+references:
+  - "MITRE ATT&CK T1110.003 — Brute Force: Password Spraying"
+  - "NIST SP 800-61 Rev. 2 — Computer Security Incident Handling Guide"
+  - "SigmaHQ — Query and Threshold Rules"
+---
+
+Spraying é a caça clássica de pouca telemetria e alto valor: nenhuma conta isolada dispara nada sozinha, e a resposta só aparece quando se agrega por origem e janela.
+
+<Callout type="info" title="Só leitura de logs">A consulta roda sobre a tabela de eventos já coletada. Nenhuma etapa envolve testar senhas ou interagir com a origem.</Callout>
+
+## Como usar
+
+Rode a consulta em janelas de 10 minutos durante o turno, valide manualmente se as contas alvo são reais e não de teste, e compare com o calendário de varreduras autorizadas antes de escalar.

@@ -45,7 +45,7 @@ next-env.d.ts
 docker-compose.override.yml
 
 # Backend
-backend/__pycache__/
+__pycache__/
 backend/.pytest_cache/
 backend/.coverage/
 backend/htmlcov/
@@ -63,3 +63,9 @@ backend/.venv/
 *.key
 *.crt
 secrets/
+# Relatórios de teste e builds
+playwright-report/
+test-results/
+coverage/
+.next/
+node_modules/

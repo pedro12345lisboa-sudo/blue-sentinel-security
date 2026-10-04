@@ -1,0 +1,61 @@
+title: Cloud Login from a Country Never Used for the Account
+id: a63aed2c-077c-4b9e-9811-cd9875862693
+lab_id: bs-cloud-login-new-country
+status: test
+description: >
+  A successful cloud console / API login from a country that has never
+  been seen for this identity (``new_country`` is enriched by the
+  collector from the identity provider log) - a common sign of stolen
+  credentials. Synthetic lab rule - matches only fabricated BLUE-SENTINEL
+  lab events.
+author: Pedro Lisboa
+date: 2026/10/02
+references:
+  - https://attack.mitre.org/techniques/T1078/
+logsource:
+  product: cloud
+detection:
+  selection:
+    category: auth
+    product: cloud
+    action: login
+  new_geo:
+    new_country: true
+  condition: selection and new_geo
+level: high
+falsepositives:
+  - Employees travelling or connecting from an unmanaged branch network
+  - Migrated workloads whose identity provider geolocates the egress IP oddly
+response:
+  - Confirm the login with the identity owner and revoke the session if it was not theirs
+  - Review every action performed by the session and rotate the credentials
+  - Require MFA and add the country to conditional access policy monitoring
+tags:
+  - attack.t1078
+lab_samples:
+  match:
+    - timestamp: '2024-11-19T22:03:00Z'
+      category: auth
+      action: login
+      event_id: 'signin'
+      host: cloud-lab-tenant
+      user: ana.ribeiro
+      ip: 203.0.113.201
+      product: cloud
+      provider: aws
+      new_country: true
+      country: SG
+      message: Successful console sign-in.
+  no_match:
+    - timestamp: '2024-11-19T09:10:00Z'
+      category: auth
+      action: login
+      event_id: 'signin'
+      host: cloud-lab-tenant
+      user: ana.ribeiro
+      ip: 198.51.100.21
+      product: cloud
+      provider: aws
+      new_country: false
+      country: PT
+      message: Successful console sign-in.

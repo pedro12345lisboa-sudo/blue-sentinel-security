@@ -1,0 +1,22 @@
+{
+  "description": "positive fixture for bs-web-sql-injection",
+  "event": {
+    "action": "http_request",
+    "category": "web",
+    "host": "WEB-LAB-01",
+    "ip": "203.0.113.77",
+    "method": "GET",
+    "path": "/search",
+    "process": "nginx",
+    "product": "generic",
+    "status": 500,
+    "timestamp": "2025-04-11T21:04:00Z",
+    "url": "/search?q=UNION%20SELECT%20password%20FROM%20accounts",
+    "user": "-"
+  },
+  "expect": [
+    "bs-web-sql-injection"
+  ],
+  "kind": "sigma",
+  "rule": "bs-web-sql-injection"
+}

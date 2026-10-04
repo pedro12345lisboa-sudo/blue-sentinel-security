@@ -1,0 +1,168 @@
+---
+title: 'SQL Injection em FastAPI: binds, allowlist de ORDER BY e o teste que falha com SQL concatenada'
+description: 'Binds, allowlist de ORDER BY e testes que provam que payload de SQL Injection não vira SQL — com código real do Blue-Sentinel.'
+date: '2026-10-03'
+updated: '2026-10-03'
+tags: ['Backend Security', 'FastAPI', 'SQL Injection', 'Python', 'OWASP']
+readingTime: 7
+cover: '/images/writeups/sql-injection-fastapi.png'
+series: 'Blue-Sentinel na prática · Parte 1 de 4'
+---
+
+
+Este é o primeiro texto da série **Blue-Sentinel na prática**, em quatro partes: nesta etapa blindo a camada de API do projeto (binds e allowlist de ordenação); depois vemos [da hipótese à regra Sigma](/writeups/da-hipotese-a-regra-sigma), [rate limiting com Redis](/writeups/rate-limiting-redis-janela-deslizante) e fecho com [o agente de coleta em C++](/writeups/agente-cpp-coleta-endpoint).
+
+<Callout type="info" title="Escopo">
+Toda linha de código citada aqui existe no repositório e é coberta por testes que rodam com `pytest` no `backend/`. Os links para o GitHub apontam para o `main`.
+</Callout>
+
+## O problema
+
+A API do Blue-Sentinel expõe o formulário de contato (`POST /api/v1/contact`) e um endpoint administrativo de listagem (`GET /api/v1/admin/messages`). Em ambos, dados vindos do cliente terminam perto do banco:
+
+- o **filtro de e-mail** no rate limit por hora usa o valor do payload;
+- a **listagem** aceita parâmetros de query (`sort`, `direction`) que descrevem o `ORDER BY`;
+- em algum momento alguém vai querer "consertar" uma query escrevendo SQL à mão.
+
+O painel de referência clássico continua valendo: qualquer string que alcance o texto de uma instrução SQL é superfície de ataque. Um `sort=created_at; DROP TABLE contact_messages` inocente já basta para demonstrar o risco — e no caso do filtro por e-mail, o payload `x' OR '1'='1` fecha a aspa, transforma a condição em verdadeira e devolve todas as linhas.
+
+Vale detalhar o segundo caso, porque é o que mais engana. Quem está olhando o código vê `ContactMessage.email == data.email` e pensa "está comparando, não concatenando" — e está certo, até alguém trocar a linha por `text(f"SELECT * FROM contact_messages WHERE email = '{data.email}'")` para "resolver" uma limitação do ORM, num commit de madrugada, com a suíte verde. Nenhum teste quebraria: os testes existentes só cobriam o caminho feliz. Por isso este artigo trata a query como artefato versionado com prova de correção, e não como código cuja segurança depende da memória de quem o escreveu.
+
+<Mermaid
+  chart={`flowchart LR
+    C[Request HTTP] --> V[Validacao Pydantic]
+    V --> S[Service]
+    S --> A{Ordenacao na allowlist?}
+    A -- nao --> E[400 ValidationError]
+    A -- sim --> B[Binds parametrizados]
+    B --> D[(PostgreSQL)]
+  `}
+  caption="Caminho de um request até o banco: a ordenação é validada antes e os filtros vão como binds."
+/>
+
+## Decisão: três camadas, e as alternativas descartadas
+
+**Decisão: parametrização/ORM para filtros + allowlist de colunas para `ORDER BY` + testes que travam as duas.**
+
+Alternativas descartadas:
+
+1. **"Remover aspas e palavras-chave" do input.** Listas negativas sempre escoram: `SLEEP` em hex, comentários alternativos (`/**/`), encoding duplo. Não é uma defesa, é um filtro de varredura.
+2. **Depender só do ORM.** O SQLAlchemy parametriza `WHERE` automaticamente, mas **`ORDER BY` aceita expressões brutas** — `text(user_input)` no ordenamento é injetável mesmo usando ORM no resto da query. O ORM cobre 90% do caminho e esconde o 10% perigoso.
+3. **"Só um WAF resolve".** WAF é defesa em profundidade, não substituto: regras genéricas atrasam ataques simples, mas qualquer payload fora da assinatura passa. Também não é algo que eu queira ser a única barreira num portfólio auditável.
+
+## Implementação
+
+### 1. Filtros como binds (ORM puro)
+
+No serviço de contato, a contagem que alimenta o limite por e-mail é uma query construída com expressões do SQLAlchemy — o valor do cliente vira parâmetro nomeado, nunca texto:
+
+```python
+count = await db.scalar(
+    select(func.count())
+    .select_from(ContactMessage)
+    .where(
+        ContactMessage.email == data.email,
+        ContactMessage.created_at >= one_hour_ago,
+    )
+)
+```
+
+([`backend/app/services/contact_service.py`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/backend/app/services/contact_service.py)) A SQL compilada contém `email = ?`; o payload fica no protocolo de parâmetros do driver, fora do texto interpretado pelo Postgres.
+
+### 2. Allowlist de ORDER BY
+
+A ordenação é o único ponto em que o usuário escolhe "o que" a query faz. Em [`app/security/sql_injection.py`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/backend/app/security/sql_injection.py) o valor do cliente só **seleciona** uma coluna já mapeada:
+
+```python
+key = (sort or default).strip()
+if key not in allowed:
+    raise UnsafeSortError(
+        f"sort field {key!r} is not allowed; use one of: {', '.join(sorted(allowed))}"
+    )
+
+order = (direction or "desc").strip().lower()
+if order not in SORT_DIRECTIONS:
+    raise UnsafeSortError(...)
+
+column = allowed[key]
+return statement.order_by(column.desc() if order == "desc" else column.asc())
+```
+
+A allowlist é explícita no serviço:
+
+```python
+MESSAGE_SORTABLE: dict[str, ColumnElement] = {
+    "created_at": ContactMessage.created_at,
+    "id": ContactMessage.id,
+    "subject": ContactMessage.subject,
+    "email": ContactMessage.email,
+}
+MESSAGE_SORT_DEFAULT = "created_at"
+```
+
+Note que a **direção** também é validada (`asc`/`desc` apenas): aceitar `direction=desc, (SELECT ...)` seria trocar um buraco por outro. E o default está no mesmo dicionário — um `MESSAGE_SORT_DEFAULT` fora da allowlist seria rejeitado no próprio `apply_sort`, porque quem define o default também precisa responder pela allowlist.
+
+`list_messages` valida a ordenação **antes** de tocar no banco e converte a violação em `ValidationError` (HTTP 400). O endpoint admin só repassa os query params ([`app/api/v1/admin.py`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/backend/app/api/v1/admin.py)).
+
+<Callout type="warning" title="ORDER BY é o buraco esquecido">
+Filtro mal sanitizado costuma quebrar `WHERE`; ordenação injetável costuma passar despercebida porque "ninguém injeta em ORDER BY". É justamente a cláusula que recebe texto cru com mais frequência.
+</Callout>
+
+### 3. Um guard que falha se alguém concatenar SQL
+
+O teste mais barato para regressão é uma varredura estática no diretório `app/`:
+
+```python
+FORBIDDEN_SQL_PATTERNS = (
+    re.compile(r"\btext\(\s*f['\"]"),
+    re.compile(r"\bexecute\(\s*f['\"]"),
+    re.compile(r"\bexec_driver_sql\(\s*f['\"]"),
+)
+```
+
+Se alguém escrever `text(f"SELECT ... {user_input}")`, a suíte fica vermelha no CI — não na revisão de código, não em produção.
+
+## Testes
+
+A suíte [`tests/unit/security/test_sql_safety.py`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/backend/tests/unit/security/test_sql_safety.py) tem 14 casos organizados em três provas:
+
+| Teste | O que prova |
+|-------|-------------|
+| `test_parametrized_filter_treats_payload_as_plain_string` | `email == "x' OR '1'='1"` devolve **0 linhas** e o payload **não aparece** na SQL compilada |
+| `test_antipattern_concatenated_sql_matches_every_row` | a versão concatenada (demonstração do anti-padrão) devolve **todas** as linhas |
+| `test_source_tree_contains_no_interpolated_sql` | nenhum `text(f"...)`/`execute(f"...)` em `app/` |
+| `test_allowlist_rejects_unknown_or_injected_sort` | `created_at; DROP TABLE contact_messages`, `password`, `1=1` → `UnsafeSortError` |
+| `test_list_messages_rejects_unsafe_sort_before_touching_the_db` | a validação acontece **antes** da primeira query (falha se qualquer `execute` for chamado) |
+
+O teste do anti-padrão é propositalmente "ao contrário": ele **espera** que a query concatenada seja injetável, documentando por que o guard existe. Quem nunca viu o payload funcionar costuma subestimar a diferença entre as duas versões.
+
+Vale detalhar o cenário dos testes, porque ele é o que torna a prova barata e reproduzível: um fixture `engine` cria um SQLite **em memória** (`create_engine("sqlite://")`), cria as tabelas com `Base.metadata.create_all` e o fixture `session` semeia duas mensagens de contato (`ana@example.com` e `beto@example.com`) antes de cada caso. Com isso, a diferença entre "payload tratado como dado" e "payload executado como SQL" não é discutida em code review — é observada na contagem de linhas retornadas, com o mesmo comando rodando na máquina de qualquer colaborador e no CI, sem container de banco, sem seed externa e sem estado compartilhado entre execuções. O teste do guard estático completa o trio varrendo o código-fonte em busca dos anti-padrões, de modo que uma regressão futura falha em duas frentes independentes: na semântica da consulta e na forma como ela foi escrita.
+
+## Resultado
+
+- **14/14 testes de segurança de SQL verdes** (suíte completa do backend: **206 testes passando**, [`pytest` no `backend/`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/backend/pytest.ini)).
+- Payload de boolean-based SQLi: **0 linhas** na versão parametrizada; **todas as linhas** na versão concatenada (medido pelo teste, SQLite em memória).
+- Tentativas de ordenação fora da allowlist respondem **400 VALIDATION_ERROR** sem chegar ao banco.
+- O guard estático varre `backend/app/**/*.py` — hoje, **0 ocorrências** de SQL por f-string.
+
+## Limitações
+
+- O guard é **heurístico**: ele pega `text(f"...")`, mas um `text("..." + x)` em concatenação espalhada por variáveis pode escapar (por isso ele fica ao lado da revisão de code, no lugar dela não).
+- Cobre SQL via SQLAlchemy; não protege contra injeção em LDAP, NoSQL ou ordem de comandos (argument injection) — vetores diferentes, testes diferentes.
+- A allowlist resolve `ORDER BY`; expressões arbitrárias em `HAVING`/`GROUP BY` continuariam sendo outro problema caso apareçam.
+- Escapar aspas manualmente (`replace("'", "''")`) também foi descartado: o escaping correto varia por dialeto e por tipo de valor (string, data, numérico), e uma única omissão anula a estratégia inteira. Bind parameter é a única abordagem em que o driver garante a separação entre dado e instrução de forma consistente.
+- Autenticação do endpoint admin é assunto de outro posto: listar mensagens com `ORDER BY` seguro continua exigindo `require_admin`.
+
+## Próximos passos
+
+- Estender o guard para detectar concatenação em variáveis (`SQL = base + x`) com análise de fluxo simples.
+- Adicionar teste de contrato do 400 no `TestClient` (hoje o caminho de serviço é testado, o HTTP completo ainda não).
+- Correlacionar com o [artigo 2 da série](/writeups/da-hipotese-a-regra-sigma): a regra `bs-web-sql-injection` do laboratório detecta exatamente o tipo de payload que este artigo usa como fixture.
+
+## Referências
+
+- [OWASP — SQL Injection Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html)
+- [OWASP — SQL Injection (WSTG)](https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.1-Testing_for_SQL_Oracle_MySQL_MSSQL_and_PostgreSQL)
+- [SQLAlchemy — Working with Core Queries (`text()` e bind params)](https://docs.sqlalchemy.org/en/20/core/sqlelement.html#sqlalchemy.sql.expression.text)
+- [MITRE ATT&CK T1190 — Exploit Public-Facing Application](https://attack.mitre.org/techniques/T1190/)
+- [CWE-89 — Improper Neutralization of Special Elements used in an SQL Command](https://cwe.mitre.org/data/definitions/89.html)

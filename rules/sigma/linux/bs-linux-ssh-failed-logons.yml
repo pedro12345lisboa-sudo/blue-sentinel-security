@@ -1,0 +1,57 @@
+title: Repeated Failed SSH Password Authentication
+id: f27656ba-f069-48b0-9738-c108221a6f20
+lab_id: bs-linux-ssh-failed-logons
+status: test
+description: >
+  The sshd service rejected several password authentications for the same
+  account - password guessing against an internet-facing or internal SSH
+  service. Synthetic lab rule - matches only fabricated BLUE-SENTINEL lab
+  events.
+author: Pedro Lisboa
+date: 2026/10/02
+references:
+  - https://attack.mitre.org/techniques/T1110/001/
+logsource:
+  product: linux
+  service: sshd
+detection:
+  selection:
+    category: auth
+    product: linux
+    action: failed_logon
+    service: sshd
+  condition: selection
+level: medium
+falsepositives:
+  - Users who mistype their passphrase behind a jump host
+  - Key scanners or monitoring probes that also test password auth
+  - Automated deployments with a stale credential
+response:
+  - Rate-limit the source IP at the firewall and review the account logon history
+  - Check whether key-based authentication is enforced for the account
+  - Confirm with the owner whether the attempts were theirs
+tags:
+  - attack.t1110_001
+lab_samples:
+  match:
+    - timestamp: '2024-06-19T02:14:00Z'
+      category: auth
+      action: failed_logon
+      event_id: 'sshd'
+      host: srv-lab-web-02
+      user: deploy
+      ip: 203.0.113.44
+      product: linux
+      service: sshd
+      message: Failed password for deploy from 203.0.113.44 port 51234 ssh2
+  no_match:
+    - timestamp: '2024-06-19T02:16:00Z'
+      category: auth
+      action: logon
+      event_id: 'sshd'
+      host: srv-lab-web-02
+      user: deploy
+      ip: 203.0.113.44
+      product: linux
+      service: sshd
+      message: Accepted password for deploy from 203.0.113.44 port 51234 ssh2

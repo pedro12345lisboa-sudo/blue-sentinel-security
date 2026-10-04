@@ -1,0 +1,42 @@
+---
+title: "Sudo grant outside the account's usual pattern"
+description: "An account with no privilege history receives sudo: the hunt that finds silent elevation before it becomes lateral movement."
+severity: high
+order: 3
+updated: "2026-10-03"
+hypothesis: "An account that never needed privilege has started running with sudo, suggesting elevation staged after credential compromise."
+technique: "T1548.003"
+techniqueName: "Abuse Elevation Control Mechanism: Sudo and Sudo Caching"
+dataSource: "auth.log and syslog from Linux servers (sudo and usermod events), with per-account execution history"
+query: |
+  SELECT
+    user,
+    command,
+    host,
+    COUNT(*)      AS executions,
+    MIN(ts)       AS first_seen
+  FROM sudo_events
+  WHERE ts >= now() - INTERVAL '7 days'
+  GROUP BY user, command, host
+  HAVING user NOT IN (
+      SELECT user
+      FROM sudo_events
+      WHERE ts < now() - INTERVAL '30 days'
+  )
+  ORDER BY first_seen DESC;
+normal: "Administrators with recurring sudo, backup accounts and automation services are routine and show up from day one. A long history with repeated commands is acceptable; a recent first occurrence, a command never used by that account or execution outside a maintenance window is anomalous."
+escalation: "Escalate to an incident when the first sudo run lines up with a recent logon from a new location, when the command modifies sudoers, cron or an SSH key, or when more than one account gains privilege within the same window. A first occurrence without those signals becomes a process check with the server owner."
+sigma: "Convert it into a first-occurrence Sigma rule: use `fieldssame` over `user` with a 30-day window, or keep the logic in the correlation layer, since plain Sigma does not retain history. A practical alternative: a change rule (`bs-linux-sudo-unusual-account`) with a short list of allowed service accounts in `notin`, documenting each entry in `falsepositives` and covering it with a negative fixture."
+labScenario: after-hours-login
+references:
+  - "MITRE ATT&CK T1548.003 — Abuse Elevation Control Mechanism: Sudo and Sudo Caching"
+  - "NIST SP 800-61 Rev. 2 — Computer Security Incident Handling Guide"
+---
+
+What separates routine from threat here is history, not the command itself: the same `sudo` is trivial for the administrator and revealing for the account that never used it.
+
+<Callout type="info" title="Read-only log access">The query aggregates events that have already been recorded. No step involves running sudo or modifying any server.</Callout>
+
+## How to use
+
+Run it weekly per server, compare against the maintenance calendar and hand first occurrences with no matching request to the privileged account playbook.

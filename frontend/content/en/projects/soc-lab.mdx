@@ -1,0 +1,90 @@
+---
+title: 'SOC Lab — Detection lab with synthetic events'
+description: 'Interactive lab with protected sessions, ticket-based WebSocket and detection scenarios mapped to MITRE ATT&CK.'
+date: '2024-03-10'
+tags: ['FastAPI', 'WebSocket', 'Sigma', 'MITRE ATT&CK', 'Next.js', 'PostgreSQL']
+highlight: true
+icon: 'Terminal'
+status: 'in evolution'
+links:
+  github: 'https://github.com/pedro12345lisboa-sudo/blue-sentinel-security'
+  demo: '/lab'
+---
+
+# SOC Lab
+
+A detection lab that runs in the browser: it generates synthetic security events, evaluates rules and shows the alert appearing. It is for studying detection without touching a real system.
+
+## Problem
+
+Studying detection requires an event, a rule and an alert at the same time. In a home lab this turns into a heavy setup: a SIEM to spin up, logs to fabricate, rules to write — and none of that fits in a 30-second demo.
+
+## Context
+
+The lab has to serve two audiences: people visiting the portfolio who want to see something happen, and me, who want to test rules and scenarios without risk. Constraints: no real machine data, no actual attacks, and the service has to be cheap to run — one Python process and one page.
+
+## Solution
+
+Two layers, with a clear boundary between demo and backend:
+
+- **Backend** (`backend/app/services/lab_service.py`): creates a session with a 30-minute TTL and returns a ticket; publishes 4 scenarios with an associated MITRE technique — PowerShell EncodedCommand (T1059.001), Suspicious Network Connection (T1071.001), Tool Transfer (T1105) and Registry Persistence (T1547.001).
+- **WebSocket** (`backend/app/api/v1/ws_lab.py`): authenticates with a short-lived ticket, accepts at most 3 simultaneous connections per IP, pings/pongs every 30s and closes the connection cleanly.
+- **Frontend** (`frontend/src/app/lab/page.tsx`): a dashboard with an event stream, search, filters by type and severity, statistics and a rules panel. It currently runs in demo mode with client-generated events.
+
+<Callout type="info" title="Synthetic events">
+All events are generated for demonstration. There is no real telemetry or production data anywhere in the flow.
+</Callout>
+
+## Architecture
+
+```text
+Navegador ──WS──▶ /api/v1/ws/lab/{session_id}?ticket=...
+                      │
+                      ├── valida ticket no PostgreSQL (LabSession)
+                      ├── limita 3 conexões por IP
+                      └── ping/pong a cada 30s
+                      │
+                      ▼
+              fila de eventos sintéticos
+                      │
+                      ▼
+              regras (4 cenários + técnicas MITRE)
+                      │
+                      ▼
+              alerta no painel do navegador
+```
+
+## Technical decisions and why
+
+| Decision | Why |
+|---------|---------|
+| Short-lived ticket instead of a long session | WebSocket has no comfortable authorization header. A single ticket, validated once at connection time, shrinks the reuse window. |
+| Limit of 3 connections per IP | Prevents a demo visit from exhausting resources. In-memory counter, no external dependency. |
+| Scenarios named after MITRE techniques | Ties the study to the framework recruiters look for, without memorizing isolated acronyms. |
+| Synthetic events on the client | The page stays interesting even when the API is down. The backend exists for session, ticket and scenarios. |
+| 30-minute session TTL | A demo session does not need to last; expiry avoids piling up dead records. |
+
+## Challenges
+
+- **Separating the demo from a real implementation.** The dashboard shows simulated events; saying so at every lab entrance was a content decision, not a code one.
+- **The detection engine does not exist yet.** The `backend/app/detection/` directory is empty: today the rules live in the presentation layer. That is the next step — moving evaluation to the backend with real Sigma.
+- **Rate limit without Redis.** The per-IP limit on the WebSocket is in memory and does not survive multiple replicas.
+
+## Results
+
+- 4 detection scenarios published via the API, each with a MITRE technique.
+- Connection protection: 3 connections per IP, ticket expires in 30 minutes.
+- [MEASURED METRIC — e.g.: latency from event to on-screen alert].
+- [MEASURED METRIC — e.g.: number of active rules in the dashboard].
+
+## Lessons
+
+1. **Start with the scenario, not the engine.** Having 4 defined scenarios unlocked UI, API and content at the same time.
+2. **A declared demo mode beats a hidden demo mode.** Visitors trust the page when it says what is fake.
+3. **WebSocket with a ticket takes little code.** The alternative (SSE + polling) would have made things worse with no upside.
+
+## Links
+
+- [Source code](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security)
+- [Open the lab](/lab)
+- [API scenarios](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/backend/app/services/lab_service.py)

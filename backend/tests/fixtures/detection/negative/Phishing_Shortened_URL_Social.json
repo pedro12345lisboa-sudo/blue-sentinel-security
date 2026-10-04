@@ -1,0 +1,18 @@
+{
+  "description": "negative fixture for Phishing_Shortened_URL_Social",
+  "event": {
+    "action": "file_create",
+    "category": "file",
+    "detail": "Changelog mirrored at bit.ly/rel-notes for the archive.",
+    "event_id": "11",
+    "host": "WS-LAB-02",
+    "ip": "198.51.100.10",
+    "path": "C:\\Users\\r.martins\\Documents\\release-note.txt",
+    "process": "notepad.exe",
+    "product": "windows",
+    "timestamp": "2025-06-01T12:21:00Z",
+    "user": "r.martins"
+  },
+  "kind": "yara",
+  "rule": "Phishing_Shortened_URL_Social"
+}

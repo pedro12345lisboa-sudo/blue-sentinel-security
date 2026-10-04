@@ -1,0 +1,61 @@
+title: Sudo Used by an Account Outside the Admin Allowlist
+id: cab5bd55-6df6-4733-8860-f67beed2cad9
+lab_id: bs-linux-sudo-unusual-account
+status: test
+description: >
+  An account that is not part of the operations allowlist elevated with
+  sudo - privilege escalation or living-off-the-land by a compromised
+  service user. Synthetic lab rule - matches only fabricated
+  BLUE-SENTINEL lab events.
+author: Pedro Lisboa
+date: 2026/10/02
+references:
+  - https://attack.mitre.org/techniques/T1548/003/
+logsource:
+  product: linux
+  service: sudo
+detection:
+  selection:
+    category: auth
+    product: linux
+    action: sudo
+  allowed_users:
+    user|notin:
+      - root
+      - deploy
+      - backup
+      - '-'
+  condition: selection and allowed_users
+level: high
+falsepositives:
+  - A new operator who has not been added to the allowlist yet
+  - Incident responders using an unmanaged account during an investigation
+response:
+  - Confirm the command that was run with elevated privileges
+  - Check the account's shell history and the parent SSH session
+  - Remove the sudoers entry that allowed the elevation
+tags:
+  - attack.t1548_003
+lab_samples:
+  match:
+    - timestamp: '2024-09-14T11:02:30Z'
+      category: auth
+      action: sudo
+      event_id: 'sudo'
+      host: srv-lab-api-05
+      user: www-data
+      ip: 198.51.100.82
+      product: linux
+      service: sudo
+      message: 'www-data : TTY=pts/0 ; PWD=/var/www ; COMMAND=/usr/bin/id'
+  no_match:
+    - timestamp: '2024-09-14T11:03:00Z'
+      category: auth
+      action: sudo
+      event_id: 'sudo'
+      host: srv-lab-api-05
+      user: deploy
+      ip: 198.51.100.82
+      product: linux
+      service: sudo
+      message: 'deploy : TTY=pts/0 ; PWD=/opt ; COMMAND=/usr/bin/systemctl restart api'
