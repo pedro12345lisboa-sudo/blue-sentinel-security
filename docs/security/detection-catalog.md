@@ -96,6 +96,15 @@ Each file carries `meta`: `id` (`bs-yara-…`), `uuid`, `description`,
 `author`, `date`, `level`, `mitre`, `false_positive` and `response` — all
 enforced by the validator.
 
+Notes:
+
+- The scanner (`backend/app/detection/yara_scanner.py`) supports the `ascii`,
+  `nocase`, `wide` and `fullword` string modifiers and the condition operators
+  `and`, `or`, `not`, `any of them`, `all of them`, `N of them` and
+  `N of ($a*, $b)`. When the optional native `yara-python` package is
+  installed it replaces the built-in subset parser (reported as
+  `yara_engine: yara-python` in the session report, otherwise `builtin`).
+
 ---
 
 ## 3. Correlation patterns (3)

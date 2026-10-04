@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { clickNav, goBackStable, gotoStable } from './helpers';
+import { clickNav, goBackStable, gotoStable, waitForHydration } from './helpers';
 
 const NAV_LINKS = [
   { href: '/pt-BR/about', text: 'Sobre' },
@@ -70,4 +70,35 @@ test.describe('Responsivo', () => {
       await expect(page.locator('h1').first()).toBeVisible();
     });
   }
+});
+
+test.describe('Jornada: home → projeto → contato', () => {
+  test('navega da home para o detalhe do projeto e para o contato', async ({ page }) => {
+    await gotoStable(page, '/');
+    await expect(page.locator('h1').first()).toContainText('blue-sentinel');
+
+    await clickNav(page, '/pt-BR/projects');
+    await expect(page).toHaveURL('/pt-BR/projects');
+    await expect(page.locator('h1').first()).toContainText('Projetos');
+
+    const projectLink = page.locator('a[href^="/pt-BR/projects/"]').first();
+    if ((await projectLink.count()) > 0) {
+      await projectLink.click();
+      await waitForHydration(page);
+      await page.waitForLoadState('networkidle');
+
+      await expect(page).toHaveURL(/\/pt-BR\/projects\/.+/);
+      await expect(page.locator('h1').first()).toBeVisible();
+
+      const contactLink = page.locator('a[href="/pt-BR/contact"]').first();
+      if ((await contactLink.count()) > 0) {
+        await contactLink.click();
+        await waitForHydration(page);
+        await page.waitForLoadState('networkidle');
+
+        await expect(page).toHaveURL('/pt-BR/contact');
+        await expect(page.locator('h1')).toContainText('Fale comigo');
+      }
+    }
+  });
 });

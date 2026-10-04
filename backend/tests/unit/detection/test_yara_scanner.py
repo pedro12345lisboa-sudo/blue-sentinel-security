@@ -107,6 +107,15 @@ def test_every_published_rule_carries_metadata(scanner: YaraScanner) -> None:
         assert rule.strings, name
 
 
+def test_published_rule_metadata_is_specific(scanner: YaraScanner) -> None:
+    rule = scanner.rules["Suspicious_Encoded_Chain"]
+    assert rule.level == "high"
+    assert rule.mitre == ("T1027",)
+    assert rule.lab_id == "bs-yara-encoded-chain"
+    assert rule.meta["uuid"] == "8bb3ea83-9375-4de6-87df-b08bdbfa1d35"
+    assert rule.false_positives and rule.response
+
+
 @pytest.mark.parametrize("rule_name", sorted(PUBLISHED))
 def test_positive_fixture_matches_its_rule(scanner: YaraScanner, rule_name: str) -> None:
     from app.collectors.normalizer import normalize
@@ -185,6 +194,10 @@ def test_wide_flag_matches_utf16_text() -> None:
         ("all of them", "lab-canary second-canary", False),
         ("1 of ($a, $b)", "just second-canary", True),
         ("1 of ($a, $b)", "nothing here", False),
+        ("all of ($a, $b)", "lab-canary second-canary tail-mark", True),
+        ("all of ($a, $b)", "lab-canary tail-mark", False),
+        ("all of ($a, $b) or $c", "tail-mark alone", True),
+        ("all of ($a, $b) or $c", "lab-canary", False),
         ("$a and not $b", "lab-canary", True),
         ("$a and not $b", "lab-canary second-canary", False),
         ("any of ($g*)", "a marker-glob one", True),
