@@ -27,9 +27,13 @@ httpx==0.28.1
 
 # Monitoring & Metrics
 psutil==7.2.2
+prometheus_client==0.26.0
 
 # Utilities
 PyYAML==6.0.3
+# Brotli é opcional em runtime (fallback para gzip), mas fica pinado para o
+# CI e as imagens terem content-encoding "br" deterministicamente.
+brotli==1.2.0
 
 # Testing (pytest cobre unit/integration/contract/security — ver docs/testing.md)
 pytest==9.1.1

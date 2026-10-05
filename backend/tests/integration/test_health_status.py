@@ -19,12 +19,36 @@ async def test_liveness_is_ok(client):
     assert resp.json() == {"status": "ok"}
 
 
-async def test_readiness_all_dependencies_ok(client):
+async def test_readiness_all_dependencies_ok(client, monkeypatch):
+    # Hermético: o resultado não pode depender do disco da máquina que roda a
+    # suíte (o check real de disco é coberto por test_readiness_disk_critical).
+    from app.monitoring import health_check
+    from app.monitoring.health_check import CheckResult
+
+    monkeypatch.setattr(
+        health_check, "check_disk", lambda: CheckResult("disk", True, 0.0, "ok", 0.0)
+    )
+
     resp = await client.get("/api/v1/health/ready")
     assert resp.status_code == 200
     body = resp.json()
     assert body["status"] == "ok"
-    assert body["checks"] == {"database": "ok", "cache": "ok"}
+    assert body["checks"] == {"database": "ok", "cache": "ok", "disk": "ok"}
+
+
+async def test_readiness_disk_critical_reports_degraded(client, monkeypatch):
+    """Disco acima do limite crítico (90%) derruba o readiness para degraded."""
+    from app.monitoring import health_check
+    from app.monitoring.health_check import CheckResult
+
+    monkeypatch.setattr(
+        health_check, "check_disk", lambda: CheckResult("disk", False, 0.0, "95.0%", 95.0)
+    )
+
+    resp = await client.get("/api/v1/health/ready")
+    body = resp.json()
+    assert body["status"] == "degraded"
+    assert body["checks"]["disk"] == "fail"
 
 
 async def test_readiness_degrades_when_cache_is_down(client):

@@ -5,6 +5,7 @@ from __future__ import annotations
 import httpx
 
 from app.cache.redis import get_redis
+from app.core.config import settings
 from app.services.github_service import CACHE_TTL, GitHubService
 
 REPOS = [
@@ -57,7 +58,9 @@ async def test_stats_from_api_then_cached(client):
     assert first.featured_repos[0].name == "blue-sentinel"
 
     ttl = await get_redis().ttl("github:stats")
-    assert 0 < ttl <= CACHE_TTL
+    # TTL leva jitter simétrico de ±CACHE_JITTER_RATIO em torno do base.
+    max_ttl = int(CACHE_TTL * (1 + settings.cache_jitter_ratio)) + 1
+    assert 0 < ttl <= max_ttl
 
 
 async def test_api_unreachable_returns_fallback(client):
