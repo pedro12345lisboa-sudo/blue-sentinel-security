@@ -1,9 +1,8 @@
-import json
 import logging
 
 import httpx
 
-from app.cache.redis import get_redis
+from app.cache.cache_manager import CacheManager
 from app.core.config import settings
 from app.core.errors import BlueSentinelError
 from app.schemas.github import GitHubStatsResponse, GitHubRepoStats
@@ -11,6 +10,30 @@ from app.schemas.github import GitHubStatsResponse, GitHubRepoStats
 logger = logging.getLogger(__name__)
 
 CACHE_TTL = 3600  # 1 hour
+
+
+def _dump(stats: GitHubStatsResponse) -> str:
+    return stats.model_dump_json()
+
+
+def _load(raw: str) -> GitHubStatsResponse:
+    return GitHubStatsResponse.model_validate_json(raw)
+
+
+# Cache-aside com TTL + jitter, lock anti-stampede e espelho stale (fallback
+# quando a API do GitHub falha — ver app/cache/cache_manager.py).
+stats_cache = CacheManager(ttl=CACHE_TTL, serializer=_dump, deserializer=_load)
+
+
+def _empty_stats(username: str) -> GitHubStatsResponse:
+    return GitHubStatsResponse(
+        username=username,
+        total_repos=0,
+        total_stars=0,
+        total_forks=0,
+        featured_repos=[],
+        cached=False,
+    )
 
 
 class GitHubService:
@@ -30,23 +53,6 @@ class GitHubService:
 
     async def __aexit__(self, *exc):
         await self.client.aclose()
-
-    async def _cache_get(self) -> GitHubStatsResponse | None:
-        try:
-            raw = await get_redis().get("github:stats")
-            if raw:
-                return GitHubStatsResponse.model_validate_json(raw)
-        except Exception:
-            logger.warning("Redis read failed", exc_info=True)
-        return None
-
-    async def _cache_set(self, stats: GitHubStatsResponse) -> None:
-        try:
-            await get_redis().setex(
-                "github:stats", CACHE_TTL, stats.model_dump_json()
-            )
-        except Exception:
-            logger.warning("Redis write failed", exc_info=True)
 
     async def _fetch_from_api(self) -> GitHubStatsResponse:
         try:
@@ -91,24 +97,18 @@ class GitHubService:
         )
 
     async def get_stats(self) -> GitHubStatsResponse:
-        cached = await self._cache_get()
-        if cached:
-            cached.cached = True
-            return cached
-
         try:
-            stats = await self._fetch_from_api()
-        except BlueSentinelError:
-            # Fallback: return empty stats instead of failing the page
-            logger.warning("GitHub API failed, serving fallback")
-            return GitHubStatsResponse(
-                username=self.username,
-                total_repos=0,
-                total_stars=0,
-                total_forks=0,
-                featured_repos=[],
-                cached=False,
+            result = await stats_cache.get_or_set(
+                "github:stats",
+                lambda: self._fetch_from_api(),
             )
+        except BlueSentinelError:
+            # Sem cache stale: devolve vazio em vez de derrubar a página.
+            logger.warning("GitHub API failed and no stale value, serving fallback")
+            return _empty_stats(self.username)
 
-        await self._cache_set(stats)
+        stats = result.value
+        stats.cached = result.hit
+        if result.stale:
+            logger.warning("Serving stale GitHub stats (API unavailable)")
         return stats
