@@ -1,0 +1,45 @@
+# Blue-Sentinel — Caddyfile para depuração SEM o proxy do Cloudflare
+# (DNS-only, certificação manual, testes de TLS direto no origin).
+#
+# Uso: CADDY_CONFIG=Caddyfile.direct no .env.prod e reiniciar o Caddy:
+#   docker compose --env-file .env.prod -f docker-compose.prod.yml restart caddy
+#
+# Diferenças do Caddyfile principal:
+#   - NÃO filtra por faixa do Cloudflare (aceita qualquer IP);
+#   - NÃO lê CF-Connecting-IP (X-Forwarded-For volta a ser o IP do cliente
+#     direto, definido pelo próprio Caddy).
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	tls {
+		dns cloudflare {$CF_DNS_API_TOKEN}
+		protocols tls1.2 tls1.3
+	}
+
+	encode gzip zstd
+
+	request_body {
+		max_size 1mb
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	}
+
+	log {
+		output stdout
+		format json
+	}
+
+	@api path /api/v1/*
+
+	handle @api {
+		reverse_proxy backend:8000
+	}
+
+	handle {
+		reverse_proxy frontend:3000
+	}
+}

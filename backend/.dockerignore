@@ -1,0 +1,13 @@
+# Contexto = ./backend. Mantém a imagem enxuta e sem arquivos sensíveis.
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.hypothesis/
+htmlcov/
+.coverage
+tests/
+test.db
+*.log

@@ -1,0 +1,382 @@
+# Blue-Sentinel — stack de PRODUÇÃO (uma VPS, Cloudflare na frente).
+#
+# Uso real (na raiz do repositório):
+#   ./scripts/deployment/deploy.sh <tag>        # pull por tag + migrations + health gate
+#   ./scripts/deployment/rollback.sh            # volta para a tag anterior
+#
+# Manual (equivalente ao que o deploy.sh faz):
+#   docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
+#
+# Diferenças explícitas vs. docker-compose.yml (dev) — matriz completa em
+# docs/architecture/infrastructure.md:
+#   * imagens por TAG (pull do registro); `build:` é fallback com deploy.sh --build
+#   * só o Caddy publica portas (80/443); postgres/redis/backend/frontend ficam
+#     em redes sem porta pública (scan de 5432/6379 dá "connection refused")
+#   * segredos do banco/chaves via Docker secrets (secrets/, modo 600, fora do Git)
+#   * read_only + cap_drop: ALL + no-new-privileges em todos os serviços
+#   * limites de CPU/memória/pids, healthchecks e rotação de logs
+#   * TLS automático (DNS-01 Cloudflare) e HSTS no proxy
+#   * nunca usa `down -v` — volumes nomeados são a fonte de dados
+#
+# Subir manualmente exige IMAGE_TAG e DOMAIN no .env.prod.
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+# Nome fixo do projeto (volumes/redes). Staging em outro host pode usar
+# COMPOSE_PROJECT_NAME diferente.
+name: ${COMPOSE_PROJECT_NAME:-blue-sentinel}
+
+services:
+  # ---------------------------------------------------------------------
+  # Proxy: único ponto de entrada. TLS Let's Encrypt via DNS-01 (sem
+  # dependência de HTTP-01) e só aceita origem Cloudflare (Caddyfile).
+  # ---------------------------------------------------------------------
+  caddy:
+    image: ${IMAGE_REGISTRY:-ghcr.io/pedro12345lisboa-sudo}/blue-sentinel-caddy:${IMAGE_TAG:?Defina IMAGE_TAG no .env.prod}
+    build: ./docker/caddy
+    restart: unless-stopped
+    entrypoint: ["/usr/local/bin/load-secrets.sh"]
+    command:
+      - caddy
+      - run
+      - --config
+      - /etc/caddy/${CADDY_CONFIG:-Caddyfile}
+      - --adapter
+      - caddyfile
+    environment:
+      DOMAIN: ${DOMAIN:?Defina DOMAIN no .env.prod}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+      TZ: ${TZ:-UTC}
+    secrets:
+      - cf_dns_api_token
+    ports:
+      - "80:80"
+      - "443:443"
+      # HTTP/3 (QUIC) fica de fora de propósito: o visitante conversa com o
+      # Cloudflare, não com o origin. Basta reativar "443:443/udp" se mudar.
+    volumes:
+      - ./docker/caddy:/etc/caddy:ro
+      - ./docker/load-secrets.sh:/usr/local/bin/load-secrets.sh:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - type: tmpfs
+        target: /tmp
+        tmpfs:
+          mode: "1777"
+    networks:
+      - edge
+    read_only: true
+    cap_drop:
+      - ALL
+    # Usuário não-root liga 80/443 sem capabilities (kernel >= 4.11).
+    # Fallback em kernel antigo: cap_add: [NET_BIND_SERVICE].
+    sysctls:
+      net.ipv4.ip_unprivileged_port_start: "0"
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 200
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:2019/config/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
+        reservations:
+          cpus: "0.10"
+          memory: 32M
+    logging: *default-logging
+
+  # ---------------------------------------------------------------------
+  # Banco: rede interna, sem porta publicada, senha via Docker secret.
+  # `user: postgres` evita a fase root do entrypoint (chown). Se um volume
+  # antigo foi criado como root, corrigir com:
+  #   docker compose run --rm --user root postgres chown -R postgres:postgres /var/lib/postgresql/data
+  # ---------------------------------------------------------------------
+  postgres:
+    image: ${POSTGRES_IMAGE:-postgres:16-alpine}
+    restart: unless-stopped
+    user: postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-blue_sentinel}
+      POSTGRES_USER: ${POSTGRES_USER:-sentinel}
+      # O entrypoint oficial lê o arquivo diretamente (suporte nativo a _FILE).
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - type: tmpfs
+        target: /var/run/postgresql
+        tmpfs:
+          mode: "1777"
+      - type: tmpfs
+        target: /tmp
+        tmpfs:
+          mode: "1777"
+    networks:
+      - backend
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 200
+    stop_grace_period: 30s
+    shm_size: 128m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+    logging: *default-logging
+
+  # ---------------------------------------------------------------------
+  # Cache/fila: rede interna, sem porta publicada, SEM senha por decisão
+  # (não há porta pública nem outro projeto na rede; adicionar
+  # requirepass + REDIS_PASSWORD se isso mudar).
+  # Persistência = só AOF: a fila de e-mails do formulário mora aqui e não
+  # pode sumir no restart. Chaves com TTL (cache) são descartáveis — por isso
+  # volatile-lru e não allkeys-lru: nunca eviciona a fila.
+  # ---------------------------------------------------------------------
+  redis:
+    image: ${REDIS_IMAGE:-redis:7-alpine}
+    restart: unless-stopped
+    user: redis
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --appendfsync
+      - everysec
+      - --save
+      - ""
+      - --maxmemory
+      - 192mb
+      - --maxmemory-policy
+      - volatile-lru
+    volumes:
+      - redis_data:/data
+      - type: tmpfs
+        target: /tmp
+        tmpfs:
+          mode: "1777"
+    networks:
+      - backend
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 200
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+        reservations:
+          cpus: "0.10"
+          memory: 64M
+    logging: *default-logging
+
+  # ---------------------------------------------------------------------
+  # API. Senhas entram pelo load-secrets.sh (Docker secrets), não pelo env.
+  # --proxy-headers faz o uvicorn confiar em X-Forwarded-For/-Proto do Caddy
+  # (IP real do visitante p/ rate limit por IP).
+  # ---------------------------------------------------------------------
+  backend:
+    image: ${IMAGE_REGISTRY:-ghcr.io/pedro12345lisboa-sudo}/blue-sentinel-backend:${IMAGE_TAG:?Defina IMAGE_TAG no .env.prod}
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    entrypoint: ["/usr/local/bin/load-secrets.sh"]
+    command:
+      - uvicorn
+      - main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --proxy-headers
+      - "--forwarded-allow-ips=*"
+    environment:
+      TZ: ${TZ:-UTC}
+      DEBUG: "false"
+      POSTGRES_DB: ${POSTGRES_DB:-blue_sentinel}
+      POSTGRES_USER: ${POSTGRES_USER:-sentinel}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      # Com Redis fora do ar o limite de contato fecha em vez de abrir mão
+      # da defesa (o Cloudflare já limita na borda; aqui é a segunda camada).
+      RATE_LIMIT_FAIL_CLOSED: "true"
+      API_V1_STR: /api/v1
+      # Alvo do CORS (a aplicação usa ALLOWED_HOSTS como lista de origens).
+      ALLOWED_HOSTS: https://${DOMAIN:?Defina DOMAIN no .env.prod}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-smtp}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: "${SMTP_PORT:-587}"
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      EMAIL_TO: ${EMAIL_TO:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      GITHUB_USERNAME: ${GITHUB_USERNAME:-}
+      CONTACT_RETENTION_DAYS: ${CONTACT_RETENTION_DAYS:-90}
+    secrets:
+      - postgres_password
+      - secret_key
+      - agent_api_key
+      - agent_hmac_secret
+      - smtp_password
+    volumes:
+      - ./rules:/rules:ro
+      - ./docker/load-secrets.sh:/usr/local/bin/load-secrets.sh:ro
+      - type: tmpfs
+        target: /tmp
+        tmpfs:
+          mode: "1777"
+    networks:
+      - edge
+      - backend
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 300
+    stop_grace_period: 30s
+    healthcheck:
+      # /health/ready responde 200 mesmo "degraded": o grep garante que
+      # Postgres + Redis + disco estão de fato OK antes do deploy seguir.
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/api/v1/health/ready | grep -q '\"status\":\"ok\"'"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.00"
+          memory: 768M
+        reservations:
+          cpus: "0.50"
+          memory: 256M
+    logging: *default-logging
+
+  # ---------------------------------------------------------------------
+  # Frontend (Next.js standalone). BACKEND_INTERNAL_URL é usada só nos
+  # rewrites do servidor (next.config.js); o cliente usa caminhos
+  # same-origin e o Caddy encaminha /api/v1/* direto ao backend.
+  # ---------------------------------------------------------------------
+  frontend:
+    image: ${IMAGE_REGISTRY:-ghcr.io/pedro12345lisboa-sudo}/blue-sentinel-frontend:${IMAGE_TAG:?Defina IMAGE_TAG no .env.prod}
+    build: ./frontend
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+      BACKEND_INTERNAL_URL: http://backend:8000
+    volumes:
+      - type: tmpfs
+        target: /tmp
+        tmpfs:
+          mode: "1777"
+      # Cache de ISR/revalidação: efêmero de propósito (se perder, reconstrói).
+      - type: tmpfs
+        target: /app/.next/cache
+        tmpfs:
+          mode: "1777"
+    networks:
+      - edge
+      - backend
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 300
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+    logging: *default-logging
+
+# Não existe serviço "worker" em produção: o envio de e-mail do formulário
+# roda como BackgroundTasks dentro do backend (app/api/v1/contact.py). O
+# módulo backend/app/workers/event_worker.py ainda é um placeholder vazio.
+
+networks:
+  # Caddy + app: única rede com saída externa (ACME DNS-01, GitHub API).
+  edge:
+    driver: bridge
+  # Banco e cache: somente entre si e a API — sem rota para a internet,
+  # sem porta publicada. `internal: true` garante que nem o firewall do
+  # host precisa ser a última linha de defesa aqui.
+  backend:
+    driver: bridge
+    internal: true
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+
+# Senhas/chaves vivem em ./secrets/* (fora do Git, chmod 600). Gerados por
+# `deploy.sh init` e rotacionados conforme docs/architecture/runbook.md.
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password
+  smtp_password:
+    file: ./secrets/smtp_password
+  agent_api_key:
+    file: ./secrets/agent_api_key
+  agent_hmac_secret:
+    file: ./secrets/agent_hmac_secret
+  secret_key:
+    file: ./secrets/secret_key
+  cf_dns_api_token:
+    file: ./secrets/cf_dns_api_token

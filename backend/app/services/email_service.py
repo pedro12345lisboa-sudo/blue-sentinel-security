@@ -37,13 +37,15 @@ class EmailService:
                 f"{message}"
             )
 
+            # 465 = TLS implícita (SMTPS); 587/25 = plaintext + STARTTLS.
+            # use_tls=True em 587 faria handshake TLS antes do EHLO e falharia.
             await aiosmtplib.send(
                 msg,
                 hostname=settings.smtp_host,
                 port=settings.smtp_port,
                 username=settings.smtp_user or None,
                 password=settings.smtp_password or None,
-                use_tls=settings.smtp_port in (465, 587),
+                use_tls=settings.smtp_port == 465,
             )
             logger.info("Email sent to=%s", settings.email_to)
             return True

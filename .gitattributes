@@ -1,0 +1,4 @@
+# Shell scripts sempre com LF — bash recusa CRLF (execução no servidor Linux).
+*.sh text eol=lf
+Caddyfile text eol=lf
+Dockerfile text eol=lf

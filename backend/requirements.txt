@@ -25,6 +25,10 @@ cryptography==50.0.2
 # HTTP Client
 httpx==0.28.1
 
+# SMTP transacional (formulário de contato) — importado sob demanda no
+# EmailService; precisa existir na imagem de produção.
+aiosmtplib==5.1.3
+
 # Monitoring & Metrics
 psutil==7.2.2
 prometheus_client==0.26.0

@@ -2,7 +2,12 @@ import useSWR from 'swr';
 import type { ProjectFrontmatter } from '@/lib/projects';
 import type { WriteupFrontmatter } from '@/lib/writeups';
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+/**
+ * Base para chamadas à API. Vazio = same-origin (produção: o Caddy encaminha
+ * `/api/v1/*` para o backend). Em dev, `next.config.js` faz o rewrite para
+ * `BACKEND_INTERNAL_URL`. `NEXT_PUBLIC_API_URL` sobrescreve quando preciso.
+ */
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
 
 /**
  * Erros da API chegam como CÓDIGO (`error.code` / `code` / `error`), nunca

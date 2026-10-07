@@ -50,9 +50,36 @@ async def test_with_smtp_sends_via_aiosmtplib(smtp_configured, monkeypatch):
     assert result is True
     assert captured["hostname"] == "smtp.example.test"
     assert captured["port"] == 587
-    assert captured["use_tls"] is True
+    # 587 fala plaintext e sobe com STARTTLS — TLS implícita quebraria aqui.
+    assert captured["use_tls"] is False
     assert captured["subject"] == "[Blue-Sentinel] Orçamento"
     assert "ana@example.com" in captured["body"]
+
+
+async def test_smtps_465_uses_implicit_tls(monkeypatch):
+    monkeypatch.setattr(settings, "smtp_host", "smtp.example.test")
+    monkeypatch.setattr(settings, "smtp_port", 465)
+    monkeypatch.setattr(settings, "smtp_user", "user")
+    monkeypatch.setattr(settings, "smtp_password", "secret")
+    monkeypatch.setattr(settings, "smtp_from", "noreply@example.test")
+    monkeypatch.setattr(settings, "email_to", "owner@example.test")
+
+    captured: dict = {}
+    fake = types.ModuleType("aiosmtplib")
+
+    async def _send(message, **kwargs):
+        captured.update(kwargs)
+
+    fake.send = _send  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "aiosmtplib", fake)
+
+    result = await EmailService.send_contact_notification(
+        name="Ana", email="ana@example.com", subject="oi", message="corpo"
+    )
+
+    assert result is True
+    assert captured["port"] == 465
+    assert captured["use_tls"] is True
 
 
 async def test_send_failure_returns_false(smtp_configured, monkeypatch):
@@ -71,7 +98,8 @@ async def test_send_failure_returns_false(smtp_configured, monkeypatch):
 
 
 async def test_missing_aiosmtplib_returns_false(smtp_configured, monkeypatch):
-    monkeypatch.delitem(sys.modules, "aiosmtplib", raising=False)
+    # sys.modules=None força ImportError mesmo com o pacote instalado.
+    monkeypatch.setitem(sys.modules, "aiosmtplib", None)
 
     result = await EmailService.send_contact_notification(
         name="Ana", email="ana@example.com", subject="oi", message="corpo"

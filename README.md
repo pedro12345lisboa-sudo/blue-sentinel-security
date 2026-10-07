@@ -37,6 +37,43 @@ docker compose up --build
 # Health: http://localhost:8000/api/v1/health/ready
 ```
 
+## Production
+
+Produção roda atrás do **Cloudflare** com **Caddy** (TLS automático via
+DNS-01), firewall Cloudflare-only nas portas Docker, backups criptografados
+(age) sincronizados em S3 (rclone) e deploy por tag com gate de saúde +
+rollback automático.
+
+```bash
+sudo ./scripts/setup/install-docker.sh $USER   # Docker + age/rclone/UFW
+sudo ./scripts/setup/harden-server.sh          # firewall, sysctl, fail2ban
+./scripts/deployment/deploy.sh init            # .env.prod + secrets
+./scripts/deployment/deploy.sh v0.1.0          # deploy da tag publicada no GHCR
+sudo ./scripts/deployment/backup.sh --install-cron   # backup diário + teste mensal
+```
+
+| Script | Função |
+|--------|--------|
+| `scripts/deployment/deploy.sh` | `init` \| `<tag>` — pull, migrations, health gate, rollback automático |
+| `scripts/deployment/rollback.sh` | Volta para tag anterior (ou `--list`) |
+| `scripts/deployment/healthcheck.sh` | Containers, HTTPS, portas fechadas, cert, disco (`--wait` / `--quiet`) |
+| `scripts/deployment/backup.sh` | Dump + age + rclone + retenção (`--verify`, `--install-cron`) |
+| `scripts/deployment/restore.sh` | `--test` (PG temporário) ou restore real do banco |
+| `scripts/setup/*.sh` | Instalação e hardening do servidor |
+
+Docs operacionais (PT):
+
+- [docs/architecture/infrastructure.md](docs/architecture/infrastructure.md) —
+  topologia, portas, TLS, segredos, firewall, imagens.
+- [docs/architecture/runbook.md](docs/architecture/runbook.md) —
+  dia a dia, deploy/rollback, incidentes, checklist mensal.
+- [docs/architecture/disaster-recovery.md](docs/architecture/disaster-recovery.md) —
+  RPO/RTO, criptografia/escrow, playbooks de restauração.
+
+Release: `git tag v0.1.0 && git push origin v0.1.0` publica as imagens
+(`.github/workflows/release.yml`) em
+`ghcr.io/pedro12345lisboa-sudo/blue-sentinel-{caddy,backend,frontend}`.
+
 ## Project Structure
 
 ```

@@ -62,11 +62,14 @@ services:
       redis:
         condition: service_healthy
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-sentinel}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/blue_sentinel
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-sentinel}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/blue_sentinel
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - AGENT_API_KEY=${AGENT_API_KEY:-dev-agent-key}
       - AGENT_HMAC_SECRET=${AGENT_HMAC_SECRET:-dev-hmac-secret}
+    volumes:
+      # Motor de detecção resolve <repo>/rules via parents[3] (=/rules no container)
+      - ./rules:/rules:ro
     ports:
       - "8000:8000"
     healthcheck:
@@ -100,14 +103,14 @@ services:
       redis:
         condition: service_healthy
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-sentinel}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/blue_sentinel
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-sentinel}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/blue_sentinel
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - AGENT_API_KEY=${AGENT_API_KEY:-dev-agent-key}
       - AGENT_HMAC_SECRET=${AGENT_HMAC_SECRET:-dev-hmac-secret}
     command: >
       sh -c "while true; do
-        python -m backend.app.workers.event_worker;
+        python -m app.workers.event_worker;
         sleep 5;
       done"
     networks:
@@ -128,7 +131,9 @@ services:
     container_name: blue-sentinel-frontend
     restart: unless-stopped
     environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8000
+      # URL interna usada apenas nos rewrites do servidor (next.config.js).
+      # O bundle do cliente usa caminhos same-origin (API_BASE vazio).
+      - BACKEND_INTERNAL_URL=http://backend:8000
     ports:
       - "3000:3000"
     networks:

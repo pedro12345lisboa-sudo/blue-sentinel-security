@@ -69,3 +69,10 @@ test-results/
 coverage/
 .next/
 node_modules/
+
+# Producao (nunca commitar)
+.env.prod
+.env.staging
+.deploy-history
+backups/
+logs/

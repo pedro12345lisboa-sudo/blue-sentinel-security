@@ -27,10 +27,18 @@ const nextConfig = {
     mdxRs: false,
   },
   async rewrites() {
+    // BACKEND_INTERNAL_URL é lida só no servidor (rewrite) — o cliente usa
+    // caminhos same-origin (`API_BASE` vazio) e em produção o Caddy encaminha
+    // `/api/v1/*` direto ao backend, sem passar pelo Next.
+    const backend = process.env.BACKEND_INTERNAL_URL || 'http://localhost:8000';
     return [
       {
         source: '/api/backend/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/:path*`,
+        destination: `${backend}/:path*`,
+      },
+      {
+        source: '/api/v1/:path*',
+        destination: `${backend}/api/v1/:path*`,
       },
     ];
   },

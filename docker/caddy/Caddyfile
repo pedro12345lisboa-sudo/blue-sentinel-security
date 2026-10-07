@@ -1,0 +1,77 @@
+# Blue-Sentinel — proxy reverso de produção (Caddy atrás do Cloudflare).
+#
+# - TLS automático via ACME DNS-01 (módulo caddy-dns/cloudflare — ver Dockerfile).
+#   Não depende de HTTP-01: o proxy do Cloudflare nunca precisa repassar
+#   /.well-known/acme-challenge/*.
+# - Aceita tráfego SOMENTE das faixas do Cloudflare (matcher @cf). Se o IP de
+#   origem for descoberto, o acesso direto recebe 403. Para depurar sem o CF
+#   (DNS-only), use CADDY_CONFIG=Caddyfile.direct.
+# - HTTP -> HTTPS, HSTS, compressão (gzip/zstd) e limite de corpo de 1 MB.
+# - Cabeçalhos da aplicação (Next.js/FastAPI) são preservados; aqui só
+#   adicionamos HSTS.
+#
+# Variáveis obrigatórias: DOMAIN, ACME_EMAIL, CF_DNS_API_TOKEN.
+# Caddy roda como usuário não-root (USER caddy) com
+# net.ipv4.ip_unprivileged_port_start=0 (ver docker-compose.prod.yml).
+{
+	# Conta ACME — avisos de renovação/erro de certificado vão para este e-mail.
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	# --- TLS: Let's Encrypt via DNS-01 + protocolos modernos ---
+	tls {
+		dns cloudflare {$CF_DNS_API_TOKEN}
+		protocols tls1.2 tls1.3
+	}
+
+	encode gzip zstd
+
+	request_body {
+		max_size 1mb
+	}
+
+	# Só o HSTS é acrescentado aqui. X-Content-Type-Options, Referrer-Policy,
+	# X-Frame-Options etc. vêm da aplicação e não devem ser sobrescritos.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	}
+
+	log {
+		output stdout
+		format json
+	}
+
+	# Faixas do Cloudflare — FONTE ÚNICA usada também por
+	# scripts/setup/harden-server.sh (regra DOCKER-USER).
+	# Atualizar quando https://www.cloudflare.com/ips-v4 e ips-v6 mudarem
+	# (healthcheck.sh avisa se estiver desatualizado).
+	@cf remote_ip 173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/13 104.24.0.0/14 172.64.0.0/13 131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32 2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32
+
+	# API + WebSocket do laboratório vão direto ao backend (mesmo domínio).
+	@api path /api/v1/*
+
+	handle @cf {
+		handle @api {
+			reverse_proxy backend:8000 {
+				# CF-Connecting-IP é definido (e invalidado) pelo Cloudflare:
+				# é ele que vira X-Forwarded-For único, e o backend (uvicorn
+				# --proxy-headers) usa o primeiro valor = visitante real.
+				header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+				header_up X-Real-IP {http.request.header.CF-Connecting-IP}
+			}
+		}
+
+		handle {
+			reverse_proxy frontend:3000 {
+				header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+				header_up X-Real-IP {http.request.header.CF-Connecting-IP}
+			}
+		}
+	}
+
+	# Tudo que NÃO vem do Cloudflare (IP de origem exposto, scanner, etc.).
+	handle {
+		respond "Direct origin access is disabled (Cloudflare only)." 403
+	}
+}

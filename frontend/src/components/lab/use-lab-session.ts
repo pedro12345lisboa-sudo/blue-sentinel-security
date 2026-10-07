@@ -16,7 +16,20 @@ import type {
 } from './types';
 
 const EVENTS_LIMIT = 500;
-const WS_BASE = (process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000').replace(/\/+$/, '');
+
+/**
+ * Base do WebSocket. Em dev (localhost) vai direto ao backend na :8000; em
+ * qualquer outro host usa a origem atual (`wss://`) — em produção o Caddy
+ * encaminha `/api/v1/ws/*` para o backend. `NEXT_PUBLIC_WS_URL` sobrescreve.
+ */
+function defaultWsBase(): string {
+  if (typeof window === 'undefined') return 'ws://localhost:8000';
+  const { protocol, host, hostname } = window.location;
+  if (hostname === 'localhost' || hostname === '127.0.0.1') return 'ws://localhost:8000';
+  return `${protocol === 'https:' ? 'wss:' : 'ws:'}//${host}`;
+}
+
+const WS_BASE = (process.env.NEXT_PUBLIC_WS_URL || defaultWsBase()).replace(/\/+$/, '');
 
 function closeCodeToError(code: number): string {
   if (code === 1008) return 'SESSION_EXPIRED';

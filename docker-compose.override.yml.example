@@ -34,7 +34,7 @@ services:
       - ./backend:/app
     command: >
       sh -c "while true; do
-        python -m backend.app.workers.event_worker;
+        python -m app.workers.event_worker;
         sleep 5;
       done"
 
