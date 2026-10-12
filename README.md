@@ -1,261 +1,281 @@
 # Blue-Sentinel
 
-Personal cybersecurity portfolio showcasing Blue Team / Detection Engineering expertise.
+> Personal Cybersecurity portfolio — Blue Team & Detection Engineering, built as a production-grade full-stack system (Next.js + FastAPI + PostgreSQL/Redis) with an interactive detection lab, 28 defensive Sigma/YARA rules and a C++20 telemetry agent.
+
+[![CI](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/actions/workflows/ci.yml/badge.svg)](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/actions/workflows/ci.yml)
+[![Agent](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/actions/workflows/agent.yml/badge.svg)](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/actions/workflows/agent.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Lighthouse SEO](https://img.shields.io/badge/Lighthouse-SEO_%3E95-brightgreen)](docs/screenshots/README.md)
+
+**100% defensive, synthetic data only.** No malware, no exploits, no live payloads — every log, host and IP in the lab is fictional (RFC 5737 documentation ranges). All personal details are placeholders (`[SEU NOME]`…) or `NEXT_PUBLIC_*` environment variables; see [Personal data](#personal-data).
+
+---
+
+## Table of contents
+
+- [Screenshots](#screenshots)
+- [What it does](#what-it-does)
+- [Architecture](#architecture)
+- [Stack — and why](#stack--and-why)
+- [Quick start (Docker, 5 commands)](#quick-start-docker-5-commands)
+- [Environment variables](#environment-variables)
+- [Project structure](#project-structure)
+- [Detection rule library](#detection-rule-library)
+- [SEO & sharing](#seo--sharing)
+- [Case study](#case-study)
+- [Roadmap](#roadmap)
+- [Documentation map](#documentation-map)
+- [Ethical use](#ethical-use)
+- [License](#license)
+
+## Screenshots
+
+> Capture guide (1440×900, dark theme) and GIF recipe: [docs/screenshots/README.md](docs/screenshots/README.md).
+> Once captured, uncomment the embeds below — the files live in `docs/screenshots/`.
+
+<!--
+
+| Home (3D slot) | Detection lab mid-incident | Case study |
+|---|---|---|
+| ![Home](docs/screenshots/home.png) | ![Lab incident](docs/screenshots/lab-incident.png) | ![Project](docs/screenshots/project-blue-sentinel.png) |
+
+| Security | Status | Lab GIF |
+|---|---|---|
+| ![Security](docs/screenshots/security.png) | ![Status](docs/screenshots/status.png) | ![Lab detecting a scenario](docs/screenshots/lab-detection.gif) |
+
+-->
+
+## What it does
+
+**Frontend (portfolio site)**
+
+- Static-first Next.js 14 App Router site, i18n PT-BR/EN with `hreflang` + canonical on every page
+- MDX content pipeline for projects, writeups, playbooks and hunting hypotheses
+- Interactive **detection lab** (`/lab`): WebSocket synthetic events → Sigma/YARA/correlation engine → auto-built incident timeline (real rules from `rules/`)
+- Live **status page** (`/status`): CPU/RAM/disk/network, DB/Redis latency, API health
+- GSAP motion (respects `prefers-reduced-motion`), WCAG AA accessibility, dark SOC visual identity
+- Full SEO: per-page metadata, dynamic Open Graph images (1200×630), JSON-LD, `robots.txt`, `sitemap.xml`, RSS
+
+**Backend (FastAPI)**
+
+- Health (`/live`, `/ready`), rate-limited contact form with honeypot + async email worker
+- WebSocket lab server with session tickets, backpressure and degrade modes
+- JWT admin area, HMAC-protected alert webhook, Prometheus metrics, Loki/Grafana stack
+- Retention cleanup (LGPD): contacts 90d, lab sessions 30d
+
+**Agent (C++20 showcase)**
+
+- Read-only telemetry agent (CMake + GoogleTest + CI) with HMAC-signed payloads — [agent/README.md](agent/README.md)
 
 ## Architecture
 
+```mermaid
+flowchart LR
+    subgraph Client
+        V[Visitor / Recruiter]
+    end
+
+    subgraph Edge
+        CF[Cloudflare]
+        Caddy[Caddy · TLS DNS-01]
+    end
+
+    subgraph App["App (Docker)"]
+        FE["Frontend<br/>Next.js 14 · SSG/ISR"]
+        BE["Backend<br/>FastAPI · REST + WS"]
+        W[Worker<br/>email · cleanup]
+    end
+
+    subgraph Data
+        PG[(PostgreSQL 16)]
+        RD[(Redis 7<br/>cache · rate limit · pub/sub)]
+    end
+
+    subgraph Obs
+        PR[Prometheus]
+        LO[Loki]
+        GR[Grafana]
+    end
+
+    V -->|HTTPS| CF --> Caddy
+    Caddy --> FE
+    Caddy -->|/api/v1| BE
+    FE -->|REST + WebSocket| BE
+    BE --> PG
+    BE --> RD
+    BE --> W
+    BE -.metrics.-> PR
+    BE -.logs.-> LO
+    PR & LO --> GR
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   Frontend      │     │    Backend      │     │   Data Layer    │
-│   (Next.js)     │────▶│   (FastAPI)     │────▶│  (PostgreSQL    │
-│   Static/ISR    │     │   REST + WS     │     │   + Redis)      │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-```
 
-- **Frontend**: Next.js 14, TypeScript, Tailwind CSS, MDX content, GSAP animations
-- **Backend**: FastAPI, Pydantic, SQLAlchemy 2.0, asyncpg
-- **Database**: PostgreSQL 16 (contact messages, lab sessions, audit)
-- **Cache/Queue**: Redis 7 (rate limiting, GitHub stats cache, pub/sub, email queue)
-- **Worker**: Python background jobs (email sending, cleanup)
-- **Agent Showcase**: C++20 read-only telemetry agent — [agent/README.md](agent/README.md)
+Deep dives: [overview](docs/architecture/overview.md) · [flows](docs/architecture/flows.md) · [data model](docs/architecture/data-model.md) · [infrastructure](docs/architecture/infrastructure.md) · [ADRs](docs/architecture/adr/).
 
-  [![agent](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/actions/workflows/agent.yml/badge.svg)](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/actions/workflows/agent.yml)
+## Stack — and why
 
-## Quick Start
+| Layer | Technology | Why this one |
+|---|---|---|
+| Frontend | **Next.js 14 + TypeScript** | App Router + Metadata API give per-page SEO (canonical, OG, JSON-LD) with static-first rendering — a portfolio must be fast and indexable without a backend |
+| Styling | **Tailwind CSS + design tokens** | Tokens generated from Figma keep PT/EN UI consistent; utility classes keep the dark SOC theme small |
+| Content | **MDX (next-mdx-remote)** | Writeups need code blocks and custom components; MDX keeps articles in git, versioned and reviewed like code ([ADR 001](docs/architecture/adr/001-content-in-mdx.md)) |
+| Motion | **GSAP** | Scroll-triggered storytelling with a single `prefers-reduced-motion` guard for accessibility |
+| Backend | **FastAPI + Pydantic** | Async by default (WebSocket lab + REST), schema validation identical in OpenAPI and tests ([ADR 003](docs/architecture/adr/003-fastapi-for-backend.md)) |
+| Database | **PostgreSQL 16** | Relational integrity for contact messages, lab sessions and admin users; plain SQL, no ORM magic |
+| Cache/queue | **Redis 7** | One store, three jobs: sliding-window rate limiting (Lua), GitHub-stats cache with stampede protection, pub/sub for lab alerts ([ADR 002](docs/architecture/adr/002-redis-for-cache-queue.md)) |
+| Detection | **Sigma/YARA (custom engine)** | The lab evaluates the *same* rule files defended in the writeups — dogfooding, not a mock |
+| Agent | **C++20 + CMake + GoogleTest** | Telemetry agents live on constrained endpoints: deterministic memory, no runtime, signed payloads |
+| Observability | **Prometheus + Loki + Grafana** | Dual-path metrics/logs; alert rules feed the same webhook the site dogfoods |
+| Production | **Caddy + Cloudflare + age backups** | Automatic TLS (DNS-01), origin locked to Cloudflare, encrypted backups synced to S3 with tested restore |
+
+## Quick start (Docker, 5 commands)
 
 ```bash
-# Clone and configure
-git clone <repo>
-cd blue-sentinel
-cp .env.example .env  # Edit with your values
-
-# Start all services
+git clone https://github.com/pedro12345lisboa-sudo/blue-sentinel-security.git
+cd blue-sentinel-security
+cp .env.example .env          # review values — dev defaults are fine locally
 docker compose up --build
-
-# Frontend: http://localhost:3000
-# Backend API: http://localhost:8000/api/v1/docs
-# Health: http://localhost:8000/api/v1/health/ready
+# Frontend: http://localhost:3000 · API docs: http://localhost:8000/api/v1/docs
 ```
 
-## Production
+Health check: `curl http://localhost:8000/api/v1/health/ready`
 
-Produção roda atrás do **Cloudflare** com **Caddy** (TLS automático via
-DNS-01), firewall Cloudflare-only nas portas Docker, backups criptografados
-(age) sincronizados em S3 (rclone) e deploy por tag com gate de saúde +
-rollback automático.
+Without Docker:
 
 ```bash
-sudo ./scripts/setup/install-docker.sh $USER   # Docker + age/rclone/UFW
-sudo ./scripts/setup/harden-server.sh          # firewall, sysctl, fail2ban
-./scripts/deployment/deploy.sh init            # .env.prod + secrets
-./scripts/deployment/deploy.sh v0.1.0          # deploy da tag publicada no GHCR
-sudo ./scripts/deployment/backup.sh --install-cron   # backup diário + teste mensal
+cd frontend && pnpm install && pnpm dev      # http://localhost:3000
+cd backend  && pip install -r requirements.txt && uvicorn main:app --reload
 ```
 
-| Script | Função |
-|--------|--------|
-| `scripts/deployment/deploy.sh` | `init` \| `<tag>` — pull, migrations, health gate, rollback automático |
-| `scripts/deployment/rollback.sh` | Volta para tag anterior (ou `--list`) |
-| `scripts/deployment/healthcheck.sh` | Containers, HTTPS, portas fechadas, cert, disco (`--wait` / `--quiet`) |
-| `scripts/deployment/backup.sh` | Dump + age + rclone + retenção (`--verify`, `--install-cron`) |
-| `scripts/deployment/restore.sh` | `--test` (PG temporário) ou restore real do banco |
-| `scripts/setup/*.sh` | Instalação e hardening do servidor |
+## Environment variables
 
-Docs operacionais (PT):
+All variables are documented with safe defaults in [`.env.example`](.env.example). The most relevant:
 
-- [docs/architecture/infrastructure.md](docs/architecture/infrastructure.md) —
-  topologia, portas, TLS, segredos, firewall, imagens.
-- [docs/architecture/runbook.md](docs/architecture/runbook.md) —
-  dia a dia, deploy/rollback, incidentes, checklist mensal.
-- [docs/architecture/disaster-recovery.md](docs/architecture/disaster-recovery.md) —
-  RPO/RTO, criptografia/escrow, playbooks de restauração.
+| Variable | Purpose | Default |
+|---|---|---|
+| `NEXT_PUBLIC_SITE_URL` | Canonical base URL (canonical, OG, sitemap, RSS) | `http://localhost:3000` |
+| `NEXT_PUBLIC_OWNER_NAME` / `_CONTACT_EMAIL` / `_LINKEDIN_URL` / `_GITHUB_URL` / `_PHONE` | Personal data overrides — **unset ⇒ placeholders** | *(empty)* |
+| `SECRET_KEY`, `AGENT_HMAC_SECRET` | App + agent HMAC secrets (**must** change in prod) | dev placeholders |
+| `RATE_LIMIT_FAIL_CLOSED` | Redis down ⇒ block (`true`) or allow (`false`) | `false` |
+| `CONTACT_RETENTION_DAYS`, `LAB_SESSION_RETENTION_DAYS` | LGPD retention windows | `90`, `30` |
+| `EMAIL_PROVIDER` | `console` \| `sendgrid` \| `resend` \| `smtp` | `console` |
 
-Release: `git tag v0.1.0 && git push origin v0.1.0` publica as imagens
-(`.github/workflows/release.yml`) em
-`ghcr.io/pedro12345lisboa-sudo/blue-sentinel-{caddy,backend,frontend}`.
+### Personal data
 
-## Project Structure
+The repository never contains real personal information. `frontend/messages/*.json` ships
+placeholders (`[SEU NOME]`, `[SEU EMAIL]`, `[SEU LINKEDIN]`, `[SEU GITHUB]`); setting the
+`NEXT_PUBLIC_*` variables in your local `.env` (or in the deployment environment) replaces
+them everywhere — UI, JSON-LD and contact links.
+
+## Project structure
 
 ```
 blue-sentinel/
-├── frontend/           # Next.js application
-│   ├── src/
-│   │   ├── app/        # App Router pages (/, /about, /projects, /lab, /writeups, /status, /contact, /resume, /security)
-│   │   ├── components/ # React components (ui/, sections/, cards/, motion/, three/, common/)
-│   │   ├── layouts/    # SiteLayout (header, footer)
-│   │   ├── hooks/      # useReducedMotion, useInView, useScrollProgress, useCounter, useGSAP
-│   │   ├── services/   # Typed API client (SWR + fetch)
-│   │   ├── types/      # TypeScript types
-│   │   └── styles/     # CSS tokens, globals
-│   ├── content/        # MDX content (projects/, writeups/)
-│   ├── public/         # Static assets
-│   ├── e2e/            # Playwright tests
-│   └── vitest.config.ts
-├── agent/              # C++20 telemetry agent (CMake, GoogleTest, CI)
-│   ├── include/sentinel/
-│   ├── src/core/
-│   ├── src/platform/{linux,windows}/
-│   ├── tests/
-│   └── README.md
-├── backend/            # FastAPI application
-│   ├── app/
-│   │   ├── api/v1/     # API routes (health, contact, lab, github, status)
-│   │   ├── core/       # Config, logging
-│   │   ├── database/   # SQLAlchemy models, session
-│   │   ├── detection/  # Detection engine (Sigma-like)
-│   │   ├── workers/    # Background jobs
-│   │   └── ...
-│   └── requirements.txt
-├── docs/
-│   ├── architecture/   # ADRs, overview diagrams (Mermaid)
-│   └── security/       # Detection catalog & severity model (lab rules)
-├── docker-compose.yml
-├── docker-compose.override.yml.example
-└── .env.example
+├── frontend/               # Next.js 14 (App Router, i18n, MDX, SEO, lab UI)
+│   ├── src/app/            # Routes, metadata, robots/sitemap/RSS, OG images
+│   ├── src/components/     # UI, sections, MDX, lab, status, seo/
+│   ├── content/{pt,en}/    # MDX: projects, writeups, playbooks
+│   ├── messages/           # i18n dictionaries (placeholders for personal data)
+│   └── tests/              # Vitest unit + Playwright e2e/a11y
+├── backend/                # FastAPI app (API, detection engine, workers, tests)
+├── agent/                  # C++20 telemetry agent (CMake, GoogleTest)
+├── rules/                  # 20 Sigma · 5 YARA · 3 correlation patterns
+├── docker/                 # Caddy, Prometheus, Loki, Grafana configs
+├── scripts/                # deploy, rollback, backup/restore, harden, validate_rules
+└── docs/                   # architecture, api, security, screenshots, pitch
 ```
 
-## Features
+## Detection rule library
 
-### Frontend (Portfolio Website)
-- **Static-First**: All core pages pre-rendered (SSG/ISR), works without backend
-- **SOC Visual Identity**: Dark theme, cyan/blue/green accent colors, grid patterns, glow effects
-- **GSAP Animations**: Scroll-triggered reveals, counter animations, text reveals (respects `prefers-reduced-motion`)
-- **MDX Content**: Projects and writeups as `.mdx` files with frontmatter, custom components
-- **Interactive Lab** (`/lab`): Real-time WebSocket synthetic events + Sigma/YARA/correlation detection with auto-incident timeline
-- **System Status** (`/status`): Live metrics (CPU, RAM, disk, network, DB/Redis latency) with Recharts
-- **Contact Form**: Zod validation, react-hook-form, rate-limited, async email via worker
-- **Accessibility**: WCAG AA, semantic HTML, keyboard navigation, skip links, focus management
-- **Responsive**: 360px to 1920px, mobile drawer navigation
+Defensive-only rules evaluated by the `/lab` engine and by CI. Every rule matches **synthetic**
+logs; the repository ships no malware, no exploit and no live payload.
 
-### Backend (API)
-- **Health Checks**: `/health/live` (liveness) + `/health/ready` (DB + Redis readiness)
-- **Contact Form**: Validation, rate limiting, honeypot, async email worker
-- **Detection Lab**: WebSocket server, synthetic event generator, Sigma rule engine
-- **GitHub Stats**: Cached repository metrics (stars, commits, languages)
-- **System Status**: Real-time metrics via psutil
+- **20 Sigma rules** (`rules/sigma/{windows,linux,web,cloud}`) — UUID, ATT&CK tags, explicit false positives
+- **5 YARA rules** (`rules/yara`) and **3 correlation patterns** (`rules/patterns`)
+- **50 fixtures** (positive + negative per rule) — hit-rate **50/50 (100%)** in CI
 
-## Detection Rules (Sigma / YARA)
+```bash
+python scripts/development/validate_rules.py     # schema, UUIDs, ATT&CK, fixture hit-rate
+```
 
-Defensive-only rule library evaluated by the `/lab` engine. Every rule
-matches **synthetic** logs; the repository ships no malware, no exploit and
-no live payload.
-
-- **20 Sigma rules** in `rules/sigma/{windows,linux,web,cloud}` (kebab-case,
-  one file per rule, UUID + ATT&CK tags + explicit false positives)
-- **5 YARA rules** in `rules/yara` (text patterns over event fields)
-- **3 correlation patterns** in `rules/patterns` (N events in T seconds)
-- **50 fixtures** in `backend/tests/fixtures/detection/{positive,negative}`
-  (one positive + one negative per rule)
-
-| Doc | What it answers |
+| Doc | Answers |
 |---|---|
-| [Detection catalog](docs/security/detection-catalog.md) | What each rule detects, its log source, severity and likely false positive |
-| [ATT&CK coverage](docs/security/attack-coverage.md) | Generated tactic × technique matrix **and the known gaps** |
-| [Tuning guide](docs/security/tuning-guide.md) | How to cut false positives without disabling detections |
-| [Severity model](docs/security/severity.md) | Alert → incident escalation rules |
+| [Detection catalog](docs/security/detection-catalog.md) | What each rule detects, source, severity, false positives |
+| [ATT&CK coverage](docs/security/attack-coverage.md) | Tactic × technique matrix **and the known gaps** |
+| [Tuning guide](docs/security/tuning-guide.md) | Cutting false positives without disabling detections |
+| [Threat model](docs/security/threat-model.md) · [Hardening](docs/security/hardening.md) | STRIDE analysis and the implemented baseline |
 
-Validate the whole library (schema, unique UUIDs, ATT&CK tags, fixtures and
-fixture hit-rate) — CI runs exactly this:
+## SEO & sharing
 
-```bash
-python scripts/development/validate_rules.py     # hit-rate: 50/50 (100%)
-python scripts/development/validate_rules.py -v  # per-fixture verdicts
-```
+- Per-page metadata: title ≤ 60 chars, description ≤ 160, canonical + `hreflang` (PT/EN), Open Graph and Twitter Card
+- Dynamic OG images (1200×630, dark theme) generated per route via `next/og` — site-wide, per project and per writeup
+- JSON-LD: `WebSite` + `Person` (home), `Article` (writeups), `SoftwareSourceCode` (projects)
+- `robots.txt` (blocks `/api/` and `/admin`), `sitemap.xml` with all public URLs + `lastmod`, RSS feed at `/rss.xml`
+- API and admin responses carry `X-Robots-Tag: noindex`
 
-## Development
+Verify locally: `curl -s localhost:3000/robots.txt`, `curl -s localhost:3000/sitemap.xml | head`,
+`curl -s localhost:3000/rss.xml | head`, or inspect any page source for `og:image` / `application/ld+json`.
 
-```bash
-# Frontend
-cd frontend && pnpm install && pnpm dev
+## Case study
 
-# Frontend tests
-pnpm test           # Vitest unit tests
-pnpm test:ui        # Vitest UI
-pnpm test:coverage  # Coverage report
-pnpm e2e            # Playwright e2e tests
-pnpm e2e:ui         # Playwright UI
-pnpm lint           # ESLint
-pnpm type-check     # TypeScript check
+**Problem.** Portfolios in security are usually static résumés. Recruiters can't *see* detection
+skills, and candidates can't prove how they think. The goal: a site that demonstrates Blue Team
+work by running it — detection rules, incident timelines, honest operational metrics.
 
-# Backend
-cd backend && pip install -r requirements.txt && uvicorn main:app --reload
+**Decisions.**
 
-# Backend tests
-pytest -v
+- *Dogfood the detection engine*: the `/lab` evaluates the exact Sigma/YARA files published in
+  `rules/` — the writeups, the rules and the UI can't drift apart.
+- *Static-first with a thin dynamic core*: content pages are SSG/ISR (fast, indexable, resilient);
+  only the lab, status and contact touch the API.
+- *Redis as the only shared state* for rate limiting, cache and pub/sub ([ADR 002](docs/architecture/adr/002-redis-for-cache-queue.md)).
+- *Everything synthetic*: event generator uses RFC 5737 IPs and fictional hosts — safe to demo anywhere.
 
-# Docker development
-docker compose -f docker-compose.yml -f docker-compose.override.yml up
-```
+**Challenges.**
 
-## Pages
+- Sliding-window rate limiting that degrades predictably when Redis is down → explicit
+  `RATE_LIMIT_FAIL_CLOSED` switch (fail-open in dev, fail-closed on the public site).
+- WebSocket lab with backpressure: bounded queues, session tickets, paced event feed and
+  degrade modes instead of silently dropping events.
+- Keeping 28 rules honest: CI validates schema, unique UUIDs, ATT&CK tags and fixture hit-rate.
 
-| Route | Description |
-|-------|-------------|
-| `/` | Hero (3D slot), positioning, skills, featured projects, lab teaser, counters, CTA |
-| `/about` | Story, focus areas, experience timeline, certifications, philosophy |
-| `/projects` | Filterable project list with tags, featured projects highlighted |
-| `/projects/[slug]` | Case study: problem, architecture, decisions, challenges, results, links |
-| `/writeups` | Technical articles list with reading time, tags, series |
-| `/writeups/[slug]` | Full article with TOC, code blocks, copy buttons, share |
-| `/lab` | Real-time WebSocket synthetic events, detection rules panel, stats |
-| `/status` | Live system metrics (CPU, RAM, disk, network, DB/Redis latency, API health) |
-| `/security` | Threat model, security measures, compliance mapping, responsible disclosure |
-| `/contact` | Validated form, rate-limited, async email, honeypot |
-| `/resume` | Professional CV with download PDF, experience, education, skills, projects |
+**Results (measured in CI / locally).**
 
-## Security
+| Metric | Value |
+|---|---|
+| Detection fixtures hit-rate | 50/50 (100%) — `validate_rules.py` in CI |
+| Backend tests | 280+ (unit, integration, contract, security) — `pytest` |
+| Frontend tests | 115 passing across 17 files — `pnpm test` (Vitest) |
+| Accessibility/SEO | Lighthouse SEO & Accessibility target ≥ 95 on all public pages ([run the audit](docs/screenshots/README.md)) |
+| Retention | automated LGPD cleanup: contacts 90d, lab sessions 30d |
 
-- Separate Docker networks (`frontend-net` public, `backend-net` internal)
-- PostgreSQL & Redis never exposed externally
-- Containers run as non-root users (UID 1000/1001)
-- Secrets via environment variables / Docker secrets only
-- Rate limiting on all public endpoints
-- Structured JSON logging
-- CSP-compatible Next.js headers
-- No `dangerouslySetInnerHTML` with external data
+## Roadmap
 
-## Content Management
+- [ ] Expand ATT&CK coverage to the documented gaps ([coverage matrix](docs/security/attack-coverage.md))
+- [ ] Wire the C++ agent's signed telemetry into the lab ingestion path
+- [ ] Correlation rules v2: multi-host chains with risk scoring
+- [ ] Automated Lighthouse budget in CI (SEO/A11y ≥ 95 gate)
+- [ ] Playbook viewer v2: printable IR worksheets per scenario
+- [ ] Public status history page backed by Prometheus exports
 
-Adding a new project:
-```bash
-# Create MDX file
-cat > frontend/content/projects/my-project.mdx << 'EOF'
----
-title: 'My Project'
-description: 'Short description'
-date: '2024-01-15'
-tags: ['Tag1', 'Tag2']
-highlight: true
-icon: 'Shield'
-links:
-  github: 'https://github.com/...'
-  demo: '/lab'
----
+## Documentation map
 
-# My Project
+| Doc | Content |
+|---|---|
+| [docs/architecture/](docs/architecture/) | Overview, flows, data model, infrastructure, observability, runbook, DR, ADRs |
+| [docs/api/](docs/api/) | OpenAPI spec, auth, error contract, WebSocket protocol |
+| [docs/security/](docs/security/) | Threat model, hardening, detection catalog, ATT&CK coverage, severity, tuning, data inventory |
+| [docs/portfolio-pitch.md](docs/portfolio-pitch.md) | 30-second pitch and interview Q&A (PT-BR) |
+| [docs/testing.md](docs/testing.md) | Test strategy and commands |
+| [CONTRIBUTING.md](CONTRIBUTING.md) · [SECURITY.md](SECURITY.md) | Workflow and responsible disclosure |
 
-Content here...
-EOF
-```
+## Ethical use
 
-Adding a new writeup:
-```bash
-cat > frontend/content/writeups/my-article.mdx << 'EOF'
----
-title: 'My Article'
-description: 'Article summary'
-date: '2024-01-15'
-tags: ['Security', 'Tutorial']
-readingTime: 10
-series: 'Series Name'
----
-
-# My Article
-
-Content with custom components...
-EOF
-```
+Blue-Sentinel is an **educational, defensive** project. The lab runs synthetic events only; the
+detection rules inspect log lines and never execute anything. The repository contains **no**
+malware, exploit or payload, and grants **no** authorization to attack any system. Use the
+techniques documented here to **detect and defend**, on systems you own or are explicitly
+authorized to test. Vulnerability reports: see [SECURITY.md](SECURITY.md).
 
 ## License
 
-MIT
+[MIT](LICENSE)

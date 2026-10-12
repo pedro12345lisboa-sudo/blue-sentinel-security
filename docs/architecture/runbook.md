@@ -223,3 +223,102 @@ systemd). Após o reboot: `$HC` e `systemctl status blue-sentinel-fw`.
 - [ ] Escrow da chave age acessível (testar decrypt de um backup fora do server).
 - [ ] A cada 6 meses: exercício de DR de verdade
       ([disaster-recovery §7](disaster-recovery.md)).
+
+## 11. Alertas do Prometheus (sintoma → ação)
+
+Fluxo e stack completa: [observabilidade](observability.md). Resumo:
+Prometheus avalia `docker/prometheus/alert.rules.yml` → Alertmanager →
+webhook do backend (`POST /api/v1/alerts/webhook`, token
+`ALERT_WEBHOOK_TOKEN`) → dedup (`ALERT_DEDUP_SECONDS`), silêncio
+(`ALERT_SILENCES`) e entrega em Discord/e-mail — sempre com link para a
+âncora abaixo. Os auto-checks do próprio backend (`AlertMonitor`) usam as
+mesmas seções via âncoras em kebab (`#high-error-rate` etc.).
+
+```bash
+DC_OBS="docker compose -f docker-compose.yml -f docker-compose.observability.yml --profile observability"
+```
+
+### Teste de ponta a ponta (BackendDown < 2 minutos)
+
+```bash
+$DC_OBS up -d && $DC_OBS ps
+$DC_OBS stop backend
+# ~75 s depois (scrape 15s + for 1m): http://localhost:9090/alerts mostra
+# BackendDown firing, e a notificação chega no canal configurado
+$DC_OBS start backend
+# resolução: alerta vira resolved e libera a deduplicação
+```
+
+### Backend fora do ar <a id="backend-down"></a>
+
+Sintoma: alerta `BackendDown` (critical); API e `/status` inacessíveis.
+Diagnóstico: `$DC_OBS ps`; `$DC_OBS logs --tail 100 backend`; dentro da
+rede: `curl -fsS http://backend:8000/api/v1/health/ready`.
+Ação: `$DC_OBS up -d backend`; crash/OOM → linha "Lentidão / OOM" da §8;
+se só o scrape falha, conferir `METRICS_TOKEN`/`docker/prometheus/metrics_token`.
+
+### Taxa de erro alta <a id="high-error-rate"></a>
+
+Sintoma: `HighErrorRate` (> 5 % de 5xx por 5 min, critical).
+Diagnóstico: logs do backend filtrando 5xx (com `request_id`); `$DC_OBS ps`;
+deploy/migration recente? Postgres ou Redis `unhealthy`?
+Ação: rollback se deploy novo (§5); corrigir a rota em erro; se vier do
+proxy, linha "502/503 do Cloudflare" da §8.
+
+### Latência alta <a id="high-latency-p95"></a>
+
+Sintoma: `HighLatencyP95` (p95 > 1 s por 5 min, warning).
+Diagnóstico: `docker stats`; Grafana (p95 por rota, http://localhost:3001);
+Redis/Postgres lentos? `bs_cache_misses_total` subindo?
+Ação: ajustar limites de recursos; investigar caminho quente; se for
+degradação deliberada, o `/status` reflete `degradation_level`.
+
+### Disco cheio <a id="disk-high"></a>
+
+Sintoma: `DiskHigh` (≥ 80 %) ou `DiskCritical` (≥ 90 %).
+Diagnóstico e ação: mesma linha da tabela da §8 ("Disco ≥ 90%").
+
+### Fila de e-mail parada <a id="email-queue-stalled"></a>
+
+Sintoma: `EmailQueueStalled` (mensagens paradas > 10 min, warning).
+Diagnóstico: `bs_queue_depth{queue="email"}` no Grafana; logs de SMTP e
+`bs_email_failed_total` / `bs_email_dead_letter_total`.
+Ação: corrigir o provedor/credencial (rotação em §7); reprocessar dead-letters.
+
+### Pico de 401/429 <a id="auth-failure-spike"></a> <a id="rate-limit-spike"></a>
+
+Sintoma: `AuthFailureSpike` (> 30 × 401 em 5 min) ou `RateLimitSpike`
+(> 60 × 429 em 5 min), ambos warning.
+Diagnóstico: logs do backend (rota, `request_id`); em massa de 429, o
+rate limit por IP está contendo o alvo?
+Ação: deixar o rate limit trabalhar; força-bruta → WAF do Cloudflare /
+fail2ban; se o cliente é legítimo, revisar limites nas settings.
+
+### Certificado expirando <a id="cert-expiring-soon"></a>
+
+Sintoma: `CertExpiringSoon` (< 14 dias, warning) ou `CertExpiringCritical`
+(< 7 dias, critical).
+Diagnóstico: `$DC_OBS logs --tail 50 caddy`; estado ACME no Caddy
+(`curl -fsS localhost:2019/config/` de dentro do container).
+Ação: linha "Certificado expirando/renovação falhou" da §8; token do
+Cloudflare via §7.
+
+### Alertmanager fora do ar
+
+Sintoma: `AlertmanagerDown` (critical) — sem entrega de alertas do Prometheus.
+Diagnóstico: `$DC_OBS ps alertmanager`; logs do container.
+Ação: `$DC_OBS up -d alertmanager`. Enquanto isso, os auto-checks do
+backend (`AlertMonitor`, `ALERT_CHECK_INTERVAL`) seguem alertando pelos
+canais dele; alertas do Prometheus ficam parados até o retorno.
+
+### Monitoramento externo
+
+O Prometheus desta stack morre junto com o host: mantenha também um
+monitor de uptime **externo** (UptimeRobot, BetterStack, Pingdom, ...)
+apontando para `https://<DOMAIN>/api/v1/health/ready` com expectativa
+HTTP 200, notificando por canal independente (e-mail/celular). As sondas
+blackbox internas cobrem frontend/backend dentro da rede; o monitor
+externo cobre falha total da VPS, do Cloudflare ou do DNS.
+
+Manutenção planejada: silencie com `ALERT_SILENCES=DiskHigh,critical`
+(em `.env.prod` + restart do backend) ou espere o dedup de 5 min.

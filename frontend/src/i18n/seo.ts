@@ -35,6 +35,9 @@ export function pageMetadata(locale: Locale, page: PageSeo): Metadata {
     alternates: {
       canonical: url,
       languages,
+      types: {
+        'application/rss+xml': [{ title: 'Blue-Sentinel — Writeups', url: `${siteUrl()}/rss.xml` }],
+      },
     },
     openGraph: {
       title,
@@ -47,9 +50,10 @@ export function pageMetadata(locale: Locale, page: PageSeo): Metadata {
       ...(image ? { images: [{ url: image }] } : {}),
     },
     twitter: {
-      card: 'summary',
+      card: image ? 'summary_large_image' : 'summary',
       title,
       description,
+      ...(image ? { images: [image] } : {}),
     },
   };
 }

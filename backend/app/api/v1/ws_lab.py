@@ -347,7 +347,9 @@ async def websocket_lab(
                 continue
             await runner.handle(data)
     except WebSocketDisconnect:
-        logger.info("Lab WS disconnected session=%s ip=%s", session_id, client_ip)
+        from app.monitoring.security_events import hash_ip
+
+        logger.info("Lab WS disconnected session=%s actor=%s", session_id, hash_ip(client_ip))
     except Exception:
         logger.error("Lab WS error", exc_info=True)
         with suppress(Exception):

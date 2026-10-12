@@ -1,0 +1,3 @@
+# Token compartilhado Alertmanager -> backend (header Authorization: Bearer).
+# Em produção gere um valor aleatório (ex.: openssl rand -hex 24).
+dev-alert-webhook-token-change-me

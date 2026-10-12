@@ -97,6 +97,14 @@
     },
     "error": {
       "title": "Server error | Blue-Sentinel"
+    },
+    "privacy": {
+      "title": "Privacy Policy | Blue-Sentinel",
+      "description": "What this portfolio collects (the minimum), how long it is kept and which rights you have over the data sent through the contact form."
+    },
+    "terms": {
+      "title": "Terms of Use | Blue-Sentinel",
+      "description": "Ethical and legal usage rules for this Cybersecurity portfolio: defensive content, synthetic lab and no authorisation to attack anything."
     }
   },
   "nav": {
@@ -165,6 +173,14 @@
       {
         "name": "Contact",
         "href": "/contact"
+      },
+      {
+        "name": "Privacy",
+        "href": "/privacy"
+      },
+      {
+        "name": "Terms of use",
+        "href": "/terms"
       }
     ],
     "social": [
@@ -869,7 +885,27 @@
       "loading": "Loading metrics...",
       "error": "Could not load metrics.",
       "empty": "No data right now.",
-      "offline": "The backend did not respond. Data appears when the API comes back — nothing is made up here."
+      "offline": "The backend did not respond. Data appears when the API comes back — nothing is made up here.",
+      "monitoring": {
+        "title": "Site under monitoring",
+        "description": "The site itself feeds the detection engine with the 401, 404 and 429 responses it receives. Below are the events from the recent window.",
+        "privacy": "No personal data: the actor is an IP hash with a salt that rotates every 24 h. No real address is stored or displayed.",
+        "empty": "No hostile event recorded in the monitored window.",
+        "window": "Detection window",
+        "columns": {
+          "time": "Time",
+          "kind": "Type",
+          "route": "Route",
+          "actor": "Actor",
+          "count": "Occurrences",
+          "detection": "Detection"
+        },
+        "kinds": {
+          "auth_burst": "401 burst",
+          "temp_ban": "Temporary ban",
+          "route_scan": "Route scan"
+        }
+      }
     },
     "security": {
       "title": "Security architecture",
@@ -1159,6 +1195,14 @@
     "faq": {
       "title": "Frequently asked questions",
       "description": "Quick answers about the lab, the projects and how to get in touch."
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "description": "Minimal collection, declared retention periods and data-subject rights under the LGPD."
+    },
+    "terms": {
+      "title": "Terms of Use",
+      "description": "Ethical use of the portfolio and the lab: defensive, educational and never an authorisation to test third-party systems."
     }
   },
   "footer": {

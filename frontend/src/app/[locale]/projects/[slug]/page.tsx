@@ -18,7 +18,9 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { MDXComponents } from '@/components/mdx-components';
 import { UntranslatedNotice } from '@/components/common/untranslated-notice';
+import { JsonLd } from '@/components/seo/json-ld';
 import { getProjectBySlug } from '@/lib/projects';
+import { softwareSourceCodeJsonLd } from '@/lib/jsonld';
 import {
   LocalizedLink,
   formatDate,
@@ -73,6 +75,9 @@ export function generateMetadata({ params }: ProjectPageProps): Metadata {
       publishedTime: project.frontmatter.date,
       tags: project.frontmatter.tags,
     },
+    // Toda página de projeto gera a própria OG image 1200×630
+    // (`opengraph-image.tsx`), então o card grande é sempre seguro.
+    twitter: { ...base.twitter, card: 'summary_large_image' as const },
   };
 }
 
@@ -89,6 +94,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
 
   return (
     <article className="min-h-screen">
+      <JsonLd data={softwareSourceCodeJsonLd(site, frontmatter, params.locale)} />
       <header className="section relative overflow-hidden">
         <div className="gradient-mesh absolute inset-0" aria-hidden="true" />
         <div className="noise-overlay absolute inset-0" aria-hidden="true" />

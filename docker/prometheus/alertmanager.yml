@@ -1,0 +1,42 @@
+# Alertmanager — entrega dos alertas do Prometheus.
+#
+# Caminho principal: webhook do backend, que aplica deduplicação/silêncio e
+# reentrega em Discord/Telegram + e-mail (app/monitoring/alerts.py).
+#
+# Caminho redundante (recomendado em produção): copie este arquivo para
+# alertmanager.email.yml, adicione o bloco email_configs abaixo e troque o
+# --config.file no docker-compose.observability.yml. Assim o alerta
+# "BackendDown" chega por e-mail mesmo com a API caída.
+#
+#   email_configs:
+#     - smtp_smarthost: "smtp.example.com:587"
+#       smtp_auth_username: "alerts@example.com"
+#       smtp_auth_password: "..."          # use um secret, nunca no git
+#       from: "alerts@example.com"
+#       to: ["voce@example.com"]
+#       send_resolved: true
+
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: blue-sentinel
+  group_by: [alertname, severity]
+  group_wait: 30s
+  group_interval: 5m
+  # Não repete o mesmo grupo mais que a cada 4h (o backend deduplica em 5 min).
+  repeat_interval: 4h
+
+inhibit_rules:
+  - source_matchers: [severity="critical"]
+    target_matchers: [severity="warning"]
+    equal: [alertname]
+
+receivers:
+  - name: blue-sentinel
+    webhook_configs:
+      - url: http://backend:8000/api/v1/alerts/webhook
+        send_resolved: true
+        max_alerts: 20
+        http_config:
+          bearer_token_file: /etc/alertmanager/webhook_token

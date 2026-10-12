@@ -1,0 +1,81 @@
+# Prometheus — coleta do Blue-Sentinel (perfil opcional do compose)
+#
+#   docker compose -f docker-compose.yml -f docker-compose.observability.yml \
+#     --profile observability up -d
+#
+# O endpoint /api/v1/metrics exige Bearer token (METRICS_TOKEN); o token é
+# montado a partir de docker/prometheus/metrics_token (não committar o real).
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: blue-sentinel
+
+rule_files:
+  - /etc/prometheus/alert.rules.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - localhost:9090
+
+  # Backend FastAPI (métricas da aplicação + latência/erros por rota)
+  - job_name: backend
+    metrics_path: /api/v1/metrics
+    scheme: http
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/metrics_token
+    static_configs:
+      - targets:
+          - backend:8000
+        labels:
+          service: backend
+
+  # Sonda de disponibilidade "por fora" do processo da aplicação.
+  - job_name: blackbox-http
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - http://frontend:3000/
+          - http://backend:8000/api/v1/health/live
+          - http://backend:8000/api/v1/health/ready
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # Expiração de TLS: troque site.example.com pelo domínio real em produção.
+  - job_name: blackbox-tls
+    metrics_path: /probe
+    params:
+      module: [tls_connect]
+    static_configs:
+      - targets:
+          - site.example.com:443
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # Alertmanager (para o próprio Prometheus monitorar o canal de alerta)
+  - job_name: alertmanager
+    static_configs:
+      - targets:
+          - alertmanager:9093

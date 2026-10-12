@@ -1,0 +1,57 @@
+---
+title: 'Política de Privacidade'
+seo:
+  title: 'Política de Privacidade | Blue-Sentinel'
+  description: 'O que este portfólio coleta (o mínimo), por quanto tempo guarda e quais direitos você tem sobre os dados enviados pelo formulário de contato.'
+---
+
+## Quem é o controlador
+
+Blue-Sentinel é um portfólio pessoal de Cybersecurity Blue Team, operado de forma independente. Para exercer qualquer direito sobre seus dados ou tirar dúvidas, use a página de [Contato](/contact) — o mesmo canal atende pedidos de acesso, correção e eliminação previstos na Lei nº 13.709/2018 (LGPD).
+
+## O que coletamos
+
+Coletamos o **mínimo necessário** para operar:
+
+| Dado | Origem | Finalidade |
+| --- | --- | --- |
+| Nome, e-mail, assunto e mensagem | Formulário de contato (envio voluntário) | Responder ao seu contato |
+| Preferência de idioma | Cookie técnico `BLUE_SENTINEL_LOCALE` | Lembrar PT/EN entre visitas |
+
+**Não coletamos** IP, user-agent, fingerprint ou dados de geolocalização do formulário. O endereço IP da requisição é usado apenas em memória, para defesa contra abuso (rate limit e armadilha anti-bot), e nunca é gravado em banco nem escrito em log — quando é preciso correlacionar abuso, guardamos somente um **hash com sal que rotaciona a cada 24 horas**, irreversible e inútil fora da janela curta da mitigação.
+
+## Cookies
+
+Este site **não usa cookies de análise, publicidade ou terceiros**. O único cookie é a preferência de idioma, estritamente funcional. Por isso não há banner de consentimento: não existe nada a consentir, e a instalação de um banner de rastreamento aqui seria, ela sim, uma coleta desnecessária.
+
+## Base legal
+
+O envio do formulário é **consentimento** (art. 7º, I, da LGPD): você digita seus dados e decide enviá-los. O tratamento mínimo de segurança (limites de requisição, hash rotativo, registros de eventos hostis) ocorre por **legítimo interesse** (art. 7º, IX), com impacto reduzido ao mínimo e sem perfilamento de visitantes.
+
+## Por quanto tempo guardamos
+
+Os prazos são declarados, aplicados por rotina automática de retenção e conferidos em [`docs/security/data-inventory.md`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/docs/security/data-inventory.md):
+
+- **Mensagens do formulário**: 90 dias (`CONTACT_RETENTION_DAYS`), depois excluídas automaticamente.
+- **Sessões do laboratório**: 30 dias (`LAB_SESSION_RETENTION_DAYS`).
+- **Logs técnicos**: 14 dias de janela operacional.
+
+Nada é mantido "para saber se um dia serve".
+
+## Compartilhamento
+
+Não vendemos, alugamos ou compartilhamos dados pessoais com terceiros para finalidade comercial — este portfólio não tem modelo de receita. Se você habilitar envio de e-mail (SMTP), a mensagem de notificação passa pelo provedor de e-mail configurado; sem provedor, nada sai do servidor.
+
+## Segurança
+
+- Logs em JSON com **redação automática**: e-mail, senha, token e cookie nunca chegam ao disco nem ao coletor de logs.
+- **"Site sob monitoramento"**: o próprio site alimenta o motor de detecção com respostas 401/404/429; os eventos públicos na página de [Status](/status) exibem apenas o hash rotativo do ator — nenhum endereço real aparece lá.
+- Transporte com TLS em produção (renovação automática via Caddy/ACME, com alerta quando faltam menos de 14 dias).
+
+## Seus direitos
+
+Você pode solicitar confirmação de tratamento, acesso, correção, anonimização, portabilidade ou eliminação dos dados enviados — art. 18 da LGPD. Responda pelo [Contato](/contact) com o e-mail usado no envio; atendemos em até 15 dias.
+
+## Alterações desta política
+
+Mudanças de prazo ou de coleta são publicadas nesta página com data de atualização. A versão vigente é sempre a deste documento.

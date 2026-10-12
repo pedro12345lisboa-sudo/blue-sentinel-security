@@ -19,6 +19,7 @@ import {
   XCircle,
   RefreshCw,
   Minus,
+  ShieldCheck,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -68,6 +69,31 @@ interface Sample {
   memory: number;
   disk: number;
 }
+
+/** Evento de dogfooding vindo de /status — `actor` é hash, nunca IP cru. */
+interface SiteEvent {
+  id: string;
+  timestamp: string;
+  kind: string;
+  severity: string;
+  count: number;
+  route: string;
+  actor: string;
+  detection: string[];
+}
+
+interface SiteMonitoringPayload {
+  events: SiteEvent[];
+  window_seconds?: number;
+  salt_rotation_hours?: number;
+}
+
+const SEVERITY_VARIANT: Record<string, 'outline' | 'default' | 'warning' | 'destructive'> = {
+  low: 'outline',
+  medium: 'default',
+  high: 'warning',
+  critical: 'destructive',
+};
 
 type Level = 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
 
@@ -340,6 +366,7 @@ export function StatusView() {
   const [mounted, setMounted] = useState(false);
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
   const [health, setHealth] = useState<HealthPayload | null>(null);
+  const [monitoring, setMonitoring] = useState<SiteMonitoringPayload | null>(null);
   const [history, setHistory] = useState<Sample[]>([]);
   const [offline, setOffline] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -360,6 +387,9 @@ export function StatusView() {
 
       if (metricsRes?.ok) {
         const data = await metricsRes.json().catch(() => null);
+        if (data && typeof data === 'object') {
+          setMonitoring((data.site_monitoring ?? null) as SiteMonitoringPayload | null);
+        }
         const m = (data?.metrics ?? data) as SystemMetrics | null;
         if (m && typeof m.cpu === 'number') {
           reachable = true;
@@ -575,6 +605,76 @@ export function StatusView() {
           </Card>
         </section>
 
+        <section className="mb-8" aria-labelledby="monitoring-title">
+          <Card className={`transition-all duration-500 ${revealClass}`} style={delay(8)}>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between gap-2">
+                <span id="monitoring-title" className="flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+                  {page.monitoring.title}
+                </span>
+                {monitoring?.window_seconds ? (
+                  <Badge variant="outline" className="font-mono text-xs">
+                    {page.monitoring.window}: {monitoring.window_seconds}s
+                  </Badge>
+                ) : null}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-1 text-sm text-muted-foreground">{page.monitoring.description}</p>
+              <p className="mb-4 text-xs text-muted-foreground">{page.monitoring.privacy}</p>
+              {!monitoring || monitoring.events.length === 0 ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">
+                  {page.monitoring.empty}
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border/50 text-left">
+                        <th className="p-3 font-medium">{page.monitoring.columns.time}</th>
+                        <th className="p-3 font-medium">{page.monitoring.columns.kind}</th>
+                        <th className="p-3 font-medium">{page.monitoring.columns.route}</th>
+                        <th className="p-3 font-medium">{page.monitoring.columns.actor}</th>
+                        <th className="p-3 font-medium">{page.monitoring.columns.count}</th>
+                        <th className="p-3 font-medium">{page.monitoring.columns.detection}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {monitoring.events.map((event) => (
+                        <tr
+                          key={event.id}
+                          className="border-b border-border/50 transition-colors hover:bg-card/50"
+                        >
+                          <td className="p-3 font-mono text-xs">
+                            {formatTime(new Date(event.timestamp), locale)}
+                          </td>
+                          <td className="p-3">
+                            <Badge variant={SEVERITY_VARIANT[event.severity] ?? 'outline'}>
+                              {(page.monitoring.kinds as Record<string, string>)[event.kind] ??
+                                event.kind}
+                            </Badge>
+                          </td>
+                          <td className="p-3">
+                            <code className="font-mono">{event.route}</code>
+                          </td>
+                          <td className="p-3">
+                            <code className="font-mono text-xs">{event.actor}</code>
+                          </td>
+                          <td className="p-3 tabular-nums">{event.count}</td>
+                          <td className="p-3 font-mono text-xs">
+                            {event.detection.join(', ') || '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
         <section className="grid gap-6 lg:grid-cols-2" aria-labelledby="services-title">
           <h2 id="services-title" className="sr-only">
             {page.services}
@@ -586,7 +686,7 @@ export function StatusView() {
             status={health?.checks?.postgres}
             latency={health?.latency?.postgres}
             className={revealClass}
-            style={delay(6)}
+            style={delay(9)}
           />
           <ServiceCard
             icon={<Server className="h-5 w-5" aria-hidden="true" />}
@@ -594,10 +694,10 @@ export function StatusView() {
             status={health?.checks?.redis}
             latency={health?.latency?.redis}
             className={revealClass}
-            style={delay(7)}
+            style={delay(10)}
           />
 
-          <Card className={`transition-all duration-500 lg:col-span-2 ${revealClass}`} style={delay(8)}>
+          <Card className={`transition-all duration-500 lg:col-span-2 ${revealClass}`} style={delay(11)}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Activity className="h-5 w-5" aria-hidden="true" />

@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 from contextlib import asynccontextmanager
 from http import HTTPStatus
@@ -13,6 +14,10 @@ from app.core.errors import BlueSentinelError, blue_sentinel_error_handler
 from app.core.logging import setup_logging
 from app.cache.redis import close_redis
 from app.database.session import init_db, engine
+from app.middleware.request_context import RequestContextMiddleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
+from app.monitoring import alerts as alerts_monitor
+from app.monitoring import resource_monitor
 from app.api.v1.contact import router as contact_router
 from app.api.v1.github import router as github_router
 from app.api.v1.lab import router as lab_router
@@ -21,6 +26,11 @@ from app.api.v1.status import router as status_router
 from app.api.v1.health import router as health_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.admin import router as admin_router
+from app.api.v1.alerts import router as alerts_router
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # Stable error codes understood by the frontend (`site.errors[code]`).
@@ -45,6 +55,7 @@ def _problem(
     title: str,
     detail: str | None = None,
     headers: dict[str, str] | None = None,
+    request_id: str | None = None,
 ) -> JSONResponse:
     return JSONResponse(
         status_code=status,
@@ -55,17 +66,49 @@ def _problem(
             "status": status,
             "code": code,
             "detail": detail,
-            "request_id": uuid.uuid4().hex[:12],
+            "request_id": request_id or uuid.uuid4().hex[:12],
         },
         headers=headers,
     )
+
+
+def _request_id(request: Request) -> str | None:
+    return getattr(request.state, "request_id", None)
+
+
+async def _retention_loop(stop: asyncio.Event) -> None:
+    """Exclusão automática LGPD a cada ``CLEANUP_INTERVAL_HOURS``."""
+    from app.workers.cleanup.old_events_cleanup import run_retention_cleanup
+
+    interval = max(settings.cleanup_interval_hours, 1) * 3600
+    while not stop.is_set():
+        try:
+            await asyncio.wait_for(stop.wait(), timeout=interval)
+            break
+        except asyncio.TimeoutError:
+            pass
+        try:
+            await run_retention_cleanup()
+        except Exception:
+            logger.warning("Falha no ciclo de retenção LGPD", exc_info=True)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     setup_logging()
     await init_db()
+
+    resource_monitor.start()
+    alerts_monitor.start_monitor()
+    retention_stop = asyncio.Event()
+    retention_task = asyncio.create_task(_retention_loop(retention_stop))
+
     yield
+
+    retention_stop.set()
+    await retention_task
+    await alerts_monitor.stop_monitor()
+    await resource_monitor.stop()
     await close_redis()
     await engine.dispose()
 
@@ -91,6 +134,14 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
+# Registrado por último => camada mais externa: todo request ganha
+# request_id, log estruturado, métricas e o hook de dogfooding.
+app.add_middleware(RequestContextMiddleware)
+
+# Camada externa: API nunca indexada (X-Robots-Tag) + baseline defensivo de
+# cabeçalhos, aplicados inclusive em respostas de erro.
+app.add_middleware(SecurityHeadersMiddleware)
+
 
 @app.exception_handler(RequestValidationError)
 async def validation_handler(request: Request, exc: RequestValidationError):
@@ -98,7 +149,13 @@ async def validation_handler(request: Request, exc: RequestValidationError):
         f"{'.'.join(str(l) for l in e.get('loc', []))}: {e.get('msg', '')}"
         for e in exc.errors()
     )
-    return _problem(422, "VALIDATION_ERROR", "Validation Error", errors)
+    return _problem(
+        422,
+        "VALIDATION_ERROR",
+        "Validation Error",
+        errors,
+        request_id=_request_id(request),
+    )
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -119,6 +176,7 @@ async def http_handler(request: Request, exc: StarletteHTTPException):
         title,
         str(detail) if detail is not None else None,
         headers=getattr(exc, "headers", None),
+        request_id=_request_id(request),
     )
 
 
@@ -128,7 +186,13 @@ app.add_exception_handler(BlueSentinelError, blue_sentinel_error_handler)
 @app.exception_handler(Exception)
 async def generic_handler(request: Request, exc: Exception):
     # Nunca vaza stack trace ou SQL
-    return _problem(500, "INTERNAL_ERROR", "Internal Server Error", "An unexpected error occurred.")
+    return _problem(
+        500,
+        "INTERNAL_ERROR",
+        "Internal Server Error",
+        "An unexpected error occurred.",
+        request_id=_request_id(request),
+    )
 
 
 app.include_router(contact_router, prefix=settings.api_v1_str)
@@ -139,6 +203,7 @@ app.include_router(status_router, prefix=settings.api_v1_str)
 app.include_router(health_router, prefix=settings.api_v1_str)
 app.include_router(auth_router, prefix=settings.api_v1_str)
 app.include_router(admin_router, prefix=settings.api_v1_str)
+app.include_router(alerts_router, prefix=settings.api_v1_str)
 
 
 @app.get("/", tags=["root"])

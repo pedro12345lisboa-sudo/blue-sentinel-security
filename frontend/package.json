@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "postinstall": "node scripts/patch-og-windows.mjs || echo [og-windows-patch skipped]",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "check:i18n": "node ../scripts/development/check_i18n.mjs",

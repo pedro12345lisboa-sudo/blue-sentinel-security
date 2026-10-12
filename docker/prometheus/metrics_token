@@ -1,0 +1,3 @@
+# Token de desenvolvimento para /api/v1/metrics (perfil observability).
+# Em produção: gere um valor aleatório, guarde em secret e NÃO committie.
+dev-metrics-token-change-me

@@ -5,7 +5,9 @@ import { FeaturedProjects } from '@/components/sections/featured-projects';
 import { LabTeaser } from '@/components/sections/lab-teaser';
 import { Counters } from '@/components/sections/counters';
 import { CTA } from '@/components/sections/cta';
+import { JsonLd } from '@/components/seo/json-ld';
 import { getAllProjects } from '@/lib/projects';
+import { personJsonLd, webSiteJsonLd } from '@/lib/jsonld';
 import { getSite, pageMetadata, type Locale } from '@/i18n';
 
 interface HomeProps {
@@ -22,6 +24,7 @@ export async function generateMetadata({ params }: HomeProps): Promise<Metadata>
 }
 
 export default function HomePage({ params }: HomeProps) {
+  const site = getSite(params.locale);
   const projects = getAllProjects(params.locale)
     .filter((project) => project.highlight)
     .slice(0, 6)
@@ -37,6 +40,7 @@ export default function HomePage({ params }: HomeProps) {
 
   return (
     <>
+      <JsonLd data={[webSiteJsonLd(site, params.locale), personJsonLd(site, params.locale)]} />
       <Hero />
       <Skills />
       <FeaturedProjects projects={projects} />

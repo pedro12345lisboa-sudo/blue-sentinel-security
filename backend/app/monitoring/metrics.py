@@ -34,6 +34,20 @@ HTTP_LATENCY = Histogram(
     buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0),
     registry=REGISTRY,
 )
+# 429 por rota — alimenta o alerta de pico anormal de rate limiting.
+RATE_LIMITED = Counter(
+    "bs_rate_limited_total",
+    "Respostas 429 por rota",
+    ["path"],
+    registry=REGISTRY,
+)
+# 401 por rota — alimenta o alerta de pico anormal de autenticação.
+AUTH_FAILURES = Counter(
+    "bs_auth_failures_total",
+    "Respostas 401 por rota",
+    ["path"],
+    registry=REGISTRY,
+)
 
 # ------------------------------------------------------------- recursos
 CPU_PERCENT = Gauge(

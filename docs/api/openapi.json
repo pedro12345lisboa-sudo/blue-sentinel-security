@@ -1,0 +1,3519 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Blue-Sentinel API",
+    "description": "Portf\u00f3lio backend: formul\u00e1rio de contato, laborat\u00f3rio de detec\u00e7\u00e3o, estat\u00edsticas GitHub e sa\u00fade do sistema.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/contact": {
+      "post": {
+        "tags": [
+          "contact"
+        ],
+        "summary": "Submit Contact",
+        "operationId": "submit_contact_api_v1_contact_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactAccepted"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request rejected",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/github/stats": {
+      "get": {
+        "tags": [
+          "github"
+        ],
+        "summary": "Github Stats",
+        "description": "Reposit\u00f3rios em destaque e contadores (cache Redis + fallback).",
+        "operationId": "github_stats_api_v1_github_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitHubStatsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/lab/sessions": {
+      "post": {
+        "tags": [
+          "lab"
+        ],
+        "summary": "Create Lab Session",
+        "description": "Create a new ephemeral lab session (rate-limited per IP).",
+        "operationId": "create_lab_session_api_v1_lab_sessions_post",
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabSessionResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Session creation rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "title": "Error"
+                    },
+                    "message": {
+                      "type": "string",
+                      "title": "Message"
+                    },
+                    "request_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "message"
+                  ],
+                  "title": "ErrorEnvelope",
+                  "description": "Envelope do handler ``BlueSentinelError`` (``app.core.errors``)."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/lab/scenarios": {
+      "get": {
+        "tags": [
+          "lab"
+        ],
+        "summary": "List Scenarios",
+        "description": "List the synthetic detection scenarios (defensive-only content).",
+        "operationId": "list_scenarios_api_v1_lab_scenarios_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LabScenario"
+                  },
+                  "type": "array",
+                  "title": "Response List Scenarios Api V1 Lab Scenarios Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/lab/rules": {
+      "get": {
+        "tags": [
+          "lab"
+        ],
+        "summary": "List Rules",
+        "description": "Sigma/YARA/correlation rule catalog.",
+        "operationId": "list_rules_api_v1_lab_rules_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LabRuleSummary"
+                  },
+                  "type": "array",
+                  "title": "Response List Rules Api V1 Lab Rules Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/lab/rules/{rule_id}": {
+      "get": {
+        "tags": [
+          "lab"
+        ],
+        "summary": "Get Rule",
+        "description": "Full rule document for the educational explanation panel.",
+        "operationId": "get_rule_api_v1_lab_rules__rule_id__get",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabRuleDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown rule id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Envelope do handler ``BlueSentinelError`` (``app.core.errors``).",
+                  "properties": {
+                    "error": {
+                      "title": "Error",
+                      "type": "string"
+                    },
+                    "message": {
+                      "title": "Message",
+                      "type": "string"
+                    },
+                    "request_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Request Id"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ],
+                  "title": "ErrorEnvelope",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/status": {
+      "get": {
+        "tags": [
+          "status"
+        ],
+        "summary": "System Status",
+        "description": "M\u00e9tricas p\u00fablicas e seguras \u2014 sem detalhes internos e sem PII.",
+        "operationId": "system_status_api_v1_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health/live": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Liveness",
+        "description": "Verifica que o processo est\u00e1 vivo.",
+        "operationId": "liveness_api_v1_health_live_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health/ready": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Readiness Endpoint",
+        "description": "Verifica que depend\u00eancias (Postgres, cache, disco) est\u00e3o prontas.",
+        "operationId": "readiness_endpoint_api_v1_health_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Account disabled",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/messages": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "List Messages",
+        "description": "Lista mensagens de contato (paginado, admin only).",
+        "operationId": "list_messages_api_v1_admin_messages_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Coluna para ordena\u00e7\u00e3o (allowlist: created_at, id, subject, email)",
+              "title": "Sort"
+            },
+            "description": "Coluna para ordena\u00e7\u00e3o (allowlist: created_at, id, subject, email)"
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "asc ou desc",
+              "title": "Direction"
+            },
+            "description": "asc ou desc"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid sort column or direction",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Envelope do handler ``BlueSentinelError`` (``app.core.errors``).",
+                  "properties": {
+                    "error": {
+                      "title": "Error",
+                      "type": "string"
+                    },
+                    "message": {
+                      "title": "Message",
+                      "type": "string"
+                    },
+                    "request_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Request Id"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ],
+                  "title": "ErrorEnvelope",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  },
+                  "properties": {
+                    "type": {
+                      "default": "about:blank",
+                      "title": "Type",
+                      "type": "string"
+                    },
+                    "title": {
+                      "title": "Title",
+                      "type": "string"
+                    },
+                    "status": {
+                      "title": "Status",
+                      "type": "integer"
+                    },
+                    "code": {
+                      "default": "ERROR",
+                      "title": "Code",
+                      "type": "string"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "title": "Request Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "type": "object"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  },
+                  "properties": {
+                    "type": {
+                      "default": "about:blank",
+                      "title": "Type",
+                      "type": "string"
+                    },
+                    "title": {
+                      "title": "Title",
+                      "type": "string"
+                    },
+                    "status": {
+                      "title": "Status",
+                      "type": "integer"
+                    },
+                    "code": {
+                      "default": "ERROR",
+                      "title": "Code",
+                      "type": "string"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "title": "Request Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Administrator permission required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  },
+                  "properties": {
+                    "type": {
+                      "default": "about:blank",
+                      "title": "Type",
+                      "type": "string"
+                    },
+                    "title": {
+                      "title": "Title",
+                      "type": "string"
+                    },
+                    "status": {
+                      "title": "Status",
+                      "type": "integer"
+                    },
+                    "code": {
+                      "default": "ERROR",
+                      "title": "Code",
+                      "type": "string"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "title": "Request Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "type": "object"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  },
+                  "properties": {
+                    "type": {
+                      "default": "about:blank",
+                      "title": "Type",
+                      "type": "string"
+                    },
+                    "title": {
+                      "title": "Title",
+                      "type": "string"
+                    },
+                    "status": {
+                      "title": "Status",
+                      "type": "integer"
+                    },
+                    "code": {
+                      "default": "ERROR",
+                      "title": "Code",
+                      "type": "string"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "title": "Request Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  },
+                  "properties": {
+                    "type": {
+                      "default": "about:blank",
+                      "title": "Type",
+                      "type": "string"
+                    },
+                    "title": {
+                      "title": "Title",
+                      "type": "string"
+                    },
+                    "status": {
+                      "title": "Status",
+                      "type": "integer"
+                    },
+                    "code": {
+                      "default": "ERROR",
+                      "title": "Code",
+                      "type": "string"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "title": "Request Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "type": "object"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  },
+                  "properties": {
+                    "type": {
+                      "default": "about:blank",
+                      "title": "Type",
+                      "type": "string"
+                    },
+                    "title": {
+                      "title": "Title",
+                      "type": "string"
+                    },
+                    "status": {
+                      "title": "Status",
+                      "type": "integer"
+                    },
+                    "code": {
+                      "default": "ERROR",
+                      "title": "Code",
+                      "type": "string"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "title": "Request Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/messages/read": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Mark Messages Read",
+        "description": "Marca mensagens como lidas (admin only).",
+        "operationId": "mark_messages_read_api_v1_admin_messages_read_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkReadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkReadResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Administrator permission required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/alerts/webhook": {
+      "post": {
+        "tags": [
+          "monitoring"
+        ],
+        "summary": "Recebe alertas do Alertmanager",
+        "operationId": "alertmanager_webhook_api_v1_alerts_webhook_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookAck"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ALERT_WEBHOOK_TOKEN ausente ou inv\u00e1lido",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload inv\u00e1lido",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Type",
+                      "default": "about:blank"
+                    },
+                    "title": {
+                      "type": "string",
+                      "title": "Title"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "title": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "title": "Code",
+                      "default": "ERROR"
+                    },
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Detail"
+                    },
+                    "instance": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Instance"
+                    },
+                    "request_id": {
+                      "type": "string",
+                      "title": "Request Id"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "status"
+                  ],
+                  "title": "ErrorResponse",
+                  "description": "RFC 9457 problem+json error format.\n\n`code` is a stable machine-readable error code; the frontend translates it\nvia `site.errors[code]`. Never put user-facing localized text here.",
+                  "example": {
+                    "code": "VALIDATION_ERROR",
+                    "detail": "name: Field required",
+                    "request_id": "a1b2c3d4e5f6",
+                    "status": 422,
+                    "title": "Validation Error",
+                    "type": "about:blank"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "root"
+        ],
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ContactAccepted": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "queued"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "request_id"
+        ],
+        "title": "ContactAccepted",
+        "example": {
+          "id": 1,
+          "request_id": "a1b2c3d4",
+          "status": "queued"
+        }
+      },
+      "ContactRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "examples": [
+              "Maria Silva"
+            ]
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "examples": [
+              "maria@example.com"
+            ]
+          },
+          "subject": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Subject",
+            "examples": [
+              "Or\u00e7amento"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 5000,
+            "minLength": 1,
+            "title": "Message",
+            "examples": [
+              "Ol\u00e1, gostaria de conversar."
+            ]
+          },
+          "honeypot": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Honeypot",
+            "description": "Must be empty (bot trap)",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "email",
+          "subject",
+          "message"
+        ],
+        "title": "ContactRequest",
+        "example": {
+          "email": "maria@example.com",
+          "honeypot": "",
+          "message": "Ol\u00e1, gostaria de conversar sobre um projeto.",
+          "name": "Maria Silva",
+          "subject": "Or\u00e7amento"
+        }
+      },
+      "GitHubRepoStats": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "stars": {
+            "type": "integer",
+            "title": "Stars",
+            "default": 0
+          },
+          "forks": {
+            "type": "integer",
+            "title": "Forks",
+            "default": 0
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "full_name",
+          "url"
+        ],
+        "title": "GitHubRepoStats",
+        "example": {
+          "description": "Cybersecurity portfolio",
+          "forks": 7,
+          "full_name": "user/blue-sentinel",
+          "language": "Python",
+          "name": "blue-sentinel",
+          "stars": 42,
+          "url": "https://github.com/user/blue-sentinel"
+        }
+      },
+      "GitHubStatsResponse": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "total_repos": {
+            "type": "integer",
+            "title": "Total Repos"
+          },
+          "total_stars": {
+            "type": "integer",
+            "title": "Total Stars"
+          },
+          "total_forks": {
+            "type": "integer",
+            "title": "Total Forks"
+          },
+          "featured_repos": {
+            "items": {
+              "$ref": "#/components/schemas/GitHubRepoStats"
+            },
+            "type": "array",
+            "title": "Featured Repos",
+            "default": []
+          },
+          "cached": {
+            "type": "boolean",
+            "title": "Cached",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "total_repos",
+          "total_stars",
+          "total_forks"
+        ],
+        "title": "GitHubStatsResponse",
+        "example": {
+          "cached": true,
+          "featured_repos": [],
+          "total_forks": 40,
+          "total_repos": 12,
+          "total_stars": 256,
+          "username": "user"
+        }
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "HealthResponse",
+        "example": {
+          "status": "ok"
+        }
+      },
+      "LabRuleDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "level": {
+            "type": "string",
+            "title": "Level"
+          },
+          "mitre": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Mitre"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "sigma",
+              "yara",
+              "correlation"
+            ],
+            "title": "Kind"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "false_positives": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "False Positives"
+          },
+          "response": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Response"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "condition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Condition"
+          },
+          "logsource": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logsource"
+          },
+          "strings": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strings"
+          },
+          "stages": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stages"
+          },
+          "window_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window Seconds"
+          },
+          "group_by": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Group By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "level",
+          "mitre",
+          "kind",
+          "description",
+          "false_positives",
+          "response",
+          "source"
+        ],
+        "title": "LabRuleDetail",
+        "description": "Full rule document backing the educational explanation panel."
+      },
+      "LabRuleSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "level": {
+            "type": "string",
+            "title": "Level"
+          },
+          "mitre": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Mitre"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "sigma",
+              "yara",
+              "correlation"
+            ],
+            "title": "Kind"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "false_positives": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "False Positives"
+          },
+          "response": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Response"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "level",
+          "mitre",
+          "kind",
+          "description",
+          "false_positives",
+          "response"
+        ],
+        "title": "LabRuleSummary",
+        "description": "Rule catalog entry pushed with the WebSocket ``connected`` message."
+      },
+      "LabScenario": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "description": "Expected final severity of the incident"
+          },
+          "event_count": {
+            "type": "integer",
+            "title": "Event Count"
+          },
+          "expected_rules": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Expected Rules"
+          },
+          "mitre": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Mitre"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "severity",
+          "event_count",
+          "expected_rules",
+          "mitre"
+        ],
+        "title": "LabScenario",
+        "description": "Didactic scenario metadata (events are synthetic/defensive-only).",
+        "example": {
+          "description": "Repeated failed logons followed by a success",
+          "event_count": 9,
+          "expected_rules": [
+            "bs-auth-failed-logons",
+            "corr-brute-force-sequence"
+          ],
+          "id": "brute-force",
+          "mitre": [
+            "T1110.001",
+            "T1078"
+          ],
+          "name": "Credential brute force",
+          "severity": "critical"
+        }
+      },
+      "LabSessionResponse": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "ticket": {
+            "type": "string",
+            "title": "Ticket",
+            "description": "Short-lived ticket for WebSocket auth"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "ticket",
+          "expires_at"
+        ],
+        "title": "LabSessionResponse",
+        "example": {
+          "expires_at": "2026-09-29T20:00:00Z",
+          "session_id": "sess-abc123",
+          "ticket": "tk-xyz789"
+        }
+      },
+      "LoginRequest": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 3,
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "LoginRequest",
+        "example": {
+          "password": "secretpass123",
+          "username": "admin"
+        }
+      },
+      "MarkReadRequest": {
+        "properties": {
+          "message_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Message Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message_ids"
+        ],
+        "title": "MarkReadRequest",
+        "example": {
+          "message_ids": [
+            1,
+            2,
+            3
+          ]
+        }
+      },
+      "MarkReadResponse": {
+        "properties": {
+          "updated": {
+            "type": "integer",
+            "title": "Updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "updated"
+        ],
+        "title": "MarkReadResponse"
+      },
+      "MessageListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MessageSummary"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "MessageListResponse",
+        "example": {
+          "items": [],
+          "total": 0
+        }
+      },
+      "MessageSummary": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          },
+          "read": {
+            "type": "boolean",
+            "title": "Read"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "email",
+          "subject",
+          "read",
+          "created_at"
+        ],
+        "title": "MessageSummary",
+        "example": {
+          "created_at": "2026-09-29T18:00:00Z",
+          "email": "maria@example.com",
+          "id": 1,
+          "name": "Maria Silva",
+          "read": false,
+          "subject": "Or\u00e7amento"
+        }
+      },
+      "ReadinessResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "checks": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Checks"
+          },
+          "latency_ms": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Latency Ms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "checks"
+        ],
+        "title": "ReadinessResponse",
+        "example": {
+          "checks": {
+            "cache": "ok",
+            "database": "ok",
+            "disk": "ok"
+          },
+          "latency_ms": {
+            "cache": 0.4,
+            "database": 1.2,
+            "disk": 0.1
+          },
+          "status": "ok"
+        }
+      },
+      "SiteMonitoring": {
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/SiteMonitoringEvent"
+            },
+            "type": "array",
+            "title": "Events"
+          },
+          "window_seconds": {
+            "type": "integer",
+            "title": "Window Seconds",
+            "default": 60
+          },
+          "salt_rotation_hours": {
+            "type": "integer",
+            "title": "Salt Rotation Hours",
+            "default": 24
+          }
+        },
+        "type": "object",
+        "title": "SiteMonitoring"
+      },
+      "SiteMonitoringEvent": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "auth_burst | temp_ban | route_scan"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "default": "medium"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Count"
+          },
+          "route": {
+            "type": "string",
+            "title": "Route"
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor"
+          },
+          "detection": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Detection"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "timestamp",
+          "kind",
+          "count",
+          "route",
+          "actor"
+        ],
+        "title": "SiteMonitoringEvent",
+        "description": "Evento de seguran\u00e7a do pr\u00f3prio site (dogfooding do motor de detec\u00e7\u00e3o).\n\n``actor`` \u00e9 um hash SHA-256 com sal rotativo \u2014 nunca um IP real.",
+        "example": {
+          "actor": "3f2a9c1b7d5e4f60",
+          "count": 21,
+          "detection": [
+            "corr-web-scan-404"
+          ],
+          "id": "site-3",
+          "kind": "route_scan",
+          "route": "/admin.php",
+          "severity": "medium",
+          "timestamp": "2026-01-10T12:00:00Z"
+        }
+      },
+      "StatusResponse": {
+        "properties": {
+          "uptime_seconds": {
+            "type": "number",
+            "title": "Uptime Seconds"
+          },
+          "cpu_percent": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Cpu Percent"
+          },
+          "memory_percent": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Memory Percent"
+          },
+          "disk_percent": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Disk Percent"
+          },
+          "api_latency_ms": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Api Latency Ms"
+          },
+          "database_reachable": {
+            "type": "boolean",
+            "title": "Database Reachable"
+          },
+          "cache_reachable": {
+            "type": "boolean",
+            "title": "Cache Reachable"
+          },
+          "latency_percentiles": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Latency Percentiles"
+          },
+          "degradation_level": {
+            "type": "integer",
+            "maximum": 2.0,
+            "minimum": 0.0,
+            "title": "Degradation Level",
+            "default": 0
+          },
+          "site_monitoring": {
+            "$ref": "#/components/schemas/SiteMonitoring"
+          },
+          "metrics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SystemMetricsPayload"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "uptime_seconds",
+          "cpu_percent",
+          "memory_percent",
+          "disk_percent",
+          "api_latency_ms",
+          "database_reachable",
+          "cache_reachable"
+        ],
+        "title": "StatusResponse",
+        "example": {
+          "api_latency_ms": 4.2,
+          "cache_reachable": true,
+          "cpu_percent": 12.5,
+          "database_reachable": true,
+          "degradation_level": 0,
+          "disk_percent": 63.1,
+          "latency_percentiles": {
+            "count": 1000,
+            "p50": 3.1,
+            "p95": 18.4,
+            "p99": 42.0
+          },
+          "memory_percent": 48.2,
+          "metrics": {
+            "cpu": 12.5,
+            "disk": {
+              "percentage": 63.1,
+              "total": 4096,
+              "used": 1024
+            },
+            "memory": {
+              "percentage": 48.2,
+              "total": 4096,
+              "used": 1024
+            },
+            "uptime": 3600.0
+          },
+          "site_monitoring": {
+            "events": [],
+            "salt_rotation_hours": 24,
+            "window_seconds": 60
+          },
+          "uptime_seconds": 3600.0
+        }
+      },
+      "SystemMetricsPayload": {
+        "properties": {
+          "cpu": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Cpu"
+          },
+          "memory": {
+            "$ref": "#/components/schemas/UsageMetrics"
+          },
+          "disk": {
+            "$ref": "#/components/schemas/UsageMetrics"
+          },
+          "uptime": {
+            "type": "number",
+            "title": "Uptime",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "cpu",
+          "memory",
+          "disk"
+        ],
+        "title": "SystemMetricsPayload",
+        "description": "Formato consumido pelo gr\u00e1fico da p\u00e1gina ``/status`` do frontend."
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "expires_in"
+        ],
+        "title": "TokenResponse",
+        "example": {
+          "access_token": "eyJ...",
+          "expires_in": 3600,
+          "token_type": "bearer"
+        }
+      },
+      "UsageMetrics": {
+        "properties": {
+          "used": {
+            "type": "integer",
+            "title": "Used",
+            "default": 0
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "default": 0
+          },
+          "percentage": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Percentage"
+          }
+        },
+        "type": "object",
+        "required": [
+          "percentage"
+        ],
+        "title": "UsageMetrics"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WebhookAck": {
+        "properties": {
+          "accepted": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Accepted"
+          },
+          "forwarded": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Forwarded"
+          }
+        },
+        "type": "object",
+        "required": [
+          "accepted",
+          "forwarded"
+        ],
+        "title": "WebhookAck"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

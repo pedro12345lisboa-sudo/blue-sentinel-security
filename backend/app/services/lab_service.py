@@ -116,7 +116,9 @@ class LabService:
         db.add(row)
         await db.commit()
 
-        logger.info("Lab session created id=%s ip=%s", session_id, ip_address)
+        from app.monitoring.security_events import hash_ip
+
+        logger.info("Lab session created id=%s actor=%s", session_id, hash_ip(ip_address))
         return LabSessionResponse(
             session_id=session_id,
             ticket=ticket,

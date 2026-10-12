@@ -46,7 +46,6 @@ async def submit_contact(
     db=Depends(get_db_session),
 ):
     client_ip = request.client.host if request.client else "unknown"
-    user_agent = request.headers.get("user-agent")
 
     try:
         await contact_ip_limiter.enforce(f"contact-ip:{client_ip}")
@@ -54,7 +53,6 @@ async def submit_contact(
             data=payload,
             db=db,
             client_ip=client_ip,
-            user_agent=user_agent,
         )
     except RateLimitError as exc:
         return JSONResponse(

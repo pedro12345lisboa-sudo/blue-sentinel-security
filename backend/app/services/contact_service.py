@@ -34,14 +34,24 @@ class ContactService:
     async def submit(
         data: ContactRequest,
         db: AsyncSession,
-        client_ip: str,
+        client_ip: str | None = None,
         user_agent: str | None = None,
     ) -> ContactAccepted:
+        """Persiste a mensagem com o mínimo de dados (LGPD).
+
+        ``client_ip``/``user_agent`` são usados **apenas** para defesa
+        (rate limit e armadilha) — nunca são gravados nem logados; no log
+        aparece somente o hash com sal rotativo.
+        """
         request_id = uuid.uuid4().hex[:12]
 
         # Honeypot: silently accept but discard (never reveal detection)
         if data.honeypot.strip():
-            logger.warning("Honeypot triggered ip=%s", client_ip)
+            from app.monitoring.security_events import hash_ip
+
+            logger.warning(
+                "Honeypot triggered actor=%s", hash_ip(client_ip) if client_ip else "unknown"
+            )
             return ContactAccepted(id=0, status="ignored", request_id=request_id)
 
         # Rate limit per email per hour
@@ -62,8 +72,6 @@ class ContactService:
             email=data.email,
             subject=data.subject,
             message=data.message,
-            ip_address=client_ip,
-            user_agent=user_agent,
             status="new",
             read=False,
         )
@@ -71,7 +79,8 @@ class ContactService:
         await db.commit()
         await db.refresh(msg)
 
-        logger.info("Contact saved id=%s ip=%s", msg.id, client_ip)
+        # Sem e-mail completo, sem IP: só o que é necessário para operar.
+        logger.info("Contact saved id=%s", msg.id)
         return ContactAccepted(id=msg.id, status="queued", request_id=request_id)
 
     @staticmethod

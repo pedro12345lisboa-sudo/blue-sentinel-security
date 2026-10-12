@@ -41,6 +41,7 @@ EXPECTED_PATHS = {
     "/api/v1/auth/login",
     "/api/v1/admin/messages",
     "/api/v1/admin/messages/read",
+    "/api/v1/alerts/webhook",
 }
 
 VALID_CONTACT_BODY = {

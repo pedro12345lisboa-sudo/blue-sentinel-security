@@ -45,7 +45,7 @@ async def blue_sentinel_error_handler(request: Request, exc: BlueSentinelError):
         content={
             "error": exc.code,
             "message": exc.message,
-            "request_id": exc.request_id,
+            "request_id": getattr(request.state, "request_id", None) or exc.request_id,
         },
         headers=headers,
     )

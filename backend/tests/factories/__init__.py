@@ -34,8 +34,6 @@ def make_contact_message(**overrides: Any) -> ContactMessage:
         "subject": "Assunto de teste",
         "message": "Mensagem de teste suficientemente longa para validação.",
         "honeypot": "",
-        "ip_address": "203.0.113.10",
-        "user_agent": "pytest",
         "status": "new",
         "read": False,
     }

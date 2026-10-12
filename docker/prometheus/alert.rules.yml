@@ -1,0 +1,147 @@
+# Regras de alerta do Blue-Sentinel.
+#
+# Cada alerta carrega `runbook_url` apontando para
+# docs/architecture/runbook.md (âncora = nome do alerta em kebab-case).
+# Critério de aceitação: derrubar o backend gera BackendDown em < 2 minutos
+# (scrape 15s + `for: 1m`).
+#
+# Conferência local (sem Docker):
+#   docker run --rm -v $PWD/docker/prometheus:/etc/prometheus \
+#     prom/prometheus promtool check rules /etc/prometheus/alert.rules.yml
+
+groups:
+  - name: blue-sentinel-backend
+    rules:
+      - alert: BackendDown
+        expr: up{job="backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend fora do ar"
+          description: "O Prometheus não coleta métricas do backend há mais de 1 minuto (processo parou ou /metrics inacessível)."
+          runbook_url: "https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/docs/architecture/runbook.md#backend-fora-do-ar"
+
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(bs_http_requests_total{status=~"5.."}[5m]))
+            /
+          sum(rate(bs_http_requests_total[5m]))
+            > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Taxa de erro acima de 5% por 5 minutos"
+          description: "Mais de 5% das requisições dos últimos 5 minutos terminaram em 5xx."
+          runbook_url: "https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/docs/architecture/runbook.md#taxa-de-erro-alta"
+
+      - alert: HighLatencyP95
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(bs_http_request_duration_seconds_bucket[5m]))
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 de latência acima de 1s"
+          description: "O percentil 95 das requisições passou de 1 segundo nos últimos 5 minutos."
+          runbook_url: "https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/docs/architecture/runbook.md#lat%C3%AAncia-alta"
+
+  - name: blue-sentinel-resources
+    rules:
+      - alert: DiskHigh
+        expr: bs_disk_percent > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disco acima de 80%"
+          description: "O disco do host passou de 80% por 5 minutos (degradação nível 1 dispara)."
+          runbook_url: "https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/docs/architecture/runbook.md#disco-cheio"
+
+      - alert: DiskCritical
+        expr: bs_disk_percent > 90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disco acima de 90%"
+          description: "Nível crítico: recursos opcionais ficam indisponíveis e o banco pode parar."
+          runbook_url: "https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/docs/architecture/runbook.md#disco-cheio"
+
+      - alert: EmailQueueStalled
+        expr: bs_queue_depth{queue="email"} > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Fila de e-mail parada"
+          description: "Há mensagens na fila de e-mail há mais de 10 minutos (worker parado ou SMTP bloqueado)."
+          runbook_url: "https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/docs/architecture/runbook.md#fila-de-e-mail-parada"
+
+  - name: blue-sentinel-security
+    rules:
+      - alert: AuthFailureSpike
+        expr: sum(increase(bs_auth_failures_total[5m])) > 30
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pico anormal de 401"
+          description: "Mais de 30 respostas 401 em 5 minutos — possível força-bruta ou varredura de credenciais."
+          runbook_url: "https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/docs/architecture/runbook.md#pico-de-401429"
+
+      - alert: RateLimitSpike
+        expr: sum(increase(bs_rate_limited_total[5m])) > 60
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pico anormal de 429"
+          description: "Mais de 60 respostas 429 em 5 minutos — rate limit sob ataque ou cliente com problema."
+          runbook_url: "https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/docs/architecture/runbook.md#pico-de-401429"
+
+      - alert: CertExpiringSoon
+        expr: (probe_ssl_earliest_cert_expiry - time()) < 14 * 24 * 3600
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Certificado TLS expira em menos de 14 dias"
+          description: "O certificado do site vence em menos de 14 dias — renove antes (Caddy/ACME renova aos 30)."
+          runbook_url: "https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/docs/architecture/runbook.md#certificado-expirando"
+
+      - alert: CertExpiringCritical
+        expr: (probe_ssl_earliest_cert_expiry - time()) < 7 * 24 * 3600
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Certificado TLS expira em menos de 7 dias"
+          description: "Renovação automática (ACME) provavelmente falhou — renove manualmente."
+          runbook_url: "https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/docs/architecture/runbook.md#certificado-expirando"
+
+  - name: blue-sentinel-monitoring
+    rules:
+      - alert: AlertmanagerDown
+        expr: up{job="alertmanager"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Alertmanager fora do ar"
+          description: "Sem Alertmanager não há entrega de alertas."
+          runbook_url: "https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/docs/architecture/runbook.md#alertmanager-fora-do-ar"
+
+      - alert: BlackboxProbeFailed
+        expr: probe_success == 0
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Sonda externa falhou"
+          description: "O blackbox-exporter não conseguiu acessar o alvo configurado."
+          runbook_url: "https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/docs/architecture/runbook.md#monitoramento-externo"

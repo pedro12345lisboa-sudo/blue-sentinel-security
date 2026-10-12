@@ -4,11 +4,18 @@ import psutil
 from fastapi import APIRouter, Depends, Request
 
 from app.cache.redis import get_redis
+from app.core.config import settings
 from app.core.deps import get_db_session
-from app.monitoring import metrics
+from app.monitoring import metrics, security_events
 from app.monitoring.health_check import check_disk
-from app.monitoring.resource_monitor import current_level, sample_once
-from app.schemas.status import StatusResponse
+from app.monitoring.resource_monitor import _disk_path, current_level, sample_once
+from app.schemas.status import (
+    SiteMonitoring,
+    SiteMonitoringEvent,
+    StatusResponse,
+    SystemMetricsPayload,
+    UsageMetrics,
+)
 
 router = APIRouter(prefix="/status", tags=["status"])
 
@@ -17,7 +24,7 @@ _start_time = time.monotonic()
 
 @router.get("", response_model=StatusResponse)
 async def system_status(request: Request, db=Depends(get_db_session)):
-    """Métricas públicas e seguras — sem detalhes internos."""
+    """Métricas públicas e seguras — sem detalhes internos e sem PII."""
     started = time.perf_counter()
     try:
         from sqlalchemy import text
@@ -38,14 +45,40 @@ async def system_status(request: Request, db=Depends(get_db_session)):
     sample_once()
     disk = check_disk()
 
+    memory = psutil.virtual_memory()
+    disk_usage = psutil.disk_usage(_disk_path())
+
     return StatusResponse(
         uptime_seconds=time.monotonic() - _start_time,
         cpu_percent=psutil.cpu_percent(interval=0.0),
-        memory_percent=psutil.virtual_memory().percent,
+        memory_percent=memory.percent,
         disk_percent=disk.value,
         api_latency_ms=round(api_latency, 2),
         database_reachable=db_ok,
         cache_reachable=cache_ok,
         latency_percentiles=metrics.latency_percentiles(),
         degradation_level=int(current_level()),
+        site_monitoring=_site_monitoring(),
+        metrics=SystemMetricsPayload(
+            cpu=psutil.cpu_percent(interval=0.0),
+            memory=UsageMetrics(
+                used=memory.used, total=memory.total, percentage=memory.percent
+            ),
+            disk=UsageMetrics(
+                used=disk_usage.used, total=disk_usage.total, percentage=disk_usage.percent
+            ),
+            uptime=time.monotonic() - _start_time,
+        ),
+    )
+
+
+def _site_monitoring() -> SiteMonitoring:
+    """Seção "Site sob monitoramento" — eventos sem dados pessoais."""
+    events = [
+        SiteMonitoringEvent(**event) for event in security_events.recent_events()
+    ]
+    return SiteMonitoring(
+        events=events,
+        window_seconds=settings.site_event_window_seconds,
+        salt_rotation_hours=settings.security_hash_rotation_hours,
     )

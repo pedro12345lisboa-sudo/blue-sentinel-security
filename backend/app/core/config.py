@@ -80,6 +80,45 @@ class Settings(BaseSettings):
     # Degradação controlada: o laboratório é desligado antes do site.
     lab_degrade_enabled: bool = Field(default=True, env="LAB_DEGRADE_ENABLED")
 
+    # Alertas (deduplicação + silêncio + notificação)
+    # Webhook genérico (Discord: campo `content`; Telegram via bridge: `text`).
+    alert_webhook_url: str = Field(default="", env="ALERT_WEBHOOK_URL")
+    alert_email_to: str = Field(default="", env="ALERT_EMAIL_TO")
+    alert_dedup_seconds: int = Field(default=300, env="ALERT_DEDUP_SECONDS")
+    # Lista separada por vírgula de alertas silenciados (ex.: "DiskHigh,LateBoot").
+    alert_silences: str = Field(default="", env="ALERT_SILENCES")
+    alert_check_interval: int = Field(default=60, env="ALERT_CHECK_INTERVAL")
+    # Token compartilhado entre o Alertmanager e o webhook do backend.
+    alert_webhook_token: str = Field(default="", env="ALERT_WEBHOOK_TOKEN")
+    # Link base de runbook anexado a todo alerta.
+    runbook_url: str = Field(
+        default=(
+            "https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/"
+            "blob/main/docs/architecture/runbook.md"
+        ),
+        env="RUNBOOK_URL",
+    )
+    # Verificação de certificado TLS (vazio = desativado).
+    cert_check_host: str = Field(default="", env="CERT_CHECK_HOST")
+    cert_check_port: int = Field(default=443, env="CERT_CHECK_PORT")
+    cert_warn_days: int = Field(default=14, env="CERT_WARN_DAYS")
+    # Limiares dos auto-checks do backend (o Prometheus tem os mesmos na
+    # docker/prometheus/alert.rules.yml).
+    error_rate_threshold: float = Field(default=0.05, env="ERROR_RATE_THRESHOLD")
+    error_rate_window_seconds: int = Field(default=300, env="ERROR_RATE_WINDOW_SECONDS")
+    latency_p95_threshold_ms: float = Field(default=1000.0, env="LATENCY_P95_THRESHOLD_MS")
+    auth_failure_spike: int = Field(default=30, env="AUTH_FAILURE_SPIKE")
+    rate_limit_spike: int = Field(default=60, env="RATE_LIMIT_SPIKE")
+    queue_stall_seconds: int = Field(default=600, env="QUEUE_STALL_SECONDS")
+
+    # Dogfooding / eventos de segurança do site
+    security_hash_rotation_hours: int = Field(default=24, env="SECURITY_HASH_ROTATION_HOURS")
+    site_event_window_seconds: int = Field(default=60, env="SITE_EVENT_WINDOW_SECONDS")
+    engine_feed_per_minute: int = Field(default=120, env="ENGINE_FEED_PER_MINUTE")
+
+    # Retenção LGPD: limpeza automática periódica (roda também sob demanda).
+    cleanup_interval_hours: int = Field(default=24, env="CLEANUP_INTERVAL_HOURS")
+
     # Compressão HTTP
     compression_min_size: int = Field(default=500, env="COMPRESSION_MIN_SIZE")
 

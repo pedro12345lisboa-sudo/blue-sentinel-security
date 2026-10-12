@@ -7,7 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { MDXComponents } from '@/components/mdx-components';
 import { ShareButtons } from '@/components/writeups/share-buttons';
+import { JsonLd } from '@/components/seo/json-ld';
 import { getWriteupBySlug } from '@/lib/writeups';
+import { articleJsonLd } from '@/lib/jsonld';
 import { extractHeadings } from '@/lib/slugify';
 import { TableOfContents } from '@/components/common/table-of-contents';
 import { UntranslatedNotice } from '@/components/common/untranslated-notice';
@@ -17,8 +19,6 @@ import {
   formatReadingTime,
   getSite,
   pageMetadata,
-  siteUrl,
-  withLocale,
   type Locale,
 } from '@/i18n';
 
@@ -52,6 +52,9 @@ export function generateMetadata({ params }: WriteupPageProps): Metadata {
       modifiedTime: writeup.frontmatter.updated ?? writeup.frontmatter.date,
       tags: writeup.frontmatter.tags,
     },
+    // Capa desenhada quando existe; senão, a OG image gerada por página.
+    // Nos dois casos a imagem é 1200×630 => card grande.
+    twitter: { ...base.twitter, card: 'summary_large_image' as const },
   };
 }
 
@@ -68,34 +71,11 @@ export default function WriteupPage({ params }: WriteupPageProps) {
     frontmatter.readingTime ||
     Math.max(1, Math.ceil(content.split(/\s+/).length / 200));
   const headings = extractHeadings(content);
-  const canonical = new URL(
-    withLocale(`/writeups/${params.slug}`, params.locale),
-    siteUrl()
-  ).toString();
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: frontmatter.title,
-    description: frontmatter.description,
-    ...(frontmatter.cover
-      ? { image: new URL(frontmatter.cover, siteUrl()).toString() }
-      : {}),
-    datePublished: frontmatter.date,
-    dateModified: frontmatter.updated ?? frontmatter.date,
-    inLanguage: params.locale === 'en' ? 'en' : 'pt-BR',
-    keywords: frontmatter.tags.join(', '),
-    wordCount: content.split(/\s+/).filter(Boolean).length,
-    author: { '@type': 'Person', name: site.brand.fullName },
-    publisher: { '@type': 'Organization', name: site.brand.fullName },
-    mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
-  };
+  const jsonLd = articleJsonLd(site, frontmatter, params.locale, content);
 
   return (
     <article className="min-h-screen">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={jsonLd} />
       <header className="section relative overflow-hidden">
         <div className="gradient-mesh absolute inset-0" aria-hidden="true" />
         <div className="noise-overlay absolute inset-0" aria-hidden="true" />

@@ -97,6 +97,14 @@
     },
     "error": {
       "title": "Erro no servidor | Blue-Sentinel"
+    },
+    "privacy": {
+      "title": "Política de Privacidade | Blue-Sentinel",
+      "description": "O que este portfólio coleta (o mínimo), por quanto tempo guarda e quais direitos você tem sobre os dados enviados pelo formulário de contato."
+    },
+    "terms": {
+      "title": "Termos de Uso | Blue-Sentinel",
+      "description": "Regras de uso ético e legal deste portfólio de Cybersecurity: conteúdo defensivo, laboratório sintético e nenhuma autorização para ataques."
     }
   },
   "nav": {
@@ -165,6 +173,14 @@
       {
         "name": "Contato",
         "href": "/contact"
+      },
+      {
+        "name": "Privacidade",
+        "href": "/privacy"
+      },
+      {
+        "name": "Termos de uso",
+        "href": "/terms"
       }
     ],
     "social": [
@@ -869,7 +885,27 @@
       "loading": "Carregando métricas...",
       "error": "Não foi possível carregar as métricas.",
       "empty": "Sem dados no momento.",
-      "offline": "O backend não respondeu. Os dados aparecem quando a API voltar — nada é inventado aqui."
+      "offline": "O backend não respondeu. Os dados aparecem quando a API voltar — nada é inventado aqui.",
+      "monitoring": {
+        "title": "Site sob monitoramento",
+        "description": "O próprio site alimenta o motor de detecção com as respostas 401, 404 e 429 que ele mesmo recebe. Abaixo, os eventos da janela recente.",
+        "privacy": "Sem dados pessoais: o ator é um hash de IP com sal que rotaciona a cada 24 h. Nenhum endereço real é armazenado ou exibido.",
+        "empty": "Nenhum evento hostil registrado na janela monitorada.",
+        "window": "Janela de detecção",
+        "columns": {
+          "time": "Hora",
+          "kind": "Tipo",
+          "route": "Rota",
+          "actor": "Ator",
+          "count": "Ocorrências",
+          "detection": "Detecção"
+        },
+        "kinds": {
+          "auth_burst": "Rajada de 401",
+          "temp_ban": "Banimento temporário",
+          "route_scan": "Varredura de rotas"
+        }
+      }
     },
     "security": {
       "title": "Arquitetura de segurança",
@@ -1159,6 +1195,14 @@
     "faq": {
       "title": "Perguntas frequentes",
       "description": "Respostas rápidas sobre o laboratório, os projetos e como entrar em contato."
+    },
+    "privacy": {
+      "title": "Política de Privacidade",
+      "description": "Coleta mínima, prazos de retenção declarados e direitos do titular previstos na LGPD."
+    },
+    "terms": {
+      "title": "Termos de Uso",
+      "description": "Uso ético do portfólio e do laboratório: defensivo, educacional e sem autorização para testar sistemas de terceiros."
     }
   },
   "footer": {

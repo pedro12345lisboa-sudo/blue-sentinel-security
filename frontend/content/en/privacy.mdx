@@ -1,0 +1,57 @@
+---
+title: 'Privacy Policy'
+seo:
+  title: 'Privacy Policy | Blue-Sentinel'
+  description: 'What this portfolio collects (the minimum), how long it is kept and which rights you have over the data sent through the contact form.'
+---
+
+## Who is the controller
+
+Blue-Sentinel is a personal Cybersecurity Blue Team portfolio, operated independently. To exercise any right over your data or ask questions, use the [Contact](/contact) page — the same channel handles access, rectification and erasure requests under Brazil's Lei nº 13.709/2018 (LGPD).
+
+## What we collect
+
+We collect the **minimum** needed to operate:
+
+| Data | Source | Purpose |
+| --- | --- | --- |
+| Name, e-mail, subject and message | Contact form (voluntary submission) | Reply to your message |
+| Language preference | Functional cookie `BLUE_SENTINEL_LOCALE` | Remember PT/EN between visits |
+
+We **do not collect** IP, user-agent, fingerprint or geolocation from the form. The request IP address is used in memory only, for abuse defence (rate limiting and anti-bot honeypot), and is never written to the database or to logs — when abuse correlation is required, we store only a **salted hash that rotates every 24 hours**, irreversible and useless outside the short mitigation window.
+
+## Cookies
+
+This site uses **no analytics, advertising or third-party cookies**. The only cookie is the language preference, which is strictly functional. That is why there is no consent banner: there is nothing to consent to, and installing a tracking banner here would itself be the unnecessary collection.
+
+## Legal basis
+
+Submitting the form is **consent** (art. 7º, I, of the LGPD): you type your data and decide to send it. Minimal security processing (request limits, rotating hash, hostile event records) relies on **legitimate interest** (art. 7º, IX), with reduced impact and no visitor profiling.
+
+## How long we keep it
+
+Retention periods are declared, enforced by an automated cleanup routine and audited in [`docs/security/data-inventory.md`](https://github.com/pedro12345lisboa-sudo/blue-sentinel-security/blob/main/docs/security/data-inventory.md):
+
+- **Form messages**: 90 days (`CONTACT_RETENTION_DAYS`), then deleted automatically.
+- **Lab sessions**: 30 days (`LAB_SESSION_RETENTION_DAYS`).
+- **Technical logs**: 14-day operational window.
+
+Nothing is kept "just in case".
+
+## Sharing
+
+We do not sell, rent or share personal data with third parties for commercial purposes — this portfolio has no revenue model. If e-mail sending is enabled (SMTP), the notification goes through the configured e-mail provider; with no provider configured, nothing leaves the server.
+
+## Security
+
+- JSON logs with **automatic redaction**: e-mail, password, token and cookie never reach disk or the log collector.
+- **"Site under monitoring"**: the site itself feeds the detection engine with 401/404/429 responses; the public events on the [Status](/status) page show only the actor's rotating hash — no real address is ever displayed.
+- TLS transport in production (automatic renewal via Caddy/ACME, with an alert when fewer than 14 days remain).
+
+## Your rights
+
+You may request confirmation of processing, access, rectification, anonymisation, portability or erasure of the submitted data — art. 18 of the LGPD. Reply through [Contact](/contact) with the e-mail used to submit; we answer within 15 days.
+
+## Changes to this policy
+
+Changes to retention or collection are published on this page with an update date. The current version is always this document.
